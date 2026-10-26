@@ -27,8 +27,6 @@ export interface AnswerEntity {
   id: string;
   questionId: string;
   profileId: string;
-  recipientProfileId: string;
-  pairwiseId: string;
   answerText: string | null;
   optionId: string | null;
   optionAnswerList?: string | null; // Q5-compatible JSON-encoded string[] | null
@@ -68,14 +66,11 @@ export interface QuestionDetail {
 // The full Postgres "question" row, which GetQuestionListByUser returned.
 export interface QuestionListItem extends QuestionDetail {
   createdAt: string;
-  sharedByProfileIds?: string[];
 }
 
 export interface AnswerListItem {
   id: string;
   profileId: string;
-  recipientProfileId: string;
-  pairwiseId: string;
   questionId: string;
   answerText: string | null;
   optionId: string | null;

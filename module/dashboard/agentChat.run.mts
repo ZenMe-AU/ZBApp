@@ -120,7 +120,6 @@ const view = (questions, names, digested = new Set()) =>
     title: q.title,
     text: q.questionText,
     options: q.option ?? [],
-    askers: (q.sharedByProfileIds ?? [q.profileId]).map((id) => ({ id, name: names[id] ?? "unknown" })),
     needsAnswer: needsAnswer(q),
     answers: q.answers.map((a) => ({
       id: a.id,
@@ -211,12 +210,12 @@ async function act(agent, { method, path: p, body }, state) {
   if (reason) return { method, path: p, body, status: "INVALID", reason, response: undefined };
   const answerMatch = url?.pathname.match(/^\/question\/([^/]+)\/answer\/?$/);
   const question = answerMatch ? state.questions.find((item) => item.id === answerMatch[1]) : undefined;
-  const answerBody =
-    answerMatch && question && body && body.recipientProfileId === undefined && question.askers?.length === 1
-      ? { ...body, recipientProfileId: question.askers[0].id }
-      : body;
+  // const answerBody =
+  //   answerMatch && question && body && body.recipientProfileId === undefined && question.askers?.length === 1
+  //     ? { ...body, recipientProfileId: question.askers[0].id }
+  //     : body;
   if (kind) agent.used[kind]++;
-  return { method, path: url.pathname, body: answerBody, ...(await call(agent, method, url, answerBody)) };
+  return { method, path: url.pathname, body, ...(await call(agent, method, url, body)) };
 }
 
 // One human-readable line per API call for the live chat log.
