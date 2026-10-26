@@ -77,7 +77,6 @@ export async function GetQuestionListByUser(request: GetQuestionListByUserReques
           item.latestAnswer && {
             ...item.latestAnswer,
             profileId: await toExternalProfileId(item.latestAnswer.profileId),
-            recipientProfileId: item.latestAnswer.recipientProfileId ? await toExternalProfileId(item.latestAnswer.recipientProfileId) : null,
           },
         isOwner: item.profileId === profileId,
       }))),
