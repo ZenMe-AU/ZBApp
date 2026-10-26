@@ -10,8 +10,8 @@ async function AddAnswer(request, context) {
   const repository = getRepository();
   const { questionId } = request.params;
   const profileId = request.userData.profileId;
-  const { answer = null, option = null, duration, recipientProfileId, when = null } = request.clientParams;
-  const questionnaire = await repository.addAnswerByQuestionId(questionId, profileId, duration, answer, option, when);
+  const { answer = null, option = null, duration } = request.clientParams;
+  const questionnaire = await repository.addAnswerByQuestionId(questionId, profileId, duration, answer, option);
   return { return: { id: questionnaire.id } };
 }
 
@@ -24,7 +24,7 @@ async function GetAnswerById(request, context) {
       detail: answer && {
         ...answer,
         profileId: await toExternalProfileId(answer.profileId),
-        recipientProfileId: answer.recipientProfileId ? await toExternalProfileId(answer.recipientProfileId) : null,
+        // recipientProfileId: answer.recipientProfileId ? await toExternalProfileId(answer.recipientProfileId) : null,
       },
     },
   };
@@ -35,19 +35,15 @@ async function GetAnswerListByQuestionId(request, context) {
   const { questionId } = request.params;
   const profileId = request.userData?.profileId;
   const answers = await repository.getAnswerListByQuestionId(questionId);
-  const processedAnswers = await Promise.all(
-    answers.map(async (ans) => {
-      return {
-        ...ans,
-        isEdited: ans.answerCount > 1 ? true : false,
-        profileId: await toExternalProfileId(ans.profileId),
-        pairwiseId: ans.pairwiseId,
-        recipientProfileId: ans.recipientProfileId ? await toExternalProfileId(ans.recipientProfileId) : null,
-        // TODO: lookup friend_name from friend table using profileId
-        answerCount: undefined,
-      };
-    })
-  );
+  const processedAnswers = answers.map((ans) => {
+    return {
+      ...ans,
+      isEdited: ans.answerCount > 1 ? true : false,
+      profileId: ans.profileId, // TODO: Replace profileid with pairwiseid.
+      // TODO: lookup friend_name from friend table using profileId
+      answerCount: undefined,
+    };
+  });
   console.log("processedAnswers:", processedAnswers);
   return { return: { list: processedAnswers } };
 }

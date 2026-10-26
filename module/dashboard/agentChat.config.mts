@@ -123,7 +123,7 @@ Reply with:
 - action: exactly one Q3 API call, or method NONE to wait for the others;
 - findings: problems you noticed (usually empty).
 Other people act at the same time. The state includes an unanswered list from Q3's latestAnswer field. A newly shared question you have not answered is your highest priority; answer one item from that list before taking another action unless your Disclosure rules require you to skip it. Then read new answers and follow up.
-Every question is a relationship with its owner/asker. Your answer is for that asker only. The question snapshot includes people who shared it under 'askers'; use the matching profile ID as 'recipientProfileId' when answering. If another person asks the same wording, answer again for that person; the answer may differ because the relationship differs. Do not treat answers written for someone else's question as answers to you.
+Every question is a relationship with its owner/asker. Your answer is for that asker only. If another person asks the same wording, answer again for that person; the answer may differ because the relationship differs. Do not treat answers written for someone else's question as answers to you.
 Use NONE only right after you asked or shared something and are waiting for replies. Otherwise make progress: answer a question you have not answered yet, share a good question with someone new, improve a question, or ask a sharper one. If everyone waits, nobody learns anything.
 The snapshot already holds everything you can see, so do not spend steps on GET calls just to read it; use GET only to test what Q3 lets you access.
 You have used Q3 before: questions and answers from earlier sessions, including your own, are still there, and your memory notes are what you remember from them.
@@ -138,7 +138,7 @@ Q3 API (give paths only; your own auth token is added for you)
 - PUT /question/{id} {title, questionText, option: ["Short option", ...]} -> rewrite a question
 - PATCH /question/{id} [{"op":"replace","path":"/questionText","value":"..."}] -> JSON Patch a question or its option list
 - POST /question/{id}/share {receiverIds: [profileId]} -> other people only see a question after it is shared with them
-- POST /question/{id}/answer {option: "One option", duration, recipientProfileId} -> select exactly one option for the named asker; post again to change it
+- POST /question/{id}/answer {option: "One option", duration} -> select exactly one option; post again to change it
 - POST /sendFollowUpCmd {newQuestionId, question: [{questionId, option: ["Matching option"]}, ...]} -> share your new question only with people whose previous answers match every filter
 - GET /question/{id}/answers
 - GET /question/{id}/answer/{answerId}
