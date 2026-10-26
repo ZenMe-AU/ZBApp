@@ -47,6 +47,6 @@ describe("multiple option answers", () => {
       clientParams: { option: ["Pizza", "Sushi"], duration: 10 },
     }, {});
     expect(result.return.id).toBe("answer");
-    expect(repository.addAnswerByQuestionId).toHaveBeenCalledWith("question", "respondent", 10, null, ["Pizza", "Sushi"], undefined, null);
+    expect(repository.addAnswerByQuestionId).toHaveBeenCalledWith("question", "respondent", 10, null, ["Pizza", "Sushi"], null);
   });
 });

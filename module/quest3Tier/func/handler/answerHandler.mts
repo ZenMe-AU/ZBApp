@@ -24,7 +24,6 @@ async function GetAnswerById(request, context) {
       detail: answer && {
         ...answer,
         profileId: await toExternalProfileId(answer.profileId),
-        // recipientProfileId: answer.recipientProfileId ? await toExternalProfileId(answer.recipientProfileId) : null,
       },
     },
   };

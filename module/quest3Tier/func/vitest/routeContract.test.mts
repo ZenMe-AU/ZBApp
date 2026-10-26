@@ -127,7 +127,7 @@ describe("Q3 route contract", () => {
     await invoke("AddAnswer", { questionId }, { answer: "yes", duration: 10 });
     expect(repository.getById).toHaveBeenCalledWith(questionId);
     expect(repository.getAnswerListByQuestionId).toHaveBeenCalledWith(questionId);
-    expect(repository.addAnswerByQuestionId).toHaveBeenCalledWith(questionId, internalId, 10, "yes", null, undefined, null);
+    expect(repository.addAnswerByQuestionId).toHaveBeenCalledWith(questionId, internalId, 10, "yes", null, null);
   });
 
   it.each([

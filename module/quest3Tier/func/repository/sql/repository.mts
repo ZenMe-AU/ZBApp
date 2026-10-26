@@ -74,9 +74,7 @@ export async function initRepository(config: DbConfig) {
  * @param {string|null} [option=null] - Selected option identifier.
  * @returns {Promise<any>} Created answer model instance.
  */
-// Previous signature omitted the `recipientProfileId` position used by the repository contract.
-// async function addAnswerByQuestionId(questionId, profileId, duration, answer = null, option = null, when = null) {
-async function addAnswerByQuestionId(questionId, profileId, duration, answer = null, option = null, _recipientProfileId = undefined, when = null) {
+async function addAnswerByQuestionId(questionId, profileId, duration, answer = null, option = null, when = null) {
   try {
     const options = option === null ? null : Array.isArray(option) ? option : [option];
     return await models.QuestionAnswer.create({
