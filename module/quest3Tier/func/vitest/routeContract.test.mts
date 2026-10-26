@@ -24,8 +24,10 @@ type RouteContract = {
   handler: (request: HttpRequest, context: InvocationContext) => Promise<HttpResponseInit>;
 };
 
-const { register, repository } = vi.hoisted(() => ({
+const { register, repository, toExternalProfileId, toInternalProfileId } = vi.hoisted(() => ({
   register: vi.fn<(name: string, summary: string, options: RouteContract) => void>(),
+  toExternalProfileId: vi.fn(),
+  toInternalProfileId: vi.fn(),
   repository: {
     ensureProfile: vi.fn(),
     getCombinationListByUser: vi.fn(async () => []),
@@ -45,6 +47,7 @@ vi.mock("@azure/functions", async (importOriginal) => ({
   app: { openAPIPath: register },
 }));
 vi.mock("../repository/getRepository.mjs", () => ({ getRepository: () => repository }));
+vi.mock("../handler/profileId.mjs", () => ({ toExternalProfileId, toInternalProfileId }));
 
 await import("../route.mjs");
 const registrations = new Map(register.mock.calls.map(([name, , options]) => [name, options]));
@@ -81,6 +84,8 @@ describe("Q3 route contract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     repository.ensureProfile.mockResolvedValue({ profile: { id: internalId, externalId }, created: false });
+    toExternalProfileId.mockResolvedValue(externalId);
+    toInternalProfileId.mockResolvedValue(internalId);
     container.singletons.set("authProvider", { decode: vi.fn().mockResolvedValue({ oid: externalId }) });
   });
 
@@ -128,6 +133,29 @@ describe("Q3 route contract", () => {
     expect(repository.getById).toHaveBeenCalledWith(questionId);
     expect(repository.getAnswerListByQuestionId).toHaveBeenCalledWith(questionId);
     expect(repository.addAnswerByQuestionId).toHaveBeenCalledWith(questionId, internalId, 10, "yes", null, null);
+  });
+
+  it("returns external profile IDs for answer lists until pairwise IDs are available", async () => {
+    repository.getAnswerListByQuestionId.mockResolvedValueOnce([{
+      id: questionId,
+      questionId,
+      profileId: internalId,
+      answerText: null,
+      optionId: "yes",
+      optionAnswerList: ["yes"],
+      when: null,
+      duration: 10,
+      createdAt: "2026-10-26T00:00:00.000Z",
+      answerCount: 2,
+    }]);
+
+    const response = await invoke("GetAnswerListByQuestionId", { questionId });
+
+    expect(toExternalProfileId).toHaveBeenCalledWith(internalId);
+    expect(response.jsonBody).toMatchObject({
+      success: true,
+      return: { list: [{ profileId: externalId, isEdited: true }] },
+    });
   });
 
   it.each([
