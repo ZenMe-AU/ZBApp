@@ -11,21 +11,26 @@ import { GetQuestionById } from "./handler/question/getById.mjs";
 import { GetQuestionListByUser } from "./handler/question/getListByUser.mjs";
 import { PatchQuestionById } from "./handler/question/patchById.mjs";
 import { UpdateQuestionById } from "./handler/question/updateById.mjs";
-import answerHandler from "./handler/answerHandler.mjs";
-import followupHandler from "./handler/followupHandler.mjs";
-import * as CreateQuestionschema from "./handler/CreateQuestion.mjs";
-import * as GetQuestionByIdsc from "./handler/GetQuestionById.mjs";
-import * as UpdateQuestionByIdsc from "./handler/UpdateQuestionById.mjs";
-import * as PatchQuestionByIdsc from "./handler/PatchQuestionById.mjs";
-import * as AddAnswer from "./handler/AddAnswer.mjs";
-import * as GetAnswerById from "./handler/GetAnswerById.mjs";
-import * as GetQuestionListByUsersc from "./handler/GetQuestionListByUser.mjs";
-import * as GetAnswerListByQuestionId from "./handler/GetAnswerListByQuestionId.mjs";
-import * as ShareQuestion from "./handler/ShareQuestion.mjs";
-import * as GetSharedQuestionList from "./handler/GetSharedQuestionList.mjs";
-import * as SendFollowUpCmd from "./handler/SendFollowUpCmd.mjs";
-import * as ShareQuestionCmd from "./handler/ShareQuestionCmd.mjs";
+import * as CreateQuestionschema from "./handler/question/CreateQuestion.mjs";
+import * as GetQuestionByIdsc from "./handler/question/GetQuestionById.mjs";
+import * as UpdateQuestionByIdsc from "./handler/question/UpdateQuestionById.mjs";
+import * as PatchQuestionByIdsc from "./handler/question/PatchQuestionById.mjs";
+import * as AddAnswer from "./handler/answer/AddAnswer.mjs";
+import * as GetAnswerById from "./handler/answer/GetAnswerById.mjs";
+import * as GetQuestionListByUsersc from "./handler/question/GetQuestionListByUser.mjs";
+import * as GetAnswerListByQuestionId from "./handler/answer/GetAnswerListByQuestionId.mjs";
+import * as ShareQuestion from "./handler/share/ShareQuestion.mjs";
+import * as GetSharedQuestionList from "./handler/share/GetSharedQuestionList.mjs";
+import * as SendFollowUpCmd from "./handler/followup/SendFollowUpCmd.mjs";
+import * as ShareQuestionCmd from "./handler/share/ShareQuestionCmd.mjs";
 import * as getEventByCorrelationId from "./handler/getEventByCorrelationId.mjs";
+import { GetAnswerById as getAnswerByIdHandler } from "./handler/answer/GetAnswerById.mjs";
+import { GetAnswerListByQuestionId as getAnswerListByQuestionIdHandler } from "./handler/answer/GetAnswerListByQuestionId.mjs";
+import { GetEventByCorrelationId as getEventByCorrelationIdHandler } from "./handler/getEventByCorrelationId.mjs";
+import { SendFollowUpCmd as sendFollowUpCmdHandler } from "./handler/followup/SendFollowUpCmd.mjs";
+import { ShareQuestionCmd as shareQuestionCmdHandler } from "./handler/share/ShareQuestionCmd.mjs";
+import { ShareQuestionById as shareQuestionByIdHandler } from "./handler/share/ShareQuestion.mjs";
+import { GetSharedQuestionListByUser as getSharedQuestionListByUserHandler } from "./handler/share/GetSharedQuestionList.mjs";
 import profileHandler from "./handler/profileHandler.mjs";
 import * as Profile from "./handler/Profile.mjs";
 import { updateMyProfileSchema } from "./handler/updateMyProfileSchema.mjs";
@@ -94,7 +99,7 @@ app.openAPIPath("AddAnswer", "Answer a question", {
   params: AddAnswer.params,
   body: AddAnswer.body,
   responses: AddAnswer.responses,
-  handler: requestHandler(answerHandler.AddAnswer, {
+  handler: requestHandler(AddAnswer.AddAnswer, {
     params: AddAnswer.params,
     schemas: [AddAnswer.body],
   }),
@@ -107,7 +112,7 @@ app.openAPIPath("GetAnswerById", "Get an answer by ID", {
   tags: ["Answer"],
   params: GetAnswerById.params,
   responses: GetAnswerById.responses,
-  handler: requestHandler(answerHandler.GetAnswerById, {
+  handler: requestHandler(getAnswerByIdHandler, {
     params: GetAnswerById.params,
   }),
 });
@@ -127,7 +132,7 @@ app.openAPIPath("GetAnswerListByQuestionId", "List answers to a question", {
   tags: ["Answer"],
   params: GetAnswerListByQuestionId.params,
   responses: GetAnswerListByQuestionId.responses,
-  handler: requestHandler(answerHandler.GetAnswerListByQuestionId, {
+  handler: requestHandler(getAnswerListByQuestionIdHandler, {
     params: GetAnswerListByQuestionId.params,
   }),
 });
@@ -140,7 +145,7 @@ app.openAPIPath("ShareQuestion", "Share a question", {
   params: ShareQuestion.params,
   body: ShareQuestion.body,
   responses: ShareQuestion.responses,
-  handler: requestHandler(followupHandler.ShareQuestionById, {
+  handler: requestHandler(shareQuestionByIdHandler, {
     params: ShareQuestion.params,
     schemas: [ShareQuestion.body],
   }),
@@ -152,7 +157,7 @@ app.openAPIPath("GetSharedQuestionList", "List questions shared with the caller"
   authLevel: "anonymous",
   tags: ["Share"],
   responses: GetSharedQuestionList.responses,
-  handler: requestHandler(followupHandler.GetSharedQuestionListByUser),
+  handler: requestHandler(getSharedQuestionListByUserHandler),
 });
 
 app.openAPIPath("GetMyProfile", "Get the caller's profile", {
@@ -205,7 +210,7 @@ app.openAPIPath("SendFollowUpCmd", "Send a follow-up question to matching respon
   headers: SendFollowUpCmd.headers,
   body: SendFollowUpCmd.body,
   responses: SendFollowUpCmd.responses,
-  handler: requestHandler(followupHandler.SendFollowUpCmd, {
+  handler: requestHandler(sendFollowUpCmdHandler, {
     schemas: [SendFollowUpCmd.body],
   }),
 });
@@ -218,7 +223,7 @@ app.openAPIPath("ShareQuestionCmd", "Share a question with profiles", {
   headers: ShareQuestionCmd.headers,
   body: ShareQuestionCmd.body,
   responses: ShareQuestionCmd.responses,
-  handler: requestHandler(followupHandler.ShareQuestionCmd, {
+  handler: requestHandler(shareQuestionCmdHandler, {
     schemas: [ShareQuestionCmd.body],
   }),
 });
@@ -230,7 +235,7 @@ app.openAPIPath("getEventByCorrelationId", "Count events recorded for a command"
   tags: ["Command"],
   params: getEventByCorrelationId.params,
   responses: getEventByCorrelationId.responses,
-  handler: requestHandler(followupHandler.GetEventByCorrelationId, {
+  handler: requestHandler(getEventByCorrelationIdHandler, {
     params: getEventByCorrelationId.params,
   }),
 });

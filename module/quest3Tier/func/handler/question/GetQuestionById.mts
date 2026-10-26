@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { apiResponses } from "./commonSchema.mjs";
+import { apiResponses } from "../commonSchema.mjs";
 
 const question = z
   .object({

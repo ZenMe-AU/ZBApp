@@ -4,12 +4,12 @@
  */
 
 import { test, expect } from "vitest";
-import followupHandler from "../../handler/followupHandler.mjs";
+import { SendFollowUpCmd } from "../../handler/followup/SendFollowUpCmd.mjs";
 import { invokeHandler } from "./functionAppMock.mjs";
 
 const createFollowUp = (profileIdLookup, questionIdLookup, testCorrelationId) => {
   test.each(followUpData())("send follow-up question by user $userId", async (followUp) => {
-    const response = await invokeHandler(followupHandler.SendFollowUpCmd, {
+    const response = await invokeHandler(SendFollowUpCmd, {
       userData: {
         profileId: await profileIdLookup.getProfileId(followUp.userId),
       },

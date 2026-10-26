@@ -4,16 +4,16 @@
  */
 
 import { z } from "zod";
-import { apiResponses } from "./commonSchema.mjs";
+import { apiResponses } from "../commonSchema.mjs";
 
 export const params = z.object({ id: z.uuid() });
 
 export const body = z
   .object({
-    answer: z.string().nullable().optional(),
-    option: z.string().nullable().optional(),
-    duration: z.int(),
+    title: z.string().nullable().optional(),
+    questionText: z.string(),
+    option: z.array(z.string()).nullable().optional(),
   })
-  .meta({ id: "AnswerBody" });
+  .meta({ id: "QuestionBody" });
 
 export const responses = apiResponses([200, 400, 401, 403, 500], z.object({ id: z.uuid() }));

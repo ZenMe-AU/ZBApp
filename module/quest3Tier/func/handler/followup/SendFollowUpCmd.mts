@@ -3,19 +3,35 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-import { getRepository } from "../repository/getRepository.mjs";
+import { z } from "zod";
+import { apiResponses } from "../commonSchema.mjs";
+import { getRepository } from "../../repository/getRepository.mjs";
 
-import { v4 as uuidv4 } from "uuid";
-import cmdName from "../enum/cmdName.mjs";
+const uuid = z.uuid().refine((value) => value[14] === "4" || value[14] === "5", "Invalid UUID version");
 
-async function GetEventByCorrelationId(request, context) {
-  const repository = getRepository();
-  const { name, correlationId } = request.params;
-  const result = await repository.getEventByCorrelationId(name, correlationId);
-  return { return: { qty: result.length } };
-}
+export const headers = z.object({
+  "X-Correlation-Id": z.string().optional().meta({ description: "Look up the command result with GET /getEventByCorrelationId" }),
+});
 
-async function SendFollowUpCmd(request, context) {
+export const body = z
+  .strictObject({
+    newQuestionId: uuid,
+    question: z
+      .array(
+        z.strictObject({
+          questionId: uuid,
+          option: z.array(z.string().min(1)).min(1),
+        })
+      )
+      .min(1),
+    // Follow-up filters are no longer stored; isSave is accepted from older clients and ignored.
+    isSave: z.boolean().optional(),
+  })
+  .meta({ id: "SendFollowUpCmd" });
+
+export const responses = apiResponses([200, 400, 401, 403, 500], z.literal(true));
+
+export async function SendFollowUpCmd(request, context) {
   const repository = getRepository();
   const { correlationId, clientParams: body } = request;
   const profileId = request.userData.profileId;
@@ -35,12 +51,6 @@ async function SendFollowUpCmd(request, context) {
   return { return: true };
 }
 
-/**
- * Retrieve the list of receivers for a follow-up command.
- * @param {string} senderId - Identifier of the authenticated sender.
- * @param {any} cmdData - Data for the follow-up command.
- * @returns {Promise<string[]>} List of receiver identifiers.
- */
 async function getFollowUpReceiver(senderId, cmdData) {
   try {
     const repository = getRepository();
@@ -65,33 +75,3 @@ async function getFollowUpReceiver(senderId, cmdData) {
     throw new Error(`Failed to retrieve follow-up receivers; ${err.message}`, { cause: err });
   }
 }
-
-async function ShareQuestionCmd(request, context) {
-  const repository = getRepository();
-  const { correlationId, clientParams: body } = request;
-  const profileId = request.userData.profileId;
-  const cmd = await repository.insertQuestionShareCmd(profileId, body, correlationId);
-  const sharedQuestions = await repository.shareQuestion(body["newQuestionId"], profileId, body["receiverIds"]);
-
-  await repository.updateQuestionShareCmdStatus(cmd["id"]);
-  return { return: true };
-}
-
-async function ShareQuestionById(request, context) {
-  const repository = getRepository();
-  await repository.shareQuestion(request.params.id, request.userData.profileId, request.clientParams.receiverIds ?? []);
-  return { return: true };
-}
-
-async function GetSharedQuestionListByUser(request, context) {
-  const repository = getRepository();
-  return { return: { list: await repository.getSharedQuestionListByProfileId(request.userData.profileId) } };
-}
-
-export default {
-  ShareQuestionById,
-  GetSharedQuestionListByUser,
-  SendFollowUpCmd,
-  ShareQuestionCmd,
-  GetEventByCorrelationId,
-};

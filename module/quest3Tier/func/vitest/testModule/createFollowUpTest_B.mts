@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from "vitest";
-import followupHandler from "../../handler/followupHandler.mjs";
+import { GetEventByCorrelationId } from "../../handler/getEventByCorrelationId.mjs";
 import { invokeHandler } from "./functionAppMock.mjs";
 
 const followUpQuestionQty = 5;
@@ -17,7 +17,7 @@ const checkFollowUpQty = (testCorrelationId, profileIdLookup) => {
   test("check follow up question by Correlation Id:" + testCorrelationId, async () => {
     let qty = 0;
     for (let i = 0; i < 5; i++) {
-      const response = await invokeHandler(followupHandler.GetEventByCorrelationId, {
+      const response = await invokeHandler(GetEventByCorrelationId, {
         userData: {
           profileId: await profileIdLookup.getProfileId(1),
         },

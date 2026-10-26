@@ -4,7 +4,8 @@
  */
 
 import { z } from "zod";
-import { apiResponses } from "./commonSchema.mjs";
+import { apiResponses } from "../commonSchema.mjs";
+import { getRepository } from "../../repository/getRepository.mjs";
 
 const answer = z
   .object({
@@ -21,3 +22,10 @@ const answer = z
 export const params = z.object({ id: z.uuid(), answerId: z.uuid() });
 
 export const responses = apiResponses([200, 401, 403, 500], z.object({ detail: answer.nullable() }));
+
+export async function GetAnswerById(request, context) {
+  const repository = getRepository();
+  const { id: questionId, answerId } = request.params;
+  const answer = await repository.getAnswerById(questionId, answerId);
+  return { return: { detail: answer } };
+}

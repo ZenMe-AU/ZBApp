@@ -4,7 +4,8 @@
  */
 
 import { z } from "zod";
-import { apiResponses } from "./commonSchema.mjs";
+import { apiResponses } from "../commonSchema.mjs";
+import { getRepository } from "../../repository/getRepository.mjs";
 
 const question = z
   .object({
@@ -18,3 +19,8 @@ const question = z
   .meta({ id: "Question" });
 
 export const responses = apiResponses([200, 401, 403, 500], z.object({ list: z.array(question) }));
+
+export async function GetSharedQuestionListByUser(request, context) {
+  const repository = getRepository();
+  return { return: { list: await repository.getSharedQuestionListByProfileId(request.userData.profileId) } };
+}
