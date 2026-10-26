@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "rootDir": "../..",
-    "outDir": "../../dist"
-  },
-  "include": ["./**/*.mts"],
-  "exclude": ["agentChat.test.mts", "node_modules", "dist"]
-}

@@ -13,7 +13,7 @@ const createAnswer = (profileIdLookup, questionIdLookup) => {
       userData: {
         profileId: await profileIdLookup.getProfileId(answer.userId),
       },
-      params: { id: questionIdLookup.getQuestionId(answer.questionId) },
+      params: { questionId: questionIdLookup.getQuestionId(answer.questionId) },
       clientParams: answer,
     });
     expect(response.return.id).toBeDefined();

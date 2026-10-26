@@ -16,7 +16,7 @@
       "args": [
         "-NoProfile",
         "-File",
-        "${workspaceFolder}/vitest/agents/run-openvino.ps1"
+        "${workspaceFolder}/../../dashboard/run-openvino.ps1"
       ],
       "isBackground": true,
       "options": {
@@ -50,7 +50,7 @@
       "args": [
         "-NoProfile",
         "-File",
-        "${workspaceFolder}/vitest/agents/run-ollama.ps1"
+        "${workspaceFolder}/../../dashboard/run-ollama.ps1"
       ],
       "isBackground": true,
       "options": {

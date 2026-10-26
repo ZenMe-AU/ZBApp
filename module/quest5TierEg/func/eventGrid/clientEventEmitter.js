@@ -59,8 +59,13 @@ class clientEventEmitter {
       //       });
       //   }.bind(this)
       // );
-      this.rawClient.on(matchingCommand.eventQueueName, (events) => {
-        console.log(`Emitted events to queue '${matchingCommand.eventQueueName}'`, events);
+      // this.rawClient.on(matchingCommand.eventQueueName, (events) => {
+      //   console.log(`Emitted events to queue '${matchingCommand.eventQueueName}'`, events);
+      // });
+      return matchingCommand.queueHandler(events[0], {
+        functionName: matchingCommand.queueFuncName,
+        invocationId: events[0].id,
+        triggerMetadata: {},
       });
     }
     console.log(`🛄 Preparing to emit events of type '${events[0].type}' to endpoint '${this.endpoint}'`);

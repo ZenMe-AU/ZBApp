@@ -13,7 +13,7 @@ const question = z
     profileId: z.uuid(),
     title: z.string().nullable(),
     questionText: z.string(),
-    option: z.array(z.string()).nullable(),
+    optionList: z.array(z.string()).nullable(),
     createdAt: z.iso.datetime().optional(),
   })
   .meta({ id: "Question" });

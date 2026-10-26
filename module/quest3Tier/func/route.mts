@@ -34,14 +34,17 @@ import { GetSharedQuestionListByUser as getSharedQuestionListByUserHandler } fro
 import profileHandler from "./handler/profileHandler.mjs";
 import * as Profile from "./handler/Profile.mjs";
 import { updateMyProfileSchema } from "./handler/updateMyProfileSchema.mjs";
+import { commandHeaders } from "./handler/commonSchema.mjs";
+import cmdName from "./enum/cmdName.mjs";
 
 //TODO: Review schema usage and ensure all endpoints have a correct schema assigned which is also in sync with the relevant function and relevant swagger doc.
 
 app.openAPIPath("CreateQuestion", "Create a question", {
-  route: "question",
+  route: "questionCmd/createQuestion",
   methods: ["POST"],
   authLevel: "anonymous",
   tags: ["Question"],
+  headers: commandHeaders,
   body: CreateQuestionschema.body,
   responses: CreateQuestionschema.responses,
   handler: requestHandler(CreateQuestion, {
@@ -50,7 +53,7 @@ app.openAPIPath("CreateQuestion", "Create a question", {
 });
 
 app.openAPIPath("GetQuestionById", "Get a question by ID", {
-  route: "question/{id}",
+  route: "questionQry/getQuestion/{questionId}",
   methods: ["GET"],
   authLevel: "anonymous",
   tags: ["Question"],
@@ -76,13 +79,19 @@ app.openAPIPath("UpdateQuestionById", "Update a question", {
 });
 
 app.openAPIPath("PatchQuestionById", "Update a question using JSON Patch", {
-  route: "question/{id}",
-  methods: ["PATCH"],
+  route: "questionCmd/updateQuestion/{questionId}",
+  methods: ["POST"],
   authLevel: "anonymous",
   tags: ["Question"],
   request: {
     params: PatchQuestionByIdsc.params,
-    body: { content: { "application/json-patch+json": { schema: PatchQuestionByIdsc.body } } },
+    headers: commandHeaders,
+    body: {
+      content: {
+        "application/json-patch+json": { schema: PatchQuestionByIdsc.patchBody },
+        "application/json": { schema: PatchQuestionByIdsc.body },
+      },
+    },
   },
   responses: PatchQuestionByIdsc.responses,
   handler: requestHandler(PatchQuestionById, {
@@ -92,10 +101,11 @@ app.openAPIPath("PatchQuestionById", "Update a question using JSON Patch", {
 });
 
 app.openAPIPath("AddAnswer", "Answer a question", {
-  route: "question/{id}/answer",
+  route: "questionCmd/createAnswer/{questionId}",
   methods: ["POST"],
   authLevel: "anonymous",
   tags: ["Answer"],
+  headers: commandHeaders,
   params: AddAnswer.params,
   body: AddAnswer.body,
   responses: AddAnswer.responses,
@@ -106,7 +116,7 @@ app.openAPIPath("AddAnswer", "Answer a question", {
 });
 
 app.openAPIPath("GetAnswerById", "Get an answer by ID", {
-  route: "question/{id}/answer/{answerId}",
+  route: "questionQry/getAnswer/{answerId}",
   methods: ["GET"],
   authLevel: "anonymous",
   tags: ["Answer"],
@@ -118,15 +128,15 @@ app.openAPIPath("GetAnswerById", "Get an answer by ID", {
 });
 
 app.openAPIPath("GetQuestionListByUser", "List questions created by or shared with the caller", {
-  route: "questions",
+  route: "questionQry/getQuestions",
   methods: ["GET"],
   authLevel: "anonymous",
   responses: GetQuestionListByUsersc.responses,
-  handler: requestHandler(GetQuestionListByUser)
+  handler: requestHandler(GetQuestionListByUser),
 });
 
 app.openAPIPath("GetAnswerListByQuestionId", "List answers to a question", {
-  route: "question/{id}/answers",
+  route: "questionQry/getAnswers/{questionId}",
   methods: ["GET"],
   authLevel: "anonymous",
   tags: ["Answer"],
@@ -152,7 +162,7 @@ app.openAPIPath("ShareQuestion", "Share a question", {
 });
 
 app.openAPIPath("GetSharedQuestionList", "List questions shared with the caller", {
-  route: "sharedQuestions",
+  route: "questionQry/getSharedQuestions",
   methods: ["GET"],
   authLevel: "anonymous",
   tags: ["Share"],
@@ -203,7 +213,7 @@ app.openAPIPath("GetMyFriends", "List the caller's friends", {
 });
 
 app.openAPIPath("SendFollowUpCmd", "Send a follow-up question to matching respondents", {
-  route: "sendFollowUpCmd",
+  route: "questionCmd/sendFollowUp",
   methods: ["POST"],
   authLevel: "anonymous",
   tags: ["Command"],
@@ -216,7 +226,7 @@ app.openAPIPath("SendFollowUpCmd", "Send a follow-up question to matching respon
 });
 
 app.openAPIPath("ShareQuestionCmd", "Share a question with profiles", {
-  route: "shareQuestionCmd",
+  route: "questionCmd/shareQuestion",
   methods: ["POST"],
   authLevel: "anonymous",
   tags: ["Command"],
@@ -237,5 +247,31 @@ app.openAPIPath("getEventByCorrelationId", "Count events recorded for a command"
   responses: getEventByCorrelationId.responses,
   handler: requestHandler(getEventByCorrelationIdHandler, {
     params: getEventByCorrelationId.params,
+  }),
+});
+
+app.openAPIPath("GetQuestionShareEventList", "Count share events recorded for a command", {
+  route: "questionQry/getQuestionShareEvents/{correlationId}",
+  methods: ["GET"],
+  authLevel: "anonymous",
+  tags: ["Command"],
+  params: getEventByCorrelationId.correlationParams,
+  responses: getEventByCorrelationId.responses,
+  handler: requestHandler(getEventByCorrelationId.GetEventByCorrelationId, {
+    params: getEventByCorrelationId.correlationParams,
+    customParams: { name: cmdName.QuestionShareCmd },
+  }),
+});
+
+app.openAPIPath("GetFollowUpEventList", "Count follow-up events recorded for a command", {
+  route: "questionQry/getFollowUpEvents/{correlationId}",
+  methods: ["GET"],
+  authLevel: "anonymous",
+  tags: ["Command"],
+  params: getEventByCorrelationId.correlationParams,
+  responses: getEventByCorrelationId.responses,
+  handler: requestHandler(getEventByCorrelationId.GetEventByCorrelationId, {
+    params: getEventByCorrelationId.correlationParams,
+    customParams: { name: cmdName.FollowUpCmd },
   }),
 });

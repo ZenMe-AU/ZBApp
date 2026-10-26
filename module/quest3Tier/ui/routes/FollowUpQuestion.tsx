@@ -8,6 +8,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 
 import { getQuestionById, getQuestionsByUser, getAnswerListByQuestionId, sendFollowUpQuestion } from "../api/question";
+import { getMyProfileId } from "../api/profile";
 import type { Question, Answer } from "../types/interfaces";
 import {
   Container,
@@ -33,11 +34,10 @@ import { logEvent, setOperationId } from "@zenmechat/shared-ui/monitor/telemetry
 type CardErrors = Record<string, { question?: boolean; option?: boolean }>;
 
 function FollowUpQuestion() {
-  const profileId = localStorage.getItem("profileId");
   const { id } = useParams<{ id: string }>();
   const [question, setQuestion] = useState<Question | null>(null);
   const [questionList, setQuestionList] = useState<Question[]>([]);
-  const [answerCount, setAnswerCount] = useState<Record<string, number>>({});
+  const [answerCounts, setAnswerCounts] = useState<Record<string, Record<string, number>>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -85,6 +85,8 @@ function FollowUpQuestion() {
 
   const handleQuestionChange = (cardId: string, questionId: string) => {
     setSelectedQuestions((prev) => ({ ...prev, [cardId]: questionId }));
+    setSelectedOptions((prev) => ({ ...prev, [cardId]: [] }));
+    void fetchAnswers(questionId);
     if (questionId === followUpQuestionId) {
       setFollowUpQuestionId(null);
     }
@@ -190,17 +192,17 @@ function FollowUpQuestion() {
 
   const fetchAnswers = async (questionId: string) => {
     try {
-      const data = await getAnswerListByQuestionId(questionId);
+      const [data, profileId] = await Promise.all([getAnswerListByQuestionId(questionId), getMyProfileId()]);
       const count = data.reduce((acc: Record<string, number>, item: Answer) => {
         if (item.profileId !== profileId) {
-          if (item.optionId) {
-            acc[item.optionId] = (acc[item.optionId] || 0) + 1;
+          for (const option of item.optionAnswerList ?? (item.optionId ? [item.optionId] : [])) {
+            acc[option] = (acc[option] || 0) + 1;
           }
         }
         return acc;
       }, {});
 
-      setAnswerCount(count);
+      setAnswerCounts((previous) => ({ ...previous, [questionId]: count }));
       console.log("Answer Count:", count);
     } catch (error) {
       console.error("Error fetching answers:", error);
@@ -290,18 +292,18 @@ function FollowUpQuestion() {
             />
 
             <FormGroup>
-              {question?.option?.map((option, index) => (
+              {Array.from(new Set([...(question?.option ?? []), ...Object.keys(answerCounts[question?.id ?? ""] ?? {})])).map((option) => (
                 <FormControlLabel
-                  key={index}
+                  key={option}
                   control={<Checkbox checked={selectedInitOptions?.includes(option) || false} onChange={() => handleInitOptionChange(option)} />}
                   label={
                     <Box display="flex" alignItems="center">
                       <Typography variant="body1" sx={{ mr: 1 }}>
                         {option}
                       </Typography>
-                      {answerCount[option] > 0 && (
+                      {(answerCounts[question?.id ?? ""]?.[option] ?? 0) > 0 && (
                         <Typography variant="body2" sx={{ color: "#455a64", fontWeight: "bold" }}>
-                          ({answerCount[option]} response)
+                          ({answerCounts[question?.id ?? ""]?.[option]} response)
                         </Typography>
                       )}
                     </Box>
@@ -355,18 +357,18 @@ function FollowUpQuestion() {
                 </Select>
 
                 <FormGroup>
-                  {(questionList.find((q) => q.id === selectedQuestions[cardId])?.option || []).map((option, index) => (
+                  {Array.from(new Set([...(questionList.find((q) => q.id === selectedQuestions[cardId])?.option ?? []), ...Object.keys(answerCounts[selectedQuestions[cardId]] ?? {})])).map((option) => (
                     <FormControlLabel
-                      key={index}
+                      key={option}
                       control={<Checkbox checked={selectedOptions[cardId]?.includes(option) || false} onChange={() => handleOptionChange(cardId, option)} />}
                       label={
                         <Box display="flex" alignItems="center">
                           <Typography variant="body1" sx={{ mr: 1 }}>
                             {option}
                           </Typography>
-                          {answerCount[option] > 0 && (
+                          {(answerCounts[selectedQuestions[cardId]]?.[option] ?? 0) > 0 && (
                             <Typography variant="body2" sx={{ color: "#455a64", fontWeight: "bold" }}>
-                              ({answerCount[option]} response)
+                              ({answerCounts[selectedQuestions[cardId]]?.[option]} response)
                             </Typography>
                           )}
                         </Box>

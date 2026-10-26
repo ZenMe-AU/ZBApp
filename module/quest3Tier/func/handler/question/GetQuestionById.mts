@@ -12,11 +12,11 @@ const question = z
     profileId: z.uuid(),
     title: z.string().nullable(),
     questionText: z.string(),
-    option: z.array(z.string()).nullable(),
+    optionList: z.array(z.string()).nullable(),
     createdAt: z.iso.datetime().optional(),
   })
   .meta({ id: "Question" });
 
-export const params = z.object({ id: z.uuid() });
+export const params = z.object({ questionId: z.uuid() });
 
 export const responses = apiResponses([200, 401, 403, 500], z.object({ detail: question.nullable() }));

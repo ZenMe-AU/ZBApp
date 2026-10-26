@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "rootDir": ".",
+    "outDir": "./dist",
+    "strict": false,
+    "noEmit": false,
+    "allowJs": true,
+    "checkJs": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["**/*.ts", "**/*.mts"],
+  "exclude": ["agentChat.test.mts", "agentChat.live.test.mts", "llmProvider/*.test.mts", "viewer/*.test.mts", "node_modules", "dist", "runs"]
+}

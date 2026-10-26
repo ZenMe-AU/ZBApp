@@ -1,5 +1,5 @@
 /**
- * @license SPDX-FileCopyrightText: © 2025 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
  * @license SPDX-License-Identifier: MIT
  */
 
@@ -67,7 +67,7 @@ function ShareQuestion() {
         id,
         selectedReceivers.map(({ id }) => id)
       );
-      alert("Question shared successfully!");
+      //alert("Question shared successfully!");
       logEvent("bntSendShareQuestionClick", {
         parentId: "SubmitButton",
         questionId: id,

@@ -14,7 +14,7 @@
       "type": "msedge",
       "request": "launch",
       "url": "http://127.0.0.1:4178",
-      "webRoot": "${workspaceFolder}/vitest/agents/viewer",
+      "webRoot": "${workspaceFolder}/../../dashboard/viewer",
       "preLaunchTask": "Start OpenVino"
     },
     {
@@ -22,7 +22,7 @@
       "type": "msedge",
       "request": "launch",
       "url": "http://127.0.0.1:4178",
-      "webRoot": "${workspaceFolder}/vitest/agents/viewer",
+      "webRoot": "${workspaceFolder}/../../dashboard/viewer",
       "preLaunchTask": "Start Ollama"
     }
   ]

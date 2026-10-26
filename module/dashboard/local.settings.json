@@ -1,0 +1,38 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AUTH_PROVIDER": "Dev",
+    "AUTH_LOCAL_SECRET": "bb64c67554381aff324d26669540f591e02e3e993ce85c2d1ed2962e22411634",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+    "languageWorkers__node__arguments": "--inspect",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://westus-0.in.applicationinsights.azure.com/",
+    "DB_USERNAME": "vscode",
+    "DB_PASSWORD": "vscode",
+    "DB_DATABASE": "quest3Tier",
+    "DB_HOST": "127.0.0.1",
+    "DB_AUTH_MODE": "password",
+    "DB_IGNORE_MIGRATION_STATE": "false",
+    "CLIENT_ID": "87aa3687-66a4-4fab-bf59-70de6bf768fa",
+    "TENANT_ID": "15fb0613-7977-4551-801b-6aadac824241",
+    "QUESTION_URL": "http://localhost:7073",
+    "LLM_PROVIDER": "claude",
+    "LLM_MODEL": "D:\\Models\\OpenVINO\\Qwen2.5-Coder-3B-Instruct-int4-ov",
+    "OPENVINO_MODEL_DIR": "D:\\Models\\OpenVINO\\Qwen2.5-Coder-3B-Instruct-int4-ov",
+    "OPENVINO_DEVICE": "NPU",
+    "OLLAMA_MODEL": "qwen2.5-coder:3b",
+    "OLLAMA_BASE_URL": "http://127.0.0.1:11434/v1",
+    "OVMS_MODEL": "Qwen2.5-Coder-3B-Instruct-int4-ov",
+    "OVMS_BASE_URL": "http://127.0.0.1:8000/v3",
+    "OPENAI_MODEL": "gpt-5-mini",
+    "OPENAI_BASE_URL": "https://api.openai.com/v1",
+    "CLAUDE_MODEL": "claude-haiku-4-5-20251001",
+    "OPENVINO_LOG_LEVEL": "5"
+  },
+  "Host": {
+    "LocalHttpPort": 7073,
+    "CORS": "http://localhost:5173,http://localhost:5183",
+    "CORSCredentials": true
+  }
+}

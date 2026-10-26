@@ -20,6 +20,8 @@ export interface AddAnswerInput {
   recipientProfileId?: string;
   answerText: string | null;
   optionId: string | null;
+  optionAnswerList?: string[] | null;
+  when?: string | null;
   duration: number;
 }
 
@@ -35,9 +37,8 @@ export async function addAnswer(input: AddAnswerInput): Promise<{ id: string }> 
     throw new Error(`Question was not shared by recipientProfileId: ${recipientProfileId}`);
   }
   await assertProfileExists(recipientProfileId);
-  const pairwiseId = createHash("sha256")
-    .update(`${recipientProfileId}:${input.profileId}`)
-    .digest("hex");
+// TODO: Replace this with an auto generated pairwiseID on the friend object that is used here, instead of creating a new one.
+  const pairwiseId = createHash("sha256").update(`${recipientProfileId}:${input.profileId}`).digest("hex");
   const id = randomUUID();
   const createdAt = new Date().toISOString();
   const entity: AnswerEntity = {
@@ -50,6 +51,8 @@ export async function addAnswer(input: AddAnswerInput): Promise<{ id: string }> 
     pairwiseId,
     answerText: input.answerText,
     optionId: input.optionId,
+    optionAnswerList: input.optionAnswerList ? JSON.stringify(input.optionAnswerList) : input.optionId === null ? null : JSON.stringify([input.optionId]),
+    when: input.when ?? null,
     duration: input.duration,
     createdAt,
   };
@@ -62,6 +65,7 @@ export async function addAnswer(input: AddAnswerInput): Promise<{ id: string }> 
 
 // Table Storage drops null properties, so nullable fields come back undefined; restore the Postgres nulls here.
 function toAnswerRecord(e: AnswerEntity): AnswerRecord {
+  const optionAnswerList = e.optionAnswerList ? JSON.parse(e.optionAnswerList) : e.optionId === null || e.optionId === undefined ? null : [e.optionId];
   return {
     id: e.id,
     questionId: e.questionId,
@@ -70,6 +74,8 @@ function toAnswerRecord(e: AnswerEntity): AnswerRecord {
     pairwiseId: e.pairwiseId ?? createHash("sha256").update(`legacy:${e.questionId}:${e.profileId}`).digest("hex"),
     answerText: e.answerText ?? null,
     optionId: e.optionId ?? null,
+    optionAnswerList,
+    when: e.when ?? null,
     duration: e.duration,
     createdAt: e.createdAt,
   };
@@ -85,7 +91,7 @@ export async function getAnswerById(questionId: string, answerId: string): Promi
   }
   return null;
 }
-
+// TODO: The row level security is not implemented, it must be Intrinsic to the environment and enforced at all queries.
 export async function getAnswerListByQuestionId(questionId: string): Promise<AnswerListItem[]> {
   const client = await getTableClient(QUESTION_DATA_TABLE);
   const [rowKeyStart, rowKeyEnd] = answerRowKeyRange(questionId);

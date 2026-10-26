@@ -53,7 +53,7 @@ export async function getTableClient(tableName: string): Promise<TableClient> {
     clients.set(tableName, client);
   }
   if (!ensuredTables.has(tableName)) {
-    await client.createTable(); // no-op if the table already exists
+    await client.createTable(); // TODO: RBAC non compliance, app code must not change infrastructure. Move this to a migration script that is run by a separate admin account.
     ensuredTables.add(tableName);
   }
   return client;

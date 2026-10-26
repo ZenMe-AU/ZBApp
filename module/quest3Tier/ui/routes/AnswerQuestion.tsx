@@ -1,5 +1,5 @@
 /**
- * @license SPDX-FileCopyrightText: © 2025 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
  * @license SPDX-License-Identifier: MIT
  */
 
@@ -7,14 +7,15 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { getQuestionById, submitAnswer, getAnswerListByQuestionId } from "../api/question";
+import { getMyProfileId } from "../api/profile";
 import type { Question, Answer } from "../types/interfaces";
 import {
   Container,
   Typography,
   Box,
   Button,
-  Radio,
-  RadioGroup,
+  Checkbox,
+  FormGroup,
   FormControlLabel,
   FormControl,
   FormLabel,
@@ -30,11 +31,12 @@ import WordCloud from "react-d3-cloud";
 import { logEvent, setOperationId } from "@zenmechat/shared-ui/monitor/telemetry.ts";
 
 function AnswerQuestion() {
-  const profileId = localStorage.getItem("profileId");
   const { id } = useParams<{ id: string }>();
   const [question, setQuestion] = useState<Question | null>(null);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [customOption, setCustomOption] = useState("");
   const [textAnswer, setTextAnswer] = useState<string>("");
+  const [when, setWhen] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -42,7 +44,9 @@ function AnswerQuestion() {
 
   const [prevAns, setPrevAns] = useState<{
     optionId: string | null;
+    optionAnswerList?: string[] | null;
     answerText: string | null;
+    when?: string | null;
   } | null>(null);
   const [answerList, setAnswerList] = useState<Answer[]>([]);
 
@@ -77,7 +81,7 @@ function AnswerQuestion() {
 
     const fetchAnswers = async () => {
       try {
-        const data = await getAnswerListByQuestionId(id);
+        const [data, profileId] = await Promise.all([getAnswerListByQuestionId(id), getMyProfileId()]);
         console.log(data);
         const answerList = data.reduce(
           (acc: { self: Answer[]; others: Answer[] }, q: Answer) => {
@@ -95,8 +99,9 @@ function AnswerQuestion() {
         setAnswerList(answerList.others);
         if (answerList.self.length > 0) {
           setPrevAns(answerList.self[0]);
-          setSelectedOption(answerList.self[0].optionId);
-          setTextAnswer(answerList.self[0].answerText);
+          setSelectedOptions(answerList.self[0].optionAnswerList ?? (answerList.self[0].optionId ? [answerList.self[0].optionId] : []));
+          setTextAnswer(answerList.self[0].answerText ?? "");
+          setWhen(answerList.self[0].when ?? "");
         }
       } catch (error) {
         console.error("Error fetching answers:", error);
@@ -130,13 +135,13 @@ function AnswerQuestion() {
       setWordCloudData(wordCount);
     } else {
       const optionCount = answerList.reduce((acc: Record<string, number>, item: Answer) => {
-        if (item.optionId) {
-          acc[item.optionId] = (acc[item.optionId] || 0) + 1;
+        for (const option of item.optionAnswerList ?? (item.optionId ? [item.optionId] : [])) {
+          acc[option] = (acc[option] || 0) + 1;
         }
         return acc;
       }, {});
 
-      const total = answerList.length;
+      const total = Object.values(optionCount).reduce((sum, count) => sum + count, 0);
       const chartData = Object.entries(optionCount)
         .map(([option, count]) => ({
           name: option,
@@ -154,7 +159,14 @@ function AnswerQuestion() {
       setPieChartData(chartData);
       setPieChartColors(generatedColors);
     }
-  }, [answerList]);
+  }, [answerList, isOption]);
+
+  const addCustomOption = () => {
+    const option = customOption.trim();
+    if (!option) return;
+    setSelectedOptions((previous) => previous.includes(option) ? previous : [...previous, option]);
+    setCustomOption("");
+  };
 
   const handleBackClick = () => {
     const correlationId = setOperationId();
@@ -181,18 +193,21 @@ function AnswerQuestion() {
     const answerDuration = Math.round(endTime - startTime);
 
     const answerPayload = {
-      option: question?.option && question.option.length > 0 ? selectedOption : null,
+      option: question?.option && question.option.length > 0 ? selectedOptions : null,
       answerText: question?.option && question.option.length > 0 ? null : textAnswer,
       answerDuration,
+      when: when.trim() || null,
     };
 
-    if (!answerPayload.option && !answerPayload.answerText) {
+    if ((!answerPayload.option || answerPayload.option.length === 0) && !answerPayload.answerText) {
       alert("Please provide an answer.");
       setSubmitting(false);
       return;
     }
 
-    if (answerPayload.option === prevAns?.optionId && answerPayload.answerText === prevAns?.answerText) {
+    const previousOptions = prevAns?.optionAnswerList ?? (prevAns?.optionId ? [prevAns.optionId] : []);
+    const sameOptions = (answerPayload.option ?? []).length === previousOptions.length && (answerPayload.option ?? []).every((option) => previousOptions.includes(option));
+    if (sameOptions && answerPayload.answerText === prevAns?.answerText && answerPayload.when === (prevAns?.when ?? null)) {
       console.log("nothing changed!");
       setSubmitting(false);
       return;
@@ -200,17 +215,21 @@ function AnswerQuestion() {
 
     try {
       await submitAnswer(id, answerPayload, question.questionText);
-      alert("Answer submitted successfully!");
+      //alert("Answer submitted successfully!");
       setPrevAns((prev) => {
         if (!prev)
           return {
-            optionId: answerPayload.option,
+            optionId: answerPayload.option?.[0] ?? null,
+            optionAnswerList: answerPayload.option,
             answerText: answerPayload.answerText,
+            when: answerPayload.when,
           };
         return {
           ...prev,
-          optionId: answerPayload.option,
+          optionId: answerPayload.option?.[0] ?? null,
+          optionAnswerList: answerPayload.option,
           answerText: answerPayload.answerText,
+          when: answerPayload.when,
         };
       });
       // navigate(`/quest3Tier/${id}`);
@@ -262,12 +281,16 @@ function AnswerQuestion() {
       <form onSubmit={handleSubmit}>
         {question.option && question.option.length > 0 ? (
           <FormControl component="fieldset" sx={{ mb: 2 }}>
-            <FormLabel component="legend">choose your answer</FormLabel>
-            <RadioGroup name="answer" value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
-              {question.option.map((option, index) => (
-                <FormControlLabel key={index} value={option} control={<Radio />} label={option} />
+            <FormLabel component="legend">Choose all answers that apply</FormLabel>
+            <FormGroup>
+              {[...question.option, ...selectedOptions.filter((option) => !question.option?.includes(option))].map((option) => (
+                <FormControlLabel key={option} control={<Checkbox checked={selectedOptions.includes(option)} onChange={(e) => setSelectedOptions((previous) => e.target.checked ? [...previous, option] : previous.filter((item) => item !== option))} />} label={option} />
               ))}
-            </RadioGroup>
+            </FormGroup>
+            <Box display="flex" gap={1} mt={1}>
+              <TextField label="Add your own option" value={customOption} onChange={(e) => setCustomOption(e.target.value)} slotProps={{ htmlInput: { maxLength: 255 } }} size="small" />
+              <Button type="button" onClick={addCustomOption} disabled={!customOption.trim()}>Add option</Button>
+            </Box>
           </FormControl>
         ) : (
           <TextField
@@ -282,6 +305,15 @@ function AnswerQuestion() {
             sx={{ mb: 2 }}
           />
         )}
+        <TextField
+          label="When does this answer apply?"
+          value={when}
+          onChange={(e) => setWhen(e.target.value)}
+          placeholder="e.g. right now, on weekends"
+          helperText="Optional — add context if your answer depends on timing."
+          fullWidth
+          sx={{ mb: 2 }}
+        />
         <Box display="flex" justifyContent="center" gap={2}>
           <Button type="submit" variant="contained" color="primary" disabled={submitting}>
             {submitting ? "Submitting..." : "Submit Answer"}

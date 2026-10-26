@@ -9,7 +9,7 @@ type CreateQuestionRequest = {
   userData: { profileId: string };
   clientParams: {
     title?: string | null;
-    option?: string[] | null;
+    optionList?: string[] | null;
     questionText: string;
   };
 };
@@ -21,7 +21,7 @@ type CreateQuestionResponse = {
 export async function CreateQuestion(request: CreateQuestionRequest, context: unknown): Promise<CreateQuestionResponse> {
   const repository = getRepository();
   const profileId = request.userData.profileId;
-  const { title = null, option = null, questionText } = request.clientParams;
-  const questionnaire = await repository.create(profileId, title, questionText, option);
+  const { title = null, optionList = null, questionText } = request.clientParams;
+  const questionnaire = await repository.create(profileId, title, questionText, optionList);
   return { return: { id: questionnaire.id } };
 }

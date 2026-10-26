@@ -5,7 +5,7 @@
 
 // Row shapes stored under the QuestionData table. Table Storage properties
 // are limited to String/Int32/Int64/Double/Boolean/DateTime/Guid/Binary, so
-// arrays (option) are stored as JSON strings and parsed back at the
+// arrays (optionList) are stored as JSON strings and parsed back at the
 // repository boundary.
 
 export interface QuestionEntity {
@@ -15,7 +15,8 @@ export interface QuestionEntity {
   profileId: string;
   title: string | null;
   questionText: string;
-  option: string; // JSON-encoded string[] | null
+  option?: string; // Legacy JSON-encoded options
+  optionList: string; // JSON-encoded string[] | null
   createdAt: string;
   etag?: string;
 }
@@ -30,6 +31,8 @@ export interface AnswerEntity {
   pairwiseId: string;
   answerText: string | null;
   optionId: string | null;
+  optionAnswerList?: string | null; // Q5-compatible JSON-encoded string[] | null
+  when?: string | null;
   duration: number;
   createdAt: string;
 }
@@ -40,6 +43,7 @@ export interface QuestionShareEntity {
   rowKey: string;
   id: string;
   newQuestionId: string;
+  questionId?: string | null;
   senderProfileId: string;
   receiverProfileId: string;
   status: number;
@@ -48,13 +52,16 @@ export interface QuestionShareEntity {
 }
 
 // Shapes returned to handlers, matching the existing API response contract.
-export type AnswerRecord = Omit<AnswerEntity, "partitionKey" | "rowKey">;
+export type AnswerRecord = Omit<AnswerEntity, "partitionKey" | "rowKey" | "optionAnswerList"> & {
+  optionAnswerList: string[] | null;
+  when: string | null;
+};
 
 export interface QuestionDetail {
   id: string;
   title: string | null;
   questionText: string;
-  option: string[] | null;
+  optionList: string[] | null;
   profileId: string;
 }
 
@@ -72,6 +79,8 @@ export interface AnswerListItem {
   questionId: string;
   answerText: string | null;
   optionId: string | null;
+  optionAnswerList: string[] | null;
+  when: string | null;
   duration: number;
   createdAt: string;
   answerCount: number;

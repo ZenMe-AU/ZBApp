@@ -13,7 +13,7 @@ const checkAnswer = (profileIdLookup, questionIdLookup) => {
       userData: {
         profileId: await profileIdLookup.getProfileId(r.userId),
       },
-      params: { id: questionIdLookup.getQuestionId(r.questionId) },
+      params: { questionId: questionIdLookup.getQuestionId(r.questionId) },
     });
     expect(response.return.list.length).toBe(r.count);
   });

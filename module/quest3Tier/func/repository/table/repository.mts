@@ -5,9 +5,24 @@
 
 import { randomUUID } from "crypto";
 import { odata } from "@azure/data-tables";
-import { createQuestion, getQuestionById, getQuestionListByProfileId, getSharedQuestionListByProfileId, patchQuestionById, shareQuestion, updateQuestionById } from "./questionRepository.mjs";
+import {
+  createQuestion,
+  getQuestionById,
+  getQuestionListByProfileId,
+  getSharedQuestionListByProfileId,
+  patchQuestionById,
+  shareQuestion,
+  updateQuestionById,
+} from "./questionRepository.mjs";
 import { addAnswer, getAnswerById, getAnswerListByQuestionId } from "./answerRepository.mjs";
-import { addFriend as addTableFriend, createProfile, ensureProfile as ensureTableProfile, findProfileByExternalId, listFriends as listTableFriends, updatePreferredName as updateTablePreferredName } from "./profileRepository.mjs";
+import {
+  addFriend as addTableFriend,
+  createProfile,
+  ensureProfile as ensureTableProfile,
+  findProfileByExternalId,
+  listFriends as listTableFriends,
+  updatePreferredName as updateTablePreferredName,
+} from "./profileRepository.mjs";
 import { configureTableStorage, getTableClient, type TableStorageSettings } from "./init.mjs";
 import { QUESTION_DATA_TABLE } from "./keys.mjs";
 import type { QuestRepository } from "../contracts.mjs";
@@ -161,34 +176,54 @@ const repository = {
     return getQuestionById(questionId);
   },
 
-  async create(profileId: string, title = null, question = null, option = null) {
-    const created = await createQuestion({ profileId, title, questionText: question ?? "", option });
+  async create(profileId: string, title = null, question = null, optionList = null) {
+    const created = await createQuestion({ profileId, title, questionText: question ?? "", optionList });
     const questionRecord = await getQuestionById(created.id);
     if (!questionRecord) throw new Error(`Question not found after creation: ${created.id}`);
     return questionRecord;
   },
 
-  async updateById(questionId: string, title = null, questionText = null, option = null) {
+  async updateById(questionId: string, title = null, questionText = null, optionList = null) {
     const question = await getQuestionById(questionId);
     if (!question) throw new Error(`Question not found for questionId: ${questionId}`);
-    return updateQuestionById(questionId, { title, questionText, option }, question.profileId);
+    return updateQuestionById(questionId, { title, questionText, optionList }, question.profileId);
   },
 
   async getCombinationListByUser(profileId: string) {
     const questions = await getQuestionListByProfileId(profileId);
     // shortcut: one answer lookup per question, batch only if question-list latency becomes measurable.
-    return Promise.all(questions.map(async (question) => ({
-      ...question,
-      latestAnswer: (await getAnswerListByQuestionId(question.id)).find((answer) => answer.profileId === profileId) ?? null,
-    })));
+    return Promise.all(
+      questions.map(async (question) => ({
+        ...question,
+        latestAnswer: (await getAnswerListByQuestionId(question.id)).find((answer) => answer.profileId === profileId) ?? null,
+      }))
+    );
   },
 
   async patchById(questionId: string, action: unknown, profileId: string) {
     return patchQuestionById(questionId, profileId, action);
   },
 
-  async addAnswerByQuestionId(questionId: string, profileId: string, duration: number, answer = null, option = null, recipientProfileId?: string) {
-    const created = await addAnswer({ questionId, profileId, duration, answerText: answer, optionId: option, recipientProfileId });
+  async addAnswerByQuestionId(
+    questionId: string,
+    profileId: string,
+    duration: number,
+    answer = null,
+    option: string | string[] | null = null,
+    recipientProfileId?: string,
+    when?: string | null
+  ) {
+    const options = option === null ? null : Array.isArray(option) ? option : [option];
+    const created = await addAnswer({
+      questionId,
+      profileId,
+      duration,
+      answerText: answer,
+      optionId: options?.[0] ?? null,
+      optionAnswerList: options,
+      recipientProfileId,
+      when,
+    });
     const record = await getAnswerById(questionId, created.id);
     if (!record) throw new Error(`Answer not found after creation: ${created.id}`);
     return record;
@@ -214,21 +249,24 @@ const repository = {
   },
 
   async insertFollowUpFilter(senderId: string, data: Record<string, unknown>) {
-    if (!data.save || !Array.isArray(data.question)) return [];
+    if (!(data.isSave ?? data.save) || !Array.isArray(data.question)) return [];
     const client = await getTableClient(QUESTION_DATA_TABLE);
     const filterId = randomUUID();
-    const newQuestionId = String(data.newQuestionId);
-    const filters = data.question.map((item: any, index) => ({
-      partitionKey: senderId,
-      rowKey: `filter:${newQuestionId}:${filterId}:${index + 1}`,
-      id: filterId,
-      order: index + 1,
-      senderProfileId: senderId,
-      refQuestionId: item.questionId,
-      refOption: JSON.stringify(item.option),
-      newQuestionId,
-      createdAt: new Date().toISOString(),
-    }));
+    const questionIdList = Array.isArray(data.questionIdList) ? data.questionIdList.map(String) : [String(data.newQuestionId)];
+    const questions = data.question as Array<{ questionId: string; option: string[] }>;
+    const filters = questionIdList.flatMap((newQuestionId) =>
+      questions.map((item, index) => ({
+        partitionKey: senderId,
+        rowKey: `filter:${newQuestionId}:${filterId}:${index + 1}`,
+        id: filterId,
+        order: index + 1,
+        senderProfileId: senderId,
+        refQuestionId: item.questionId,
+        refOption: JSON.stringify(item.option),
+        newQuestionId,
+        createdAt: new Date().toISOString(),
+      }))
+    );
     for (const filter of filters) await client.createEntity(filter);
     return filters;
   },

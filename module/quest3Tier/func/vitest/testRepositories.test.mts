@@ -11,6 +11,7 @@ import { initSqlRepository, initTableRepository } from "./util/repositoriesInit.
 import tableRepository from "../repository/table/repository.mjs";
 import { getTableClient } from "../repository/table/init.mjs";
 import { QUESTION_DATA_TABLE } from "../repository/table/keys.mjs";
+import type { QuestionShareEntity } from "../repository/table/entities.mjs";
 import type { QuestRepository } from "../repository/contracts.mjs";
 import cmdName from "../enum/cmdName.mjs";
 
@@ -21,7 +22,6 @@ interface RepositoryTestIds {
   followUpCmdIds: string[];
   questionShareCmdIds: string[];
 }
-
 
 describe("Test SQL repository", () => {
   let sequelize: Awaited<ReturnType<typeof initSqlRepository>>["sequelize"] | undefined;
@@ -37,16 +37,44 @@ describe("Test SQL repository", () => {
       if (sequelize) await sequelize.close();
     }
   });
-  testRepositoryContract(sqlRepository, ids);
+  testRepositoryContract(sqlRepository, ids, async (questionId, senderId, receiverId) => {
+    const share = await models.QuestionShare.findOne({ where: { newQuestionId: questionId, senderProfileId: senderId, receiverProfileId: receiverId } });
+    expect(share?.get("questionId")).toBe(questionId);
+    await share!.update({ questionId: null });
+  });
 });
 
 describe("Test Azure Table repository", () => {
   const ids = createRepositoryTestIds();
-  beforeAll(() => {initTableRepository();});
+  beforeAll(() => {
+    initTableRepository();
+  });
   afterAll(async () => {
     if (ids.profileIds.length > 0) await cleanupTableRows(ids.profileIds, ids.externalIds);
   });
-  testRepositoryContract(tableRepository, ids);
+  testRepositoryContract(tableRepository, ids, async (questionId, senderId, receiverId) => {
+    const client = await getTableClient(QUESTION_DATA_TABLE);
+    const rows = client.listEntities<QuestionShareEntity>({
+      queryOptions: { filter: odata`PartitionKey eq ${senderId} and newQuestionId eq ${questionId} and receiverProfileId eq ${receiverId}` },
+    });
+    const share = (await rows.next()).value;
+    expect(share?.questionId).toBe(questionId);
+    const { partitionKey, rowKey, id, newQuestionId, senderProfileId, receiverProfileId, status, type, createdAt } = share!;
+    await client.updateEntity({ partitionKey, rowKey, id, newQuestionId, senderProfileId, receiverProfileId, status, type, createdAt }, "Replace");
+  });
+
+  it("patches optionList array entries", async () => {
+    const externalId = `option-list-${randomUUID()}`;
+    ids.externalIds.push(externalId);
+    const profile = await tableRepository.createProfile(externalId);
+    ids.profileIds.push(profile.id);
+    const question = await tableRepository.create(profile.id, "Options", "Choose one", ["A", "B", "C"]);
+    ids.questionIds.push(question.id);
+
+    await tableRepository.patchById(question.id, [{ op: "replace", path: "/optionList/2", value: "Updated C" }], profile.id);
+
+    await expect(tableRepository.getById(question.id)).resolves.toMatchObject({ optionList: ["A", "B", "Updated C"] });
+  });
 
   it("stores the signed-in name on the canonical profile", async () => {
     const externalId = `named-profile-${randomUUID()}`;
@@ -83,9 +111,16 @@ describe("Test Azure Table repository", () => {
     const josh = await tableRepository.ensureProfile(`friend-josh-${randomUUID()}`, { name: "Josh Kim" });
     const bella = await tableRepository.ensureProfile(`friend-bella-${randomUUID()}`, { name: "Bella Jones" });
     try {
-      await expect(tableRepository.addFriend(josh.profile.id, bella.profile.id)).resolves.toEqual({ id: bella.profile.id, name: "Bella Jones", degree: 1, path: [josh.profile.id, bella.profile.id] });
+      await expect(tableRepository.addFriend(josh.profile.id, bella.profile.id)).resolves.toEqual({
+        id: bella.profile.id,
+        name: "Bella Jones",
+        degree: 1,
+        path: [josh.profile.id, bella.profile.id],
+      });
       await tableRepository.updatePreferredName(bella.profile.externalId, "B");
-      await expect(tableRepository.listFriends(josh.profile.id)).resolves.toEqual([{ id: bella.profile.id, name: "B", degree: 1, path: [josh.profile.id, bella.profile.id] }]);
+      await expect(tableRepository.listFriends(josh.profile.id)).resolves.toEqual([
+        { id: bella.profile.id, name: "B", degree: 1, path: [josh.profile.id, bella.profile.id] },
+      ]);
       await expect(profiles.getEntity(josh.profile.id, `friend:${bella.profile.id}`)).resolves.toMatchObject({
         friend_internal_id: bella.profile.id,
         friend_name: "Bella Jones",
@@ -108,7 +143,9 @@ describe("Test Azure Table repository", () => {
   it("finds unique friends through four relationship levels", async () => {
     const profiles = await getTableClient("Profiles");
     const internalIndex = await getTableClient("ProfileByInternalId");
-    const people = await Promise.all(["Josh", "Bella", "Eric", "Ian", "Mike"].map((name) => tableRepository.ensureProfile(`network-${name}-${randomUUID()}`, { name })));
+    const people = await Promise.all(
+      ["Josh", "Bella", "Eric", "Ian", "Mike"].map((name) => tableRepository.ensureProfile(`network-${name}-${randomUUID()}`, { name }))
+    );
     try {
       for (let index = 0; index < people.length - 1; index += 1) {
         await tableRepository.addFriend(people[index].profile.id, people[index + 1].profile.id);
@@ -155,8 +192,11 @@ describe("Test Azure Table repository", () => {
   });
 });
 
-
-function testRepositoryContract(repository: QuestRepository, ids: RepositoryTestIds) {
+function testRepositoryContract(
+  repository: QuestRepository,
+  ids: RepositoryTestIds,
+  verifyShare: (questionId: string, senderId: string, receiverId: string) => Promise<void>
+) {
   it("testRepositoryContract: question, answer, share, and follow-up", async () => {
     async function createTestProfile(label: string) {
       const externalId = `questdb-${label}-${randomUUID()}`;
@@ -178,28 +218,41 @@ function testRepositoryContract(repository: QuestRepository, ids: RepositoryTest
       profileId: owner.id,
       title: "Quest DB",
       questionText: "Which option?",
-      option: ["yes", "no"],
+      optionList: ["yes", "no"],
     });
     await expect(repository.getCombinationListByUser(owner.id)).resolves.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: question.id, latestAnswer: null })])
     );
     await expect(repository.shareQuestion(question.id, owner.id, [responder.id])).resolves.toHaveLength(1);
+    await verifyShare(question.id, owner.id, responder.id);
+    await expect(repository.getSharedQuestionListByProfileId(responder.id)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: question.id, profileId: owner.id })])
+    );
 
     await expect(repository.updateById(question.id, "Updated Quest DB", "Which option?", ["yes", "no", "maybe"])).resolves.toEqual({ id: question.id });
-    await expect(repository.patchById(question.id, [{ op: "replace", path: "/title", value: "Patched Quest DB" }], owner.id)).resolves.toMatchObject({ id: expect.any(String) });
-    await expect(repository.getById(question.id)).resolves.toMatchObject({ title: "Patched Quest DB", option: ["yes", "no", "maybe"] });
+    await expect(repository.patchById(question.id, [{ op: "replace", path: "/title", value: "Patched Quest DB" }], owner.id)).resolves.toMatchObject({
+      id: expect.any(String),
+    });
+    await expect(repository.patchById(question.id, [{ op: "replace", path: "/optionList/2", value: "maybe" }], owner.id)).resolves.toMatchObject({
+      id: expect.any(String),
+    });
+    await expect(repository.getById(question.id)).resolves.toMatchObject({ title: "Patched Quest DB", optionList: ["yes", "no", "maybe"] });
 
-    const answer = await repository.addAnswerByQuestionId(question.id, responder.id, 15, "yes", "yes");
+    const answer = await repository.addAnswerByQuestionId(question.id, responder.id, 15, "yes", "yes", "during-work");
     await expect(repository.getAnswerById(question.id, answer.id)).resolves.toMatchObject({
       id: answer.id,
       questionId: question.id,
       profileId: responder.id,
       answerText: "yes",
       optionId: "yes",
+      optionAnswerList: ["yes"],
+      when: "during-work",
       duration: 15,
     });
     await expect(repository.getAnswerListByQuestionId(question.id)).resolves.toEqual(
-      expect.arrayContaining([expect.objectContaining({ profileId: responder.id, answerCount: 1, optionId: "yes" })])
+      expect.arrayContaining([
+        expect.objectContaining({ profileId: responder.id, answerCount: 1, optionId: "yes", optionAnswerList: ["yes"], when: "during-work" }),
+      ])
     );
 
     await repository.addAnswerByQuestionId(question.id, responder.id, 12, "no", "no");
@@ -209,6 +262,20 @@ function testRepositoryContract(repository: QuestRepository, ids: RepositoryTest
           id: question.id,
           latestAnswer: expect.objectContaining({ profileId: responder.id, optionId: "no" }),
         }),
+      ])
+    );
+
+    const multiAnswer = await repository.addAnswerByQuestionId(question.id, responder.id, 10, null, ["yes", "custom option"]);
+    await expect(repository.getAnswerById(question.id, multiAnswer.id)).resolves.toMatchObject({
+      optionId: "yes",
+      optionAnswerList: ["yes", "custom option"],
+    });
+    await expect(repository.getAnswerListByQuestionId(question.id)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ profileId: responder.id, optionAnswerList: ["yes", "custom option"] })])
+    );
+    await expect(repository.getCombinationListByUser(responder.id)).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: question.id, latestAnswer: expect.objectContaining({ optionAnswerList: ["yes", "custom option"] }) }),
       ])
     );
 
@@ -241,12 +308,9 @@ function testRepositoryContract(repository: QuestRepository, ids: RepositoryTest
   }, 30000);
 }
 
-
-
 function createRepositoryTestIds(): RepositoryTestIds {
   return { profileIds: [], externalIds: [], questionIds: [], followUpCmdIds: [], questionShareCmdIds: [] };
 }
-
 
 async function cleanupTableRows(profileIds: string[], externalIds: string[]) {
   const questionData = await getTableClient(QUESTION_DATA_TABLE);
@@ -261,8 +325,6 @@ async function cleanupTableRows(profileIds: string[], externalIds: string[]) {
   const profileIndexes = await getTableClient("ProfileByInternalId");
   for (const profileId of profileIds) await profileIndexes.deleteEntity(profileId, "profile");
 }
-
-
 
 async function cleanupSqlRows(models: Awaited<ReturnType<typeof initSqlRepository>>["models"], ids: RepositoryTestIds) {
   if (ids.questionIds.length > 0) {

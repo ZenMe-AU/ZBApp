@@ -1,0 +1,54 @@
+{
+  "name": "quest-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5186 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --port 5186 --strictPort"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@azure/msal-browser": "^4.28.1",
+    "@azure/msal-react": "^3.0.25",
+    "@microsoft/applicationinsights-clickanalytics-js": "^3.3.8",
+    "@microsoft/applicationinsights-react-js": "^18.3.6",
+    "@microsoft/applicationinsights-web": "^3.3.8",
+    "@mui/icons-material": "^7.1.1",
+    "@mui/material": "^7.1.1",
+    "bootstrap": "^5.3.6",
+    "fast-json-patch": "^3.1.1",
+    "lodash": "^4.17.21",
+    "match-sorter": "^8.0.0",
+    "react": "^18.2.0",
+    "react-d3-cloud": "^1.0.6",
+    "react-dom": "^18.2.0",
+    "react-helmet": "^6.1.0",
+    "react-router": "^7.6.2",
+    "react-router-dom": "^7.6.2",
+    "recharts": "^2.15.3",
+    "sort-by": "^1.2.0",
+    "tiny-invariant": "^1.3.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@types/lodash": "^4.17.17",
+    "@types/node": "^20",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.1",
+    "@types/react-helmet": "^6.1.11",
+    "@types/recharts": "^2.0.1",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.38.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.4.0",
+    "jiti": "^2.6.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.46.2",
+    "vite": "^7.3.6"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

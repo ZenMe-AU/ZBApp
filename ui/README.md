@@ -33,7 +33,7 @@ Remotes:
 
 - `question-ui` (quest3Tier) → http://localhost:5174
 - `quest5Tier-ui` → http://localhost:5175
-- `quest5TierEg-ui` → http://localhost:5176
+- `quest-ui` → http://localhost:5176 
 
 The host loads `remoteEntry.js` from those URLs (see `vite.config.ts`). Remote URLs can be overridden with `VITE_QUEST3TIER_REMOTE_URL`, `VITE_QUEST5TIER_REMOTE_URL`, and `VITE_QUEST5TIEREG_REMOTE_URL`.
 

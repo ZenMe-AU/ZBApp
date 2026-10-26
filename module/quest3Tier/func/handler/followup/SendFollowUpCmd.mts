@@ -12,6 +12,8 @@ const uuid = z.uuid().refine((value) => value[14] === "4" || value[14] === "5", 
 export const headers = z.object({
   "X-Correlation-Id": z.string().optional().meta({ description: "Look up the command result with GET /getEventByCorrelationId" }),
 });
+import cmdName from "../../enum/cmdName.mjs";
+import { toExternalProfileId, toInternalProfileId } from "../profileId.mjs";
 
 export const body = z
   .strictObject({
@@ -33,12 +35,14 @@ export const responses = apiResponses([200, 400, 401, 403, 500], z.literal(true)
 
 export async function SendFollowUpCmd(request, context) {
   const repository = getRepository();
-  const { correlationId, clientParams: body } = request;
+  const { correlationId, clientParams } = request;
   const profileId = request.userData.profileId;
+  const questionIdList = clientParams.questionIdList ?? [clientParams.newQuestionId];
+  const body = { ...clientParams, newQuestionId: questionIdList[0], questionIdList };
   const cmd = await repository.insertFollowUpCmd(profileId, body, correlationId);
   const filters = repository.insertFollowUpFilter(profileId, body);
   const receiverIds = getFollowUpReceiver(profileId, body);
-  const sharedQuestions = repository.shareQuestion(body["newQuestionId"], profileId, await receiverIds);
+  const sharedQuestions = Promise.all((await receiverIds).flatMap((receiverId) => questionIdList.map((questionId) => repository.shareQuestion(questionId, profileId, [receiverId]))));
 
   const settled = await Promise.allSettled([filters, sharedQuestions]);
   const errors = settled.filter((result) => result.status === "rejected").map((result) => result.reason);
@@ -51,14 +55,14 @@ export async function SendFollowUpCmd(request, context) {
   return { return: true };
 }
 
-async function getFollowUpReceiver(senderId, cmdData) {
+export async function getFollowUpReceiver(senderId, cmdData) {
   try {
     const repository = getRepository();
     const filterReceiverIdAry = await Promise.all(
       cmdData.question.map(async function (filter) {
         const ansList = await repository.getAnswerListByQuestionId(filter.questionId);
         return ansList.reduce((acc, ans) => {
-          if (ans.profileId !== senderId && filter.option.includes(ans.optionId)) {
+          if (ans.profileId !== senderId && (ans.optionAnswerList ?? [ans.optionId]).some((option) => filter.option.includes(option))) {
             acc.push(ans.profileId);
           }
           return acc;

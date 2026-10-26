@@ -12,3 +12,9 @@ export const apiResponses = (httpCodes: number[], returnSchema: z.ZodType) =>
     httpCode,
     schema: httpCode < 400 ? z.object({ success: z.literal(true), return: returnSchema }) : errorResponse,
   }));
+
+export const commandHeaders = z.object({
+  "X-Correlation-Id": z.string().optional().meta({ description: "Correlation ID for tracing the command and querying its events." }),
+});
+
+export const commandResponses = apiResponses([200, 400, 401, 403, 500], z.object({ messageId: z.uuid() }));

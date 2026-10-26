@@ -5,9 +5,10 @@
 
 import { getRepository } from "../../repository/getRepository.mjs";
 import type { QuestionRecord } from "../../repository/contracts.mjs";
+import { toExternalProfileId } from "../profileId.mjs";
 
 type RequestWithQuestionId = {
-  params: { id: string };
+  params: { questionId: string };
 };
 
 type HandlerResponse = {
@@ -16,19 +17,19 @@ type HandlerResponse = {
 
 /**
  * @swagger
- * /question/{id}:
+ * /questionQry/getQuestion/{questionId}:
  *   get:
  *     tags:
  *       - Question
  *     summary: Get questionnaire by ID
  *     description: Retrieve the details of a specific questionnaire by its ID.
  *     parameters:
- *       - name: id
+ *       - name: questionId
  *         in: path
  *         required: true
  *         schema:
- *           type: integer
- *           example: 123
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Successfully retrieved questionnaire.
@@ -45,7 +46,8 @@ type HandlerResponse = {
  *                       description: Details of the questionnaire.
  */
 export async function GetQuestionById(request: RequestWithQuestionId, context: unknown): Promise<HandlerResponse> {
-  const { id: questionId } = request.params;
-  const questionnaire: QuestionRecord | null = await getRepository().getById(questionId);
-  return { return: { detail: questionnaire } };
+  const { questionId } = request.params;
+  let questionnaire: QuestionRecord | null = await getRepository().getById(questionId);
+  if (!questionnaire) return { return: { detail: null } };
+  return { return: { detail: { ...questionnaire, profileId: await toExternalProfileId(questionnaire.profileId) } } };
 }

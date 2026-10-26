@@ -23,10 +23,11 @@ import { Question } from "./interfaces.js";
 import type { QuestRepository } from "../contracts.mjs";
 import cmdName from "../../enum/cmdName.mjs";
 import { v4 as uuidv4 } from "uuid";
-import {  Op } from "@sequelize/core";
+import { Op } from "@sequelize/core";
 
 let models: Record<string, any> | null = null;
 
+// TODO: add code to capture the authenticated user to enforce row level rbac at query time.
 export async function initRepository(config: DbConfig) {
   if (models) return { sequelize: models.Question.sequelize, models, repository };
   const sequelize = await initDbConnection(config);
@@ -73,13 +74,16 @@ export async function initRepository(config: DbConfig) {
  * @param {string|null} [option=null] - Selected option identifier.
  * @returns {Promise<any>} Created answer model instance.
  */
-async function addAnswerByQuestionId(questionId, profileId, duration, answer = null, option = null) {
+async function addAnswerByQuestionId(questionId, profileId, duration, answer = null, option = null, when = null) {
   try {
+    const options = option === null ? null : Array.isArray(option) ? option : [option];
     return await models.QuestionAnswer.create({
       questionId: questionId,
       profileId: profileId, // Use the actual profileId when available
       answerText: answer,
-      optionId: option,
+      optionId: options?.[0] ?? null,
+      optionAnswerList: options,
+      when,
       duration: duration,
     });
   } catch (err) {
@@ -134,6 +138,8 @@ async function getAnswerListByQuestionId(questionId) {
             "questionId",
             "answerText",
             "optionId",
+            "optionAnswerList",
+            "when",
             "duration"
           FROM "questionAnswer"
           WHERE "questionId" = :questionId
@@ -257,6 +263,7 @@ async function shareQuestion(newQuestionId, senderId, receiverIds) {
     const addData = receiverIds.map(function (receiverId) {
       return {
         newQuestionId: newQuestionId,
+        questionId: newQuestionId,
         senderProfileId: senderId,
         receiverProfileId: receiverId,
       };
@@ -302,16 +309,16 @@ async function updateQuestionShareCmdStatus(id) {
  * @param {string} profileId - Owner profile identifier.
  * @param {string|null} [title=null] - Question title.
  * @param {string|null} [question=null] - Question body text.
- * @param {string|null} [option=null] - Question option metadata.
+ * @param {string[]|null} [optionList=null] - Question option metadata.
  * @returns {Promise<any>} Created question model instance.
  */
-async function create(profileId, title = null, question = null, option = null) {
+async function create(profileId, title = null, question = null, optionList = null) {
   try {
     return await models.Question.create({
       profileId: profileId,
       title: title,
       questionText: question,
-      option: option,
+      optionList,
     });
   } catch (err) {
     console.log(err);
@@ -325,16 +332,16 @@ async function create(profileId, title = null, question = null, option = null) {
  * @param {string} questionId - Identifier of the question to update.
  * @param {string|null} [title=null] - New question title.
  * @param {string|null} [questionText=null] - New question text.
- * @param {string|null} [option=null] - Updated option metadata.
+ * @param {string[]|null} [optionList=null] - Updated question option metadata.
  * @returns {Promise<any>} Result of the update operation.
  */
-async function updateById(questionId, title = null, questionText = null, option = null) {
+async function updateById(questionId, title = null, questionText = null, optionList = null) {
   try {
     await models.Question.update(
       {
         title: title,
         questionText: questionText,
-        option: option,
+        optionList,
       },
       {
         where: {
@@ -376,13 +383,18 @@ async function getCombinationListByUser(profileId) {
       ],
     });
     // shortcut: one answer lookup per question, batch only if question-list latency becomes measurable.
-    return Promise.all(questions.map(async (question) => ({
-      ...question.toJSON(),
-      latestAnswer: (await models.QuestionAnswer.findOne({
-        where: { questionId: question.id, profileId },
-        order: [["createdAt", "DESC"]],
-      }))?.toJSON() ?? null,
-    })));
+    return Promise.all(
+      questions.map(async (question) => ({
+        ...question.toJSON(),
+        latestAnswer:
+          (
+            await models.QuestionAnswer.findOne({
+              where: { questionId: question.id, profileId },
+              order: [["createdAt", "DESC"]],
+            })
+          )?.toJSON() ?? null,
+      }))
+    );
   } catch (err) {
     console.log(err);
     throw new Error(`Failed to retrieve questions for profileId: ${profileId}; ${err.message}`, { cause: err });
@@ -478,19 +490,18 @@ async function getSharedQuestionListByProfileId(profileId) {
 }
 
 export async function getById(questionId) {
-    try {
-        const question = await models.Question.findByPk(questionId);
-        if (!question) {
-            return null;
-        }
-        const { id, title, questionText, option, profileId } = question.dataValues;
-        return { id, title, questionText, option, profileId };
+  try {
+    const question = await models.Question.findByPk(questionId);
+    if (!question) {
+      return null;
     }
-    catch (err) {
-        console.log(err);
-        const message = err instanceof Error ? err.message : String(err);
-        throw new Error(`Failed to retrieve question for questionId: ${questionId}; ${message}`, { cause: err });
-    }
+    const { id, title, questionText, optionList, profileId } = question.dataValues;
+    return { id, title, questionText, optionList, profileId };
+  } catch (err) {
+    console.log(err);
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Failed to retrieve question for questionId: ${questionId}; ${message}`, { cause: err });
+  }
 }
 
 const repository = {
@@ -501,7 +512,7 @@ const repository = {
   updatePreferredName,
   addFriend,
   listFriends,
-  getById,  
+  getById,
   patchById,
   getCombinationListByUser,
   updateById,

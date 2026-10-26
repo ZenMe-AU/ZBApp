@@ -17,7 +17,7 @@ export interface Question {
   id: string;
   title: string;
   questionText: string;
-  option: string[] | null;
+  optionList: string[] | null;
   profileId: string;
 }
 

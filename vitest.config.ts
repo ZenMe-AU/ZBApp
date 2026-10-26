@@ -1,47 +1,17 @@
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
+
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
     globals: true,
+    globalSetup: ".codingstandards/vitestGlobalSetup.ts",
     environment: "node",
     fileParallelism: false,
-    projects: [
-      {
-        test: {
-          name: "quest3Tier/func",
-          include: ["module/quest3Tier/func/vitest/**/*.test.mts"],
-          setupFiles: ["module/quest3Tier/func/vitest/vitest.setup.mts"],
-          globals: true,
-          environment: "node",
-        },
-      },
-      {
-        test: {
-          name: "quest3TierCqrs/func",
-          include: ["module/quest3TierCqrs/func/vitest/**/*.test.mjs"],
-          setupFiles: ["module/quest3TierCqrs/func/vitest/vitest.setup.mjs"],
-          globals: true,
-          environment: "node",
-        },
-      },
-      {
-        test: {
-          name: "quest5Tier/func",
-          include: ["module/quest5Tier/func/vitest/**/*.test.mjs"],
-          setupFiles: ["module/quest5Tier/func/vitest/vitest.setup.mjs"],
-          globals: true,
-          environment: "node",
-        },
-      },
-      {
-        test: {
-          name: "quest5TierEg/func",
-          include: ["module/quest5TierEg/func/vitest/**/*.test.mjs"],
-          setupFiles: ["module/quest5TierEg/func/vitest/vitest.setup.mjs"],
-          globals: true,
-          environment: "node",
-        },
-      },
-    ],
+    include: ["**/*.test.{js,cjs,mjs,ts,cts,mts,jsx,tsx}"],
+    exclude: ["**/node_modules/**", "**/dist/**"],
   },
 });

@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start Viewer",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:4178",
+      "webRoot": "${workspaceFolder}/viewer",
+      "preLaunchTask": "Start"
+    },
+    {
+      "name": "Start OpenVino",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:4178",
+      "webRoot": "${workspaceFolder}/viewer",
+      "preLaunchTask": "Start OpenVino"
+    },
+    {
+      "name": "Start Ollama",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:4178",
+      "webRoot": "${workspaceFolder}/viewer",
+      "preLaunchTask": "Start Ollama"
+    }
+  ]
+}

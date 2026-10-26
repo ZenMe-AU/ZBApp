@@ -12,6 +12,7 @@ export default (sequelize, DataTypes) => {
       title: { type: DataTypes.STRING, allowNull: true },
       questionText: { type: DataTypes.TEXT, allowNull: false },
       option: { type: DataTypes.JSON, allowNull: true },
+      optionList: { type: DataTypes.JSON, allowNull: true },
       eventId: { type: DataTypes.UUID, allowNull: true },
     },
     { tableName: "question", updatedAt: false }

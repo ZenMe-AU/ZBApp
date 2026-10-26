@@ -9,8 +9,8 @@
       "path": "./ui",
     },
     {
-      "name": "Q5Eg UI",
-      "path": "./module/quest5TierEg/ui",
+      "name": "Quest UI",
+      "path": "./module/questUi",
     },
     {
       "name": "Q5Eg Func",
@@ -56,6 +56,10 @@
       "name": "Coordinate Func",
       "path": "./module/coordinate/func",
     },
+    {
+      "name": "Dashboard UI",
+      "path": "./module/dashboard",
+    },
   ],
   "launch": {
     "version": "0.2.0",
@@ -74,11 +78,11 @@
           {
             "name": "Start",
             "folder": "Q3 Func",
-          },       
+          },
           {
             "name": "Start",
-            "folder": "Profile Func"
-          }
+            "folder": "Profile Func",
+          },
         ],
       },
     ],
@@ -97,16 +101,16 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "[javascript]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     },
     "[javascriptreact]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     },
     "[typescript]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     },
     "[typescriptreact]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     },
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit",
@@ -115,12 +119,7 @@
     "eslint.enable": true,
     "eslint.lintTask.enable": true,
     "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-    "eslint.workingDirectories": [
-      "./",
-      "./ui",
-      "./module/*/ui",
-      "./module/*/func"
-    ],
+    "eslint.workingDirectories": ["./", "./ui", "./module/*/ui", "./module/*/func"],
 
     // For Linux, set the NVM_DIR in VsCode to same NVM install dir as user shell
     "terminal.integrated.automationProfile.linux": {

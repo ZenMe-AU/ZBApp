@@ -9,6 +9,7 @@ export default (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.UUID, allowNull: false, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
       newQuestionId: { type: DataTypes.UUID, allowNull: false },
+      questionId: { type: DataTypes.UUID, allowNull: true },
       senderProfileId: { type: DataTypes.UUID, allowNull: false },
       receiverProfileId: { type: DataTypes.UUID, allowNull: false },
       status: { type: DataTypes.SMALLINT, allowNull: false },

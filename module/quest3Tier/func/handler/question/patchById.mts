@@ -6,7 +6,7 @@
 import { getRepository } from "../../repository/getRepository.mjs";
 
 type PatchQuestionByIdRequest = {
-  params: { id: string };
+  params: { questionId: string };
   userData: { profileId: string };
   clientParams: unknown;
 };
@@ -17,14 +17,14 @@ type PatchQuestionByIdResponse = {
 
 /**
  * @swagger
- * /question/{id}:
- *   patch:
+ * /questionCmd/updateQuestion/{questionId}:
+ *   post:
  *     tags:
  *       - Question
  *     summary: Update a question using JSON Patch
  *     description: Apply JSON Patch operations to update a question's data. Changes are recorded in the question_action table.
  *     parameters:
- *       - name: id
+ *       - name: questionId
  *         in: path
  *         required: true
  *         schema:
@@ -73,7 +73,12 @@ type PatchQuestionByIdResponse = {
 export async function PatchQuestionById(request: PatchQuestionByIdRequest, context: unknown): Promise<PatchQuestionByIdResponse> {
   const repository = getRepository();
   const profileId = request.userData.profileId;
-  const { id: questionId } = request.params;
+  const { questionId } = request.params;
+  if (!Array.isArray(request.clientParams)) {
+    const { title = null, questionText, optionList = null } = request.clientParams as { title?: string | null; questionText: string; optionList?: string[] | null };
+    const question = await repository.updateById(questionId, title, questionText, optionList);
+    return { return: { id: question.id } };
+  }
   const questionAction = await repository.patchById(questionId, request.clientParams, profileId);
   return { return: { id: questionAction.id } };
 }

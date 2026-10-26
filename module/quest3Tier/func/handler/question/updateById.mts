@@ -9,7 +9,7 @@ type UpdateQuestionByIdRequest = {
   params: { id: string };
   clientParams: {
     title?: string | null;
-    option?: string[] | null;
+    optionList?: string[] | null;
     questionText: string;
   };
 };
@@ -50,7 +50,7 @@ type UpdateQuestionByIdResponse = {
  *                 type: string
  *                 description: The updated question text.
  *                 example: "What is your updated favorite food?"
- *               option:
+ *               optionList:
  *                 type: array
  *                 items:
  *                   type: string
@@ -76,7 +76,7 @@ type UpdateQuestionByIdResponse = {
 export async function UpdateQuestionById(request: UpdateQuestionByIdRequest, context: unknown): Promise<UpdateQuestionByIdResponse> {
   const repository = getRepository();
   const { id: questionId } = request.params;
-  const { title = null, option = null, questionText } = request.clientParams;
-  const question = await repository.updateById(questionId, title, questionText, option);
+  const { title = null, optionList = null, questionText } = request.clientParams;
+  const question = await repository.updateById(questionId, title, questionText, optionList);
   return { return: { id: question.id } };
 }

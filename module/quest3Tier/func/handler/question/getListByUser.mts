@@ -5,6 +5,7 @@
 
 import { getRepository } from "../../repository/getRepository.mjs";
 import type { QuestionRecord } from "../../repository/contracts.mjs";
+import { toExternalProfileId } from "../profileId.mjs";
 
 type GetQuestionListByUserRequest = {
   userData: { profileId: string };
@@ -52,7 +53,7 @@ type GetQuestionListByUserResponse = {
  *                           question:
  *                             type: string
  *                             example: "What is your favorite food?"
- *                           option:
+ *                           optionList:
  *                             type: array
  *                             items:
  *                               type: string
@@ -67,5 +68,19 @@ export async function GetQuestionListByUser(request: GetQuestionListByUserReques
   const repository = getRepository();
   const profileId = request.userData.profileId;
   const question = await repository.getCombinationListByUser(profileId);
-  return { return: { list: question.map((item) => ({ ...item, isOwner: item.profileId === profileId })) } };
+  return {
+    return: {
+      list: await Promise.all(question.map(async (item) => ({
+        ...item,
+        profileId: await toExternalProfileId(item.profileId),
+        latestAnswer:
+          item.latestAnswer && {
+            ...item.latestAnswer,
+            profileId: await toExternalProfileId(item.latestAnswer.profileId),
+            recipientProfileId: item.latestAnswer.recipientProfileId ? await toExternalProfileId(item.latestAnswer.recipientProfileId) : null,
+          },
+        isOwner: item.profileId === profileId,
+      }))),
+    },
+  };
 }

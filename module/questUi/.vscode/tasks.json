@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start",
+      "type": "shell",
+      "command": "pnpm run dev",
+      "isBackground": true,
+      "options": {"cwd": "${workspaceFolder}"},
+       "problemMatcher": {
+        "owner": "vite",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\s*.*(vite|VITE).*",
+          "endsPattern": "localhost:|➜|ready in"
+        },
+        "pattern": {"regexp": "^$"}
+      },
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "pnpm install --frozen-lockfile"
+    }
+  ]
+}

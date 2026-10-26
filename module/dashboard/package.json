@@ -1,0 +1,30 @@
+{
+  "name": "dashboard-ui",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Q3 Agent Lab Viewer and Dashboard",
+  "main": "dist/viewer/server.mjs",
+  "scripts": {
+    "start": "node dist/viewer/server.mjs",
+    "build": "tsc --project tsconfig.json",
+    "watch": "tsc --project tsconfig.json --watch",
+    "prestart": "pnpm run build",
+    "check": "node dist/viewer/server.mjs --check",
+    "test:vitest": "vitest run agentChat.test.mts",
+    "test:openvino": "vitest run openvinoUnit.test.mts llmProvider/openvino.provider.test.mts",
+    "test:llm": "vitest run llmProvider/llmProvider.test.mts"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.2",
+    "@azure/identity": "^4.4.1",
+    "jsonwebtoken": "^9.0.2",
+    "quest3Tier": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/node": "^20.19.23",
+    "openvino-genai-node": "^2026.4.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
