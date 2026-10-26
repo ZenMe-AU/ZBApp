@@ -38,6 +38,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import WordCloud from "react-d3-cloud";
 import { logEvent, setOperationId } from "../monitor/telemetry.ts";
 import _ from "lodash";
+import { isDuplicateOption } from "./optionValidation";
 // import { useFetcher, useLoaderData, useParams } from "react-router-dom";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 // import { Checkbox, FormControlLabel, TextField, Button, FormControl, FormLabel, FormGroup, Select, MenuItem, Box } from "@mui/material";
@@ -168,7 +169,7 @@ export default function AnswerQuestion({ loaderData }: { loaderData: unknown }) 
   const [whenList, setWhenList] = useState<string[]>(["Weekends", "Next weekend", "Daily", "Weekly"]);
 
   // const predefinedOptions = question?.optionList || [];
-  const [customOptions, setCustomOptions] = useState<{ text: string; editing: boolean; checked: boolean; hover: boolean }[]>(() => {
+  const [customOptions, setCustomOptions] = useState<{ text: string; editing: boolean; checked: boolean; hover: boolean; error?: string }[]>(() => {
     const originalOptions = (question?.optionList || []).map((text: string) => ({
       text,
       editing: false,
@@ -334,7 +335,8 @@ export default function AnswerQuestion({ loaderData }: { loaderData: unknown }) 
         if (i !== idx) return o;
 
         const checked = text.trim() === "" && o.checked ? false : o.checked;
-        return { ...o, text, checked };
+        const nextOptions = prev.map((option, optionIndex) => (optionIndex === idx ? { ...option, text } : option));
+        return { ...o, text, checked, error: o.error && isDuplicateOption(nextOptions, idx) ? o.error : undefined };
       })
     );
   };
@@ -344,12 +346,23 @@ export default function AnswerQuestion({ loaderData }: { loaderData: unknown }) 
       const updated = [...prev];
       const current = updated[idx];
 
+      if (isDuplicateOption(updated, idx)) {
+        updated[idx] = {
+          ...current,
+          checked: false,
+          editing: true,
+          error: "This option has already been added. Enter a different option.",
+        };
+        return updated;
+      }
+
       const hasText = current.text.trim() !== "";
       updated[idx] = {
         ...current,
         editing: false,
         checked: hasText,
         hover: false,
+        error: undefined,
       };
 
       const last = updated[updated.length - 1];
@@ -476,6 +489,8 @@ export default function AnswerQuestion({ loaderData }: { loaderData: unknown }) 
                           }
                         }}
                         autoFocus={option.editing}
+                        error={Boolean(option.error)}
+                        helperText={option.error}
                         endAdornment={
                           <InputAdornment position="end">
                             <IconButton
@@ -628,7 +643,7 @@ export default function AnswerQuestion({ loaderData }: { loaderData: unknown }) 
   );
 }
 
-const AutoWidthTextField = ({ value, onChange, onBlur, onKeyDown, autoFocus, endAdornment, disableUnderline = false }) => {
+const AutoWidthTextField = ({ value, onChange, onBlur, onKeyDown, autoFocus, endAdornment, error, helperText, disableUnderline = false }) => {
   const spanRef = useRef<HTMLSpanElement>(null);
   const [width, setWidth] = useState("10ch");
 
@@ -658,6 +673,8 @@ const AutoWidthTextField = ({ value, onChange, onBlur, onKeyDown, autoFocus, end
         onChange={onChange}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
+        error={error}
+        helperText={helperText}
         variant="standard"
         InputProps={{
           disableUnderline,
