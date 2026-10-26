@@ -17,7 +17,7 @@ function EditQuestion() {
     id: "",
     title: "",
     questionText: "",
-    option: null,
+    optionList: null,
     profileId: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -46,18 +46,18 @@ function EditQuestion() {
   };
 
   const handleOptionChange = (index: number, value: string) => {
-    const updatedOptions = [...(question.option || [])];
+    const updatedOptions = [...(question.optionList || [])];
     updatedOptions[index] = value;
-    setQuestion({ ...question, option: updatedOptions });
+    setQuestion({ ...question, optionList: updatedOptions });
   };
 
   const handleAddOption = () => {
-    setQuestion({ ...question, option: [...(question.option || []), ""] });
+    setQuestion({ ...question, optionList: [...(question.optionList || []), ""] });
   };
 
   const handleRemoveOption = (index: number) => {
-    const updatedOptions = question.option ? question.option.filter((_, i) => i !== index) : null;
-    setQuestion({ ...question, option: updatedOptions });
+    const updatedOptions = question.optionList ? question.optionList.filter((_, i) => i !== index) : null;
+    setQuestion({ ...question, optionList: updatedOptions });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,11 +99,11 @@ function EditQuestion() {
         </div>
         <div>
           <label>Options</label>
-          {Array.isArray(question.option) &&
-            question.option.map((opt, index) => (
+          {Array.isArray(question.optionList) &&
+            question.optionList.map((opt, index) => (
               <div key={index}>
                 <input type="text" value={opt} onChange={(e) => handleOptionChange(index, e.target.value)} />
-                <button type="button" onClick={() => handleRemoveOption(index)} disabled={!question.option || question.option.length <= 1}>
+                <button type="button" onClick={() => handleRemoveOption(index)} disabled={!question.optionList || question.optionList.length <= 1}>
                   Remove
                 </button>
               </div>

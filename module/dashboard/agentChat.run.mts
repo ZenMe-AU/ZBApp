@@ -119,12 +119,12 @@ const view = (questions, names, digested = new Set()) =>
     owner: q.isOwner ? "you" : (names[q.profileId] ?? "unknown"),
     title: q.title,
     text: q.questionText,
-    options: q.option ?? [],
+    options: q.optionList ?? [],
     needsAnswer: needsAnswer(q),
     answers: q.answers.map((a) => ({
       id: a.id,
       ...(a.author && { by: a.author }),
-      option: a.optionId ?? a.answerText,
+      option: a.optionAnswerList?.join(", ") ?? a.answerText,
       ...(a.isEdited && { edited: true }),
     })),
   }));
@@ -143,7 +143,7 @@ async function observe(agent) {
       news.push(q.isOwner ? `Your question "${q.title}" is live.` : `${names[q.profileId] ?? "Someone"} shared a question with you: "${q.title}"`);
     agent.seen.add(q.id);
     for (const ans of q.answers) {
-      const value = ans.optionId ?? ans.answerText;
+      const value = ans.optionAnswerList?.join(", ") ?? ans.answerText;
       const key = `${ans.id}:${value}`;
       if (!agent.seen.has(key) && ans.profileId === null) news.push(`New answer on "${q.title}": ${clip(value, 120)}`);
       agent.seen.add(key);

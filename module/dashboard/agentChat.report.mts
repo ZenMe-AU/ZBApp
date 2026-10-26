@@ -16,12 +16,12 @@ export async function judge(agents, questions, names, log, sandbox) {
     questions: questions.map((question) => ({
       title: question.title,
       questionText: question.questionText,
-      options: question.option ?? [],
+      options: question.optionList ?? [],
       owner: names[question.profileId] ?? question.profileId,
       sharedWithThisRun: [...(sharedWith[question.id] ?? [])],
       answers: question.answers.map((answer) => ({
         author: names[answer.profileId] ?? answer.profileId,
-        option: answer.optionId ?? answer.answerText,
+        option: answer.optionAnswerList?.join(", ") ?? answer.answerText,
         edited: answer.isEdited,
       })),
     })),
@@ -105,9 +105,9 @@ export function report(participants, agents, log, questions, names, judgement, p
     ...questions.flatMap((question) => [
       `### ${question.title ?? "(no title)"} (id ${question.id}; owner ${names[question.profileId] ?? question.profileId})`,
       question.questionText,
-      `Options: ${(question.option ?? []).join(" · ")}`,
+      `Options: ${(question.optionList ?? []).join(" · ")}`,
       ...question.answers.map(
-        (answer) => `- ${answer.isEdited ? "(edited) " : ""}${names[answer.profileId] ?? answer.profileId}: ${answer.optionId ?? answer.answerText}`
+        (answer) => `- ${answer.isEdited ? "(edited) " : ""}${names[answer.profileId] ?? answer.profileId}: ${answer.optionAnswerList?.join(", ") ?? answer.answerText}`
       ),
     ]),
     "## Call log",

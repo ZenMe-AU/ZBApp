@@ -141,7 +141,6 @@ describe("Q3 route contract", () => {
       questionId,
       profileId: internalId,
       answerText: null,
-      optionId: "yes",
       optionAnswerList: ["yes"],
       when: null,
       duration: 10,

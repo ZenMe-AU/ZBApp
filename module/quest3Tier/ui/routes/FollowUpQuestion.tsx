@@ -195,7 +195,7 @@ function FollowUpQuestion() {
       const [data, profileId] = await Promise.all([getAnswerListByQuestionId(questionId), getMyProfileId()]);
       const count = data.reduce((acc: Record<string, number>, item: Answer) => {
         if (item.profileId !== profileId) {
-          for (const option of item.optionAnswerList ?? (item.optionId ? [item.optionId] : [])) {
+          for (const option of item.optionAnswerList ?? []) {
             acc[option] = (acc[option] || 0) + 1;
           }
         }
@@ -218,11 +218,11 @@ function FollowUpQuestion() {
       try {
         setLoading(true);
         const fetchedQuestion = await getQuestionById(id);
-        if (fetchedQuestion.option === null) {
+        if (fetchedQuestion.optionList === null) {
           console.log("not an option");
         }
         setQuestion(fetchedQuestion);
-        setOptionList(fetchedQuestion.option);
+        setOptionList(fetchedQuestion.optionList);
         // setCards(["card-initial"]);
         // setSelectedQuestions({ "card-initial": fetchedQuestion.id });
         // setSelectedOptions({ "card-initial": [] });
@@ -239,7 +239,7 @@ function FollowUpQuestion() {
     const fetchQuestions = async () => {
       try {
         const data = await getQuestionsByUser();
-        const list = data.filter((q: Question) => q.id != id && q.option !== null && q.option.length > 0);
+        const list = data.filter((q: Question) => q.id != id && q.optionList !== null && q.optionList.length > 0);
         console.log("List:", list);
         setQuestionList(list);
       } catch (error) {
@@ -292,7 +292,7 @@ function FollowUpQuestion() {
             />
 
             <FormGroup>
-              {Array.from(new Set([...(question?.option ?? []), ...Object.keys(answerCounts[question?.id ?? ""] ?? {})])).map((option) => (
+              {Array.from(new Set([...(question?.optionList ?? []), ...Object.keys(answerCounts[question?.id ?? ""] ?? {})])).map((option) => (
                 <FormControlLabel
                   key={option}
                   control={<Checkbox checked={selectedInitOptions?.includes(option) || false} onChange={() => handleInitOptionChange(option)} />}
@@ -357,7 +357,7 @@ function FollowUpQuestion() {
                 </Select>
 
                 <FormGroup>
-                  {Array.from(new Set([...(questionList.find((q) => q.id === selectedQuestions[cardId])?.option ?? []), ...Object.keys(answerCounts[selectedQuestions[cardId]] ?? {})])).map((option) => (
+                  {Array.from(new Set([...(questionList.find((q) => q.id === selectedQuestions[cardId])?.optionList ?? []), ...Object.keys(answerCounts[selectedQuestions[cardId]] ?? {})])).map((option) => (
                     <FormControlLabel
                       key={option}
                       control={<Checkbox checked={selectedOptions[cardId]?.includes(option) || false} onChange={() => handleOptionChange(cardId, option)} />}

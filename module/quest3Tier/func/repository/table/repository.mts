@@ -206,7 +206,7 @@ const repository = {
 
   async addAnswerByQuestionId(questionId: string, profileId: string, duration: number, answer = null, option = null, when?: string | null) {
     const options = option === null ? null : Array.isArray(option) ? option : [option];
-    const created = await addAnswer({ questionId, profileId, duration, answerText: answer, optionId: options?.[0] ?? null, optionAnswerList: options, when });
+    const created = await addAnswer({ questionId, profileId, duration, answerText: answer, optionAnswerList: options, when });
     const record = await getAnswerById(questionId, created.id);
     if (!record) throw new Error(`Answer not found after creation: ${created.id}`);
     return record;

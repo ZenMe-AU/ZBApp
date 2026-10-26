@@ -87,8 +87,8 @@ describe("fact-only memory", () => {
           id: "q1",
           questionText: "Preferred work style?",
           answers: [
-            { id: "a1", author: "Mike", optionId: "Hybrid" },
-            { id: "a2", author: null, optionId: "Remote" },
+            { id: "a1", author: "Mike", optionAnswerList: ["Hybrid"] },
+            { id: "a2", author: null, optionAnswerList: ["Remote"] },
           ],
         },
       ]
@@ -99,7 +99,7 @@ describe("fact-only memory", () => {
   });
 
   test("rejects facts without source ids", () => {
-    const memory = factMemory("Bella", ["Mike"], [{ id: "q1", questionText: "Preferred work style?", answers: [{ author: "Mike", optionId: "Hybrid" }] }]);
+    const memory = factMemory("Bella", ["Mike"], [{ id: "q1", questionText: "Preferred work style?", answers: [{ author: "Mike", optionAnswerList: ["Hybrid"] }] }]);
     expect(memory.Mike).toBe("### Facts\n- None verified.");
   });
 
@@ -112,13 +112,13 @@ describe("fact-only memory", () => {
           id: "q1",
           ownerName: "Bella",
           questionText: "Where do you live?",
-          answers: [{ id: "a1", memoryAuthor: "Ian", optionId: "Brisbane" }],
+          answers: [{ id: "a1", memoryAuthor: "Ian", optionAnswerList: ["Brisbane"] }],
         },
         {
           id: "q2",
           ownerName: "Bella",
           questionText: "What do you do there?",
-          answers: [{ id: "a2", memoryAuthor: "Ian", optionId: "Engineering" }],
+          answers: [{ id: "a2", memoryAuthor: "Ian", optionAnswerList: ["Engineering"] }],
         },
       ]
     );
@@ -132,7 +132,7 @@ describe("online participant boundary", () => {
   test("prioritises only visible questions without the current user's latest answer", () => {
     expect(needsAnswer({ isOwner: false, latestAnswer: null })).toBe(true);
     expect(needsAnswer({ isOwner: false, latestAnswer: undefined })).toBe(true);
-    expect(needsAnswer({ isOwner: false, latestAnswer: { optionId: "Taipei" } })).toBe(false);
+    expect(needsAnswer({ isOwner: false, latestAnswer: { optionAnswerList: ["Taipei"] } })).toBe(false);
     expect(needsAnswer({ isOwner: true, latestAnswer: null })).toBe(false);
   });
 
@@ -171,7 +171,7 @@ describe("learning coverage", () => {
         isOwner: true,
         title: "What exact work do you do?",
         questionText: "What is your profession?",
-        answers: [{ memoryAuthor: "Eric", optionId: "UX design" }],
+        answers: [{ memoryAuthor: "Eric", optionAnswerList: ["UX design"] }],
       },
     ];
     expect(learningCoverage(agent, questions)["Person E123"]).toEqual({
@@ -191,7 +191,7 @@ describe("human participant", () => {
       title: "Where?",
       questionText: "Where do you live?",
       option: ["Brisbane"],
-      answers: [{ profileId: "josh-id", optionId: "Brisbane", isEdited: false }],
+      answers: [{ profileId: "josh-id", optionAnswerList: ["Brisbane"], isEdited: false }],
     };
     const output = report(["Mike", "Josh"], [agent], [], [question], { "mike-id": "Mike", "josh-id": "Josh" }, { pairs: [], leaks: [] });
     expect(output).toContain("- Josh: Brisbane");
@@ -209,7 +209,7 @@ describe("human participant", () => {
         {
           id: "q-human",
           questionText: "Where do you live?",
-          answers: [{ id: "a-human", author: "Person 7A2C", memoryAuthor: "Josh", optionId: "Brisbane" }],
+          answers: [{ id: "a-human", author: "Person 7A2C", memoryAuthor: "Josh", optionAnswerList: ["Brisbane"] }],
         },
       ]
     );

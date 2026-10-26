@@ -81,7 +81,6 @@ async function addAnswerByQuestionId(questionId, profileId, duration, answer = n
       questionId: questionId,
       profileId: profileId, // Use the actual profileId when available
       answerText: answer,
-      optionId: options?.[0] ?? null,
       optionAnswerList: options,
       when,
       duration: duration,
@@ -121,7 +120,6 @@ async function getAnswerListByQuestionId(questionId) {
     //     [Sequelize.fn("MAX", Sequelize.col("createdAt")), "latestCreatedAt"],
     //     [Sequelize.fn("COUNT", Sequelize.col("id")), "answerCount"],
     //     [Sequelize.literal(`FIRST_VALUE("answerText") OVER (PARTITION BY "profileId" ORDER BY "createdAt" DESC)`), "answerText"],
-    //     [Sequelize.literal(`FIRST_VALUE("optionId") OVER (PARTITION BY "profileId" ORDER BY "createdAt" DESC)`), "optionId"],
     //    ],
     //   where: { questionId },
     //   group: ["profileId"],
@@ -137,7 +135,6 @@ async function getAnswerListByQuestionId(questionId) {
             COUNT("id") OVER (PARTITION BY "profileId") AS "answerCount",
             "questionId",
             "answerText",
-            "optionId",
             "optionAnswerList",
             "when",
             "duration"

@@ -25,6 +25,6 @@ export interface Question {
 export interface Answer {
   id: string;
   profileId: string;
-  optionId: string | null;
+  optionAnswerList: string[] | null;
   answerText: string | null;
 }

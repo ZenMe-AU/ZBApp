@@ -52,7 +52,7 @@ async function getFollowUpReceiver(senderId, cmdData) {
       cmdData.question.map(async function (filter) {
         const ansList = await repository.getAnswerListByQuestionId(filter.questionId);
         return ansList.reduce((acc, ans) => {
-          if (ans.profileId !== senderId && (ans.optionAnswerList ?? [ans.optionId]).some((option) => filter.option.includes(option))) {
+          if (ans.profileId !== senderId && (ans.optionAnswerList ?? []).some((option) => filter.option.includes(option))) {
             acc.push(ans.profileId);
           }
           return acc;

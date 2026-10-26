@@ -11,7 +11,7 @@ export function factMemory(owner, subjects, questions) {
   for (const question of questions) {
     for (const answer of question.answers ?? []) {
       const author = answer.memoryAuthor ?? answer.author ?? (answer.profileId ? owner : null);
-      const value = answer.optionId ?? answer.answerText;
+      const value = answer.optionAnswerList?.join(", ") ?? answer.answerText;
       if (!facts[author] || !question.id || !answer.id || !value) continue;
       facts[author].add(
         `- ${oneLine(question.questionText)} — ${oneLine(value)} (question: ${question.id}; answer: ${answer.id})`

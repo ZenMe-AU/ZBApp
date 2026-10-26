@@ -14,7 +14,7 @@ export interface Question {
   id: string;
   title: string;
   questionText: string;
-  option: string[] | null;
+  optionList: string[] | null;
   profileId: string;
   isOwner?: boolean;
   latestAnswer?: Answer | null;
@@ -23,8 +23,7 @@ export interface Question {
 export interface Answer {
   id: string;
   profileId: string;
-  optionId: string | null;
-  optionAnswerList?: string[] | null;
+  optionAnswerList: string[] | null;
   answerText: string | null;
   when?: string | null;
 }

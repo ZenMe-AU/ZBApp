@@ -39,8 +39,7 @@ export interface AnswerRecord {
   questionId: string;
   profileId: string;
   answerText: string | null;
-  optionId: string | null;
-  optionAnswerList?: string[] | null;
+  optionAnswerList: string[] | null;
   when?: string | null;
   duration: number;
   createdAt: Date | string;
