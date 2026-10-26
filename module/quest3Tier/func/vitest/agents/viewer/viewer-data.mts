@@ -9,6 +9,7 @@ export const KINDS = {
   edit: ["Question refined", "Edit"],
   error: ["Action failed", "Error"],
   finding: ["Finding raised", "Finding"],
+  followup: ["Follow-up sent", "Follow-up"],
   memory: ["Memory updated", "Memory"],
   note: ["Private observer note", "Thought"],
   question: ["Question created", "Question"],
@@ -23,6 +24,7 @@ export const VIEWS = {
   overview: { title: "Run overview", kinds: [] },
   relationships: { title: "Relationship accuracy", kinds: [] },
   questions: { title: "Questions", kinds: [] },
+  followups: { title: "Follow-ups", kinds: ["followup"] },
   findings: { title: "Findings", kinds: ["finding", "error"] },
   activity: { title: "Activity", kinds: null, reverse: true },
 };
@@ -51,6 +53,7 @@ export function parseLine(line, people = AGENTS) {
   }
   const message = body.slice(agent.length).trimStart();
   if (message.startsWith("FINDING:")) return { time, agent, kind: "finding", text: message.slice(8).trim() };
+  if (message.startsWith("followed up ")) return { time, agent, kind: "followup", text: message };
   if (message.startsWith(":")) {
     const raw = message.slice(1).trim();
     const text = raw.startsWith('"') && raw.endsWith('"') ? raw.slice(1, -1) : raw;

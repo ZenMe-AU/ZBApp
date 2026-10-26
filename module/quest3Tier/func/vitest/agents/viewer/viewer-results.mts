@@ -74,6 +74,10 @@ export function renderRelationships({ activeAgent, elements, report, renderInspe
   if (!report.pairs.length) return emptyResults(elements, renderInspector);
 
   const pairs = activeAgent ? report.pairs.filter((pair) => pair.observer === activeAgent || pair.subject === activeAgent) : report.pairs;
+  const ranked = [...pairs].sort((left, right) => right.accuracy - left.accuracy);
+  const summary = activeAgent && ranked.length
+    ? element("li", "relationship-summary", `Closest understanding: ${ranked[0].observer} ↔ ${ranked[0].subject} (${ranked[0].accuracy}/10)\nFarthest understanding: ${ranked.at(-1).observer} ↔ ${ranked.at(-1).subject} (${ranked.at(-1).accuracy}/10)`)
+    : null;
   const choices = pairs.map((pair, index) => {
     const button = element("button", "relationship-choice");
     button.append(
@@ -92,7 +96,7 @@ export function renderRelationships({ activeAgent, elements, report, renderInspe
   const help = element("li", "relationship-help", "The first person learned facts about the second person. Select one pair to see the judge's assessment.");
   const grid = element("li", "relationship-grid");
   grid.append(...choices);
-  elements.feed.replaceChildren(help, grid);
+  elements.feed.replaceChildren(...(summary ? [summary] : []), help, grid);
   inspectPair(pairs[0], renderInspector);
 }
 

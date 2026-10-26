@@ -15,6 +15,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isAuthReady: boolean;
   login: () => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -71,7 +72,12 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     await instance.loginRedirect({ scopes: loginScopes, prompt: "select_account" });
   };
 
-  return <AuthContext.Provider value={{ account, isAuthenticated: Boolean(account), isAuthReady, login }}>{children}</AuthContext.Provider>;
+  const logout = async () => {
+    clearAuthStorage();
+    await instance.logoutRedirect({ account: instance.getActiveAccount() ?? undefined });
+  };
+
+  return <AuthContext.Provider value={{ account, isAuthenticated: Boolean(account), isAuthReady, login, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function AuthProvider({ children, msalInstance }: { children: ReactNode; msalInstance: IPublicClientApplication }) {

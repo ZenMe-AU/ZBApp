@@ -6,9 +6,10 @@
 import { Helmet } from "react-helmet";
 import { Link } from "react-router";
 import { getQuestionsByUser } from "../api/question";
-import { Alert, Chip, Container, Typography, List, ListItem, ListItemButton, ListItemText, Button, Box, Divider } from "@mui/material";
+import { Alert, Chip, Container, Typography, List, ListItem, ListItemButton, ListItemText, Button, Box, Divider, Tooltip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import ShareIcon from "@mui/icons-material/Share";
+import CreateOutlinedIcon from "@mui/icons-material/CreateOutlined";
 import type { Question } from "../types/interfaces";
 import { logEvent, setOperationId } from "@zenmechat/shared-ui/monitor/telemetry";
 import { Suspense } from "react";
@@ -69,9 +70,14 @@ export default function QuestionCombinationList({ loaderData }: { loaderData: an
           }
         >
           {(resolvedQuestions: Question[]) => {
-            const visibleQuestions = resolvedQuestions.filter((q: Question) => q.isOwner || !q.latestAnswer);
+            const visibleQuestions = resolvedQuestions;
             return (
               <>
+                <Box display="flex" justifyContent="flex-end" mb={2}>
+                  <Button variant="outlined" component={Link} to="/quest3Tier/friends">
+                    Manage friends
+                  </Button>
+                </Box>
                 <List>
                   {visibleQuestions.map((q: Question, index: number) => {
                     const isOwner = q.isOwner === true;
@@ -79,8 +85,19 @@ export default function QuestionCombinationList({ loaderData }: { loaderData: an
                       <div key={q.id}>
                         <ListItem disablePadding>
                           <ListItemButton component={Link} to={`/quest3Tier/${q.id}/answer`} onClick={() => handleOpenAnswer(q.id)}>
-                            <ListItemText primary={q.title} secondary={!isOwner && !q.latestAnswer ? "Not answered" : undefined} />
-                            {isOwner && <Chip label="My question" size="small" color="primary" variant="outlined" sx={{ mr: 1 }} />}
+                            <ListItemText
+                              primary={
+                                <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                                  <Typography component="span">{q.title}</Typography>
+                                  {q.latestAnswer && <Chip label="Answered" size="small" color="success" variant="outlined" />}
+                                  {isOwner && (
+                                    <Tooltip title="Created by you">
+                                      <CreateOutlinedIcon aria-label="Created by you" fontSize="small" color="primary" />
+                                    </Tooltip>
+                                  )}
+                                </Box>
+                              }
+                            />
                             <Box display="flex" gap={1} ml={2}>
                               <Button
                                 variant="outlined"

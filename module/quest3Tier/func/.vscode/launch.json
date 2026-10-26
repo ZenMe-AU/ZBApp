@@ -10,18 +10,20 @@
       "preLaunchTask": "Start"
     },
      {
-      "name": "Start Agent UI",
+      "name": "Start OpenVino",
       "type": "msedge",
       "request": "launch",
       "url": "http://127.0.0.1:4178",
       "webRoot": "${workspaceFolder}/vitest/agents/viewer",
-      "preLaunchTask": "Start Agent UI"
-    }
-  ],
-  "compounds": [
+      "preLaunchTask": "Start OpenVino"
+    },
     {
-      "name": "Start Compound",
-      "configurations": ["Start", "Start Agent UI"]
+      "name": "Start Ollama",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:4178",
+      "webRoot": "${workspaceFolder}/vitest/agents/viewer",
+      "preLaunchTask": "Start Ollama"
     }
   ]
 }

@@ -30,7 +30,8 @@ import { HUMAN_NAME, loadAgent, LOCK_PATH, pickParticipants, RUNS_DIR, takeLock,
 const MAX_STEPS = Number(process.env.AGENT_STEPS ?? 30);
 const RECENT_STEPS = 8;
 const POLL_MS = 5 * 1000;
-const IDLE_POLLS = Number(process.env.HUMAN_RUN === "1" ? 60 : 3);
+// Human participation is optional after joining; agents must finish without waiting indefinitely.
+const IDLE_POLLS = 3;
 const QUESTION_URL = process.env.QUESTION_URL ?? "http://127.0.0.1:7073";
 async function call(agent, method, url, body?) {
   // A JSON Content-Type with an empty body makes the handler wrapper 500, so only send it with a body.
@@ -83,6 +84,7 @@ async function snapshot(agent) {
 
   for (const q of questions) {
     q.isOwner = q.profileId === agent.profileId;
+    q.ownerName = agent.realNamesById?.[q.profileId];
     try {
       q.answers = await list(agent, `/question/${q.id}/answers`);
     } catch (err: any) {
@@ -110,6 +112,7 @@ const view = (questions, names, digested = new Set()) =>
     title: q.title,
     text: q.questionText,
     options: q.option ?? [],
+    askers: (q.sharedByProfileIds ?? [q.profileId]).map((id) => ({ id, name: names[id] ?? "unknown" })),
     needsAnswer: needsAnswer(q),
     answers: q.answers.map((a) => ({
       id: a.id,
@@ -191,8 +194,13 @@ async function act(agent, { method, path: p, body }, state) {
       ? `limit:${kind}`
       : offlineActionReason(url?.pathname ?? "", body, questions, agent.shareableIds) ?? invalidAction(method, url?.pathname ?? "", body);
   if (reason) return { method, path: p, body, status: "INVALID", reason, response: undefined };
+  const answerMatch = url?.pathname.match(/^\/question\/([^/]+)\/answer\/?$/);
+  const question = answerMatch ? state.questions.find((item) => item.id === answerMatch[1]) : undefined;
+  const answerBody = answerMatch && question && body && body.recipientProfileId === undefined && question.askers?.length === 1
+    ? { ...body, recipientProfileId: question.askers[0].id }
+    : body;
   if (kind) agent.used[kind]++;
-  return { method, path: url.pathname, body, ...(await call(agent, method, url, body)) };
+  return { method, path: url.pathname, body: answerBody, ...(await call(agent, method, url, answerBody)) };
 }
 
 // One human-readable line per API call for the live chat log.
@@ -206,6 +214,10 @@ function narrate(r, titles, names) {
   if (root === "question" && sub === "share") return `shared [q:${id}] ${q} with ${(r.body?.receiverIds ?? []).map((pid) => names[pid] ?? pid).join(", ")}`;
   if (root === "question" && sub === "answer") return `answered [q:${id}] ${q}: ${clip(r.body?.option)}`;
   if (root === "question" && !sub) return `edited [q:${id}] ${q}: ${clip(JSON.stringify(r.body))}`;
+  if (r.path === "/sendFollowUpCmd") {
+    const filters = (r.body?.question ?? []).map((filter) => `${titles[filter.questionId] ?? filter.questionId} = ${(filter.option ?? []).join(" or ")}`).join("; ");
+    return `followed up [q:${r.body?.newQuestionId ?? "unknown"}] for people matching ${filters || "the selected answers"}`;
+  }
   return `${r.method} ${r.path} ${clip(JSON.stringify(r.body))}`;
 }
 

@@ -14,5 +14,6 @@ export const protectedRoutes = [
   route("/quest3Tier/add", "../../module/quest3Tier/ui/routes/AddQuestion.tsx"),
   route("/quest3Tier/:id/edit", "../../module/quest3Tier/ui/routes/EditQuestion.tsx"),
   route("/quest3Tier/:id/share", "../../module/quest3Tier/ui/routes/ShareQuestion.tsx"),
+  route("/quest3Tier/friends", "../../module/quest3Tier/ui/routes/ManageFriends.tsx"),
 ];
 export const publicRoutes = [];

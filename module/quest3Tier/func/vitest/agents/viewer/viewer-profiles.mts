@@ -5,7 +5,7 @@
 
 import { AGENTS, KINDS } from "./viewer-data.mjs";
 
-const DETAILS: Record<string, string> = { Mike: "Korea", Bella: "Australia", Ian: "South Africa", Eric: "Taiwan" };
+const DETAILS: Record<string, string> = { Mike: "Brisbane", Bella: "Brisbane", Ian: "Brisbane", Eric: "Brisbane" };
 
 export const profileKind = (name: string) => (AGENTS.includes(name) ? "Agent" : "Human");
 

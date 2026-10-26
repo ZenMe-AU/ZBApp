@@ -103,7 +103,7 @@ const [, frontmatter, persona] = match;
   return {
     name,
     persona,
-    model: process.env.AGENT_MODEL ?? meta.model,
+    model: process.env.AGENT_MODEL ?? meta.model ?? "haiku",
     token: authDev.generateToken({
       oid: meta.oid,
       name,

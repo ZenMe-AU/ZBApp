@@ -10,7 +10,41 @@
       "dependsOn": ["Start Azurite"]
     },
     {
-      "label": "Start Agent UI",
+      "label": "Start OpenVino",
+      "type": "process",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/vitest/agents/run-openvino.ps1"
+      ],
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "agent-viewer",
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Building Q3 and the agent viewer",
+          "endsPattern": "^Q3 Agent Lab: http://"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "close": false
+      }
+    },
+    {
+      "label": "Start Ollama",
       "type": "process",
       "command": "pwsh",
       "args": [

@@ -57,6 +57,8 @@ To watch the conversation live, use the terminal, or open `runs/<time>_<particip
 
 ### Visual observer
 
+See the [viewer architecture overview](viewer/architecture-overview.md) for the UI, data flow, and build details.
+
 From the repo root, start the local viewer in another terminal:
 
 ```sh

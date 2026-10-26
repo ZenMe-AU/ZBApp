@@ -67,5 +67,5 @@ export async function GetQuestionListByUser(request: GetQuestionListByUserReques
   const repository = getRepository();
   const profileId = request.userData.profileId;
   const question = await repository.getCombinationListByUser(profileId);
-  return { return: { list: question } };
+  return { return: { list: question.map((item) => ({ ...item, isOwner: item.profileId === profileId })) } };
 }

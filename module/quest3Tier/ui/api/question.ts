@@ -5,6 +5,7 @@
 
 import { jwtFetch } from "@zenmechat/shared-ui/api/jwtFetch";
 import { getConfig, loadConfig } from "@zenmechat/shared-ui/config/loadConfig"; //Config file: /ui/env.json
+import { getMyProfileId } from "./profile";
 // const apiDomain = getConfig("QUEST3TIER_DOMAIN");
 
 // Fetch list of questions for a specific user
@@ -161,6 +162,19 @@ export const submitAnswer = async (
 
     // Parse the JSON response body
     const data = await response.json();
+    void getMyProfileId()
+      .catch(() => localStorage.getItem("agentLabProfileId") ?? localStorage.getItem("profileId") ?? "")
+      .then((profileId) => fetch("http://127.0.0.1:4178/api/human-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId,
+          questionId: id,
+          title: questionText,
+          answer: answerPayload.option ?? answerPayload.answerText,
+        }),
+      }))
+      .catch(() => undefined);
     return data.return;
   } catch (err) {
     console.error("Error submitting answer:", err);

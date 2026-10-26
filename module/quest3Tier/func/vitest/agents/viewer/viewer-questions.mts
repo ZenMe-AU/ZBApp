@@ -55,7 +55,7 @@ export function groupQuestions(events: QuestionEvent[], reportQuestions: ReportQ
       const answer = event.text.split(/":\s*/, 2)[1] ?? "Answer recorded";
       const unknown = question.answers.find((item) => item.author === "Unknown" && item.text === answer);
       if (unknown) unknown.author = event.agent;
-      else if (!hasFinalReport && !question.answers.some((item) => item.author === event.agent && item.text === answer)) {
+      else if (!question.answers.some((item) => item.author === event.agent && item.text === answer)) {
         question.answers.push({ author: event.agent, text: answer });
       }
     }

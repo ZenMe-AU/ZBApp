@@ -6,7 +6,7 @@
 import jwt from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
 
-const generateToken = (payload) => {
+const generateToken = (_payload) => {
   return "";
 };
 
@@ -48,9 +48,7 @@ const decode = async (token) => {
     throw Object.assign(new Error("Invalid or expired token"), { status: 401 });
   }
   if (!verified.scp?.split(" ").includes("access_as_user")) {
-    const err = new Error("Token is missing the access_as_user scope");
-    err.status = 403;
-    throw err;
+    throw Object.assign(new Error("Token is missing the access_as_user scope"), { status: 403 });
   }
   return verified;
 };

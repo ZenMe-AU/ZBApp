@@ -100,9 +100,13 @@ function Install-DevAiTools {
     Install-GitHubCopilotCli
     Install-ClaudeCode
     Install-Packer
+    Install-Python
     #Install-DockerCli
     Install-Ollama
-    Install-OllamaModels
+    #Install-OllamaModels
+    Install-OpenVino
+    Install-HuggingFace
+    #Install-OpenVinoModels
 }
 
 function Install-Pnpm {
@@ -731,6 +735,109 @@ function Install-OllamaModels {
     Write-Output "Ollama models are installed."
 }
 
+function Install-OpenVino {
+    if (-not $script:IsWindows) {
+        Write-Warning "Automatic OpenVINO installation using winget is only supported on Windows."
+        return 1
+    }
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-Error "winget is not installed. Please install App Installer before installing OpenVINO."
+        return 1
+    }
+
+    $installed = winget list --id Intel.OpenVINOToolkit.2026.3.0 -e --accept-source-agreements 2>$null
+    if ($LASTEXITCODE -eq 0 -and ($installed -match 'Intel\.OpenVINOToolkit\.2026\.3\.0')) {
+        Write-Output "OpenVINO is already installed."
+        return
+    }
+
+    Write-Output "OpenVINO not found. Installing OpenVINO using winget..."
+    winget install --id Intel.OpenVINOToolkit.2026.3.0 -e --source winget --silent --accept-source-agreements --accept-package-agreements
+    if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
+        Write-Error "OpenVINO installation failed with exit code $LASTEXITCODE."
+        return 1
+    }
+    Update-ProcessPathFromEnvironment
+    Write-Output "OpenVINO is installed."
+}
+
+function Install-HuggingFace {
+    if (Get-Command hfdownloader -ErrorAction SilentlyContinue) {
+        Write-Output "HuggingFace Model Downloader is already installed."
+        return
+    }
+    if (-not $script:IsWindows) {
+        Write-Warning "Automatic HuggingFace Model Downloader installation using winget is only supported on Windows."
+        return 1
+    }
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-Error "winget is not installed. Please install App Installer before installing HuggingFace Model Downloader."
+        return 1
+    }
+
+    $installed = winget list --id bodaay.hfdownloader -e --accept-source-agreements 2>$null
+    if ($LASTEXITCODE -eq 0 -and ($installed -match 'bodaay\.hfdownloader')) {
+        Write-Output "HuggingFace Model Downloader is already installed."
+        return
+    }
+
+    Write-Output "HuggingFace Model Downloader not found. Installing using winget..."
+    winget install --id=bodaay.hfdownloader -e --silent --accept-source-agreements --accept-package-agreements
+    if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
+        Write-Error "HuggingFace Model Downloader installation failed with exit code $LASTEXITCODE."
+        return 1
+    }
+    Update-ProcessPathFromEnvironment
+    if (-not (Get-Command hfdownloader -ErrorAction SilentlyContinue)) {
+        Write-Warning "hfdownloader was not found in PATH immediately after installation. Please restart your terminal or verify %LOCALAPPDATA%\Microsoft\WinGet\Links is in PATH."
+    }
+    Write-Output "HuggingFace Model Downloader is installed."
+}
+
+function Install-OpenVinoModels {
+    param(
+        [string]$model = "OpenVINO/Qwen2.5-Coder-3B-Instruct-int4-ov"
+    )
+    if (-not (Get-Command hfdownloader -ErrorAction SilentlyContinue)) {
+        Write-Error "hfdownloader is not installed. Run Install-HuggingFace before downloading models."
+        return 1
+    }
+    try {
+        hfdownloader download $model
+        if ($LASTEXITCODE -ne 0) { throw "Failed to download $model (exit code $LASTEXITCODE)." }
+    } catch {
+        Write-Error "$_ Ensure network connection and hfdownloader are working, then retry."
+        return 1
+    }
+    Write-Output "OpenVINO models are installed."
+}
+
+function Install-Python {
+    if (-not $script:IsWindows) {
+        Write-Warning "Automatic Python installation using winget is only supported on Windows."
+        return 1
+    }
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-Error "winget is not installed. Please install App Installer before installing Python."
+        return 1
+    }
+
+    $installed = winget list --id Python.PythonInstallManager -e --accept-source-agreements 2>$null
+    if ($LASTEXITCODE -eq 0 -and ($installed -match 'Python\.PythonInstallManager')) {
+        Write-Output "Python Install Manager is already installed."
+        return
+    }
+
+    Write-Output "Python Install Manager not found. Installing using winget..."
+    winget install -e --id Python.PythonInstallManager --silent --accept-source-agreements --accept-package-agreements
+    if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
+        Write-Error "Python Install Manager installation failed with exit code $LASTEXITCODE."
+        return 1
+    }
+    Update-ProcessPathFromEnvironment
+    Write-Output "Python Install Manager is installed."
+}
+
 function Set-TerraformEnvironmentType {
     param(
         [string]$type = "dev"
@@ -854,4 +961,4 @@ function Update-ProcessPathFromEnvironment {
     }
 }
 
-Export-ModuleMember -Function Initialize-PlatformState,Install-Pnpm,Install-NodeJsAndNpm,Install-Terraform,Install-Packer,Install-DockerCli,Install-PostgreSql,Install-AwsCli,Install-AzureCli,Install-AzureStorageExplorer,Install-Ripgrep,Install-Fd,Install-Jq,Install-Yq,Install-GitHubCli,Install-GitHubCopilotCli,Install-ClaudeCode,Install-Ollama,Set-TerraformEnvironmentType,Set-ProjectRootFolder,Install-ProjectDependencies,Initialize-ResourceGroupBootstrap,Publish-MainEnvironment,Publish-ModuleDeployments,Publish-UserInterface,Test-InitializationEnvironment,Install-DevTools,Install-DevAiTools
+Export-ModuleMember -Function Initialize-PlatformState,Install-Pnpm,Install-NodeJsAndNpm,Install-Terraform,Install-Packer,Install-DockerCli,Install-PostgreSql,Install-AwsCli,Install-AzureCli,Install-AzureStorageExplorer,Install-Ripgrep,Install-Fd,Install-Jq,Install-Yq,Install-GitHubCli,Install-GitHubCopilotCli,Install-ClaudeCode,Install-Ollama,Install-OllamaModels,Install-OpenVino,Install-HuggingFace,Install-OpenVinoModels,Install-Python,Set-TerraformEnvironmentType,Set-ProjectRootFolder,Install-ProjectDependencies,Initialize-ResourceGroupBootstrap,Publish-MainEnvironment,Publish-ModuleDeployments,Publish-UserInterface,Test-InitializationEnvironment,Install-DevTools,Install-DevAiTools

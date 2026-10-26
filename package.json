@@ -43,8 +43,8 @@
     "lint-staged": "^16.2.6",
     "minimist": "^1.2.8",
     "prettier": "^3.6.2",
-    "typescript": "^7.0.2",
-    "typescript-eslint": "^8.46.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2",
     "unique-names-generator": "^4.7.1",
     "vitest": "^4.1.9"
   },

@@ -22,7 +22,9 @@ const state = {
   network: {},
   selectedEventId: null,
   chatMessages: [] as { role: "user" | "assistant"; content: string }[],
+  selectedChatMessage: -1,
   chatAgent: "",
+  chatStatus: "" as "" | "Thinking…" | "Answering…",
 };
 
 const detailsForRun = (name) => {
@@ -39,7 +41,7 @@ function setCount(name, value) {
   if (target) target.textContent = String(value);
 }
 
-const participantsFor = (events) => new Set(events.find((event) => event.kind === "start")?.participants ?? events.map((event) => event.agent).filter(Boolean));
+const participantsFor = (events) => new Set<string>(events.find((event) => event.kind === "start")?.participants ?? events.map((event) => event.agent).filter(Boolean));
 
 function visibleEvents() {
   const view = VIEWS[state.activeView];
@@ -63,17 +65,52 @@ function renderInspector(event) {
 
 const resultContext = () => ({ activeAgent: state.activeAgent, elements, network: state.network, report: state.currentReport, renderInspector });
 
-function openChat(agent = "") {
-  state.activeAgent = "";
+function setChatTarget(agent = "") {
+  if (state.chatAgent !== agent) {
+    state.chatMessages = [];
+    state.selectedChatMessage = -1;
+  }
   state.chatAgent = agent;
-  state.chatMessages = [];
-  elements.chatPanel.hidden = false;
-  elements.chatTitle.textContent = agent ? `${agent} chat` : "Test chat";
-  elements.chatRunLabel.textContent = state.selectedRun
-    ? `${agent ? `Chat with ${agent}` : "Results assistant"} · ${detailsForRun(state.selectedRun).title}`
-    : "Select a run to begin";
   renderChat();
-  elements.chatInput.focus();
+}
+
+function inspectChatMessage(message: { role: "user" | "assistant"; content: string }, index: number) {
+  state.selectedChatMessage = index;
+  const sender = message.role === "user" ? "You" : state.chatAgent || "Test assistant";
+  renderInspector({
+    kind: "system",
+    title: `${sender} chat message`,
+    actorLabel: sender,
+    kindLabel: message.role === "user" ? "Sent" : "Response received",
+    time: "Not recorded",
+    text: [
+      `Sender\n${sender}`,
+      "Timestamp\nNot provided by the chat API",
+      `Response status\n${message.role === "assistant" ? "Received" : "Sent"}`,
+      `Response content\n${message.content}`,
+    ].join("\n\n"),
+  });
+  renderChat();
+}
+
+function renderChatView(participants = new Set<string>()) {
+  const names = [...new Set([...AGENTS, ...participants])];
+  const filteredAgent = state.activeAgent && names.includes(state.activeAgent) ? state.activeAgent : "";
+  const chatTarget = filteredAgent || (state.chatAgent && names.includes(state.chatAgent) ? state.chatAgent : names[0] ?? "");
+  elements.feed.hidden = true;
+  elements.feedHead.hidden = true;
+  elements.chatPanel.hidden = false;
+  setChatTarget(chatTarget);
+  renderInspector({
+    kind: "system",
+    title: "Chat details",
+    actorLabel: state.chatAgent || "Test assistant",
+    kindLabel: "Chat",
+    time: "Ready",
+    text: "Select a message to inspect its sender, status and content.",
+  });
+  elements.viewTitle.textContent = "Chat";
+  elements.filterNote.textContent = state.chatAgent || "Choose a participant";
 }
 
 function renderProfiles(participants) {
@@ -85,13 +122,22 @@ function renderProfiles(participants) {
     participants,
     questions: state.currentReport.questionList,
     onSelect: (name) => {
-      openChat(name);
+      state.activeAgent = state.activeAgent === name ? "" : name;
+      state.selectedEventId = null;
+      renderProfiles(participants);
+      renderFeed();
     },
   });
 }
 
 function renderFeed() {
   const view = VIEWS[state.activeView];
+  if (state.activeView === "chat") return renderChatView(participantsFor(state.currentEvents));
+  delete document.body.dataset.chatMode;
+  elements.chatPanel.hidden = true;
+  elements.feed.hidden = false;
+  elements.feedHead.hidden = false;
+  elements.inspector.hidden = false;
   if (state.activeView === "network") return renderNetwork(resultContext());
   if (state.activeView === "overview") return renderOverview(resultContext());
   if (state.activeView === "relationships") return renderRelationships(resultContext());
@@ -159,15 +205,35 @@ function renderChat() {
     empty.className = "chat-empty";
     empty.textContent = "Ask about scores, answers, leaks or agent behaviour.";
     elements.chatMessages.replaceChildren(empty);
+    if (state.chatStatus) {
+      const status = document.createElement("li");
+      status.className = "chat-message assistant chat-status-message";
+      status.textContent = state.chatStatus;
+      status.setAttribute("aria-live", "polite");
+      elements.chatMessages.append(status);
+    }
     return;
   }
-  elements.chatMessages.replaceChildren(...state.chatMessages.map(({ role, content }) => {
+  const messages = state.chatMessages.map((message, index) => {
     const item = document.createElement("li");
-    item.className = `chat-message ${role}`;
-    item.textContent = content;
+    const button = document.createElement("button");
+    item.className = `chat-message-row ${message.role}`;
+    button.type = "button";
+    button.className = `chat-message ${message.role}`;
+    button.textContent = message.content;
+    button.setAttribute("aria-pressed", String(state.selectedChatMessage === index));
+    button.addEventListener("click", () => inspectChatMessage(message, index));
+    item.append(button);
     return item;
-  }));
-  elements.chatMessages.lastElementChild?.scrollIntoView({ block: "nearest" });
+  });
+  if (state.chatStatus) {
+    const status = document.createElement("li");
+    status.className = "chat-message assistant chat-status-message";
+    status.textContent = state.chatStatus;
+    status.setAttribute("aria-live", "polite");
+    messages.push(status);
+  }
+  elements.chatMessages.replaceChildren(...messages);
 }
 
 function render(events, mtime) {
@@ -208,10 +274,6 @@ async function loadRuns() {
   const newestRun = names[0] ?? "";
   if (!state.selectedRun || !names.includes(state.selectedRun) || state.selectedRun === state.latestRun) state.selectedRun = newestRun;
   state.latestRun = newestRun;
-  elements.chatTitle.textContent = state.chatAgent ? `${state.chatAgent} chat` : "Test chat";
-  elements.chatRunLabel.textContent = state.selectedRun
-    ? `${state.chatAgent ? `Chat with ${state.chatAgent}` : "Results assistant"} · ${detailsForRun(state.selectedRun).title}`
-    : "Select a run to begin";
   const signature = names.join("\n");
   if (elements.runList.dataset.signature !== signature) {
     elements.runList.dataset.signature = signature;
@@ -241,12 +303,14 @@ async function loadRunState() {
   const response = await fetch("/api/run", { cache: "no-store" });
   if (!response.ok) throw new Error("Could not read the test runner state");
   const state = await response.json();
-  const active = state.status === "starting" || state.status === "running";
+  const active = state.status === "starting" || state.status === "running" || state.status === "waiting-for-human";
   elements.agentStartButton.disabled = active;
   elements.agentStartButton.textContent = state.status === "starting"
       ? "Starting test..."
       : state.status === "running"
         ? "Test running..."
+        : state.status === "waiting-for-human"
+          ? "Waiting for human..."
         : elements.agentStartButton.dataset.idleLabel;
   elements.agentStartButton.title = state.error ?? (state.status === "failed" ? `Test exited with code ${state.exitCode ?? "unknown"}` : "");
 }
@@ -314,6 +378,7 @@ if (elements) {
     state.selectedEventId = null;
     state.chatAgent = "";
     state.chatMessages = [];
+    state.chatStatus = "";
     renderChat();
     refreshLog();
     loadRuns();
@@ -326,16 +391,16 @@ if (elements) {
     for (const item of elements.viewTabs.querySelectorAll("[data-view]")) item.setAttribute("aria-pressed", String(item === tab));
     renderFeed();
   });
-  elements.chatClose.addEventListener("click", () => {
-    elements.chatPanel.hidden = true;
-  });
   elements.chatForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const message = elements.chatInput.value.trim();
     if (!message || !state.selectedRun) return;
     state.chatMessages.push({ role: "user", content: message });
+    state.selectedChatMessage = -1;
     elements.chatInput.value = "";
     elements.chatSend.disabled = true;
+    elements.chatSend.textContent = "Thinking…";
+    state.chatStatus = "Thinking…";
     renderChat();
     try {
       const response = await fetch("/api/chat", {
@@ -345,11 +410,18 @@ if (elements) {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? "Chat request failed");
+      state.chatStatus = "Answering…";
+      renderChat();
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       state.chatMessages.push({ role: "assistant", content: body.answer });
     } catch (error) {
+      state.chatStatus = "Answering…";
+      renderChat();
       state.chatMessages.push({ role: "assistant", content: `Unable to answer: ${error instanceof Error ? error.message : String(error)}` });
     } finally {
+      state.chatStatus = "";
       elements.chatSend.disabled = false;
+      elements.chatSend.textContent = "Send";
       renderChat();
       elements.chatInput.focus();
     }

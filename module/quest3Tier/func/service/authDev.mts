@@ -27,9 +27,10 @@ const decode = async (token) => {
     return jwt.verify(token, jwtSecret, { algorithms: [jwtSignOptions.algorithm] });
   } catch (error) {
     console.log("JWT verification failed:", error.message);
-    const err = new Error("Invalid or expired token");
-    err.status = 401;
-    throw err;
+    const err = Object.assign(new Error("Invalid or expired token"), {
+  status: 401,
+});
+throw err;
   }
 };
 

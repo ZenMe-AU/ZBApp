@@ -117,6 +117,12 @@ function ShareQuestion() {
           />
         </Box>
 
+        <Box display="flex" justifyContent="flex-end" mb={3}>
+          <Button variant="text" onClick={() => navigate("/quest3Tier/friends")}>
+            Manage friends
+          </Button>
+        </Box>
+
         <Box display="flex" justifyContent="center">
           <Button type="submit" variant="contained" color="primary" disabled={loading}>
             {loading ? "Sharing..." : "Share"}

@@ -17,6 +17,10 @@ As the foundation matures, we plan to publish a fully working sample environment
 **Running Locally**  
 To run this code on your local computer you need to do the following:
 
+The root tooling and accessManager backend use TypeScript 6.0.3 or a compatible
+6.x release. Keep the root `typescript-eslint` dependency at 8.71.2 or newer for
+TypeScript 6 support.
+
 1. Check out the code to a local folder
 2. Open the folder in VSCode as a workspace, this is a monorepo and scripts require to be run from a workspace.
 3. In a terminal run `deployLocalDependencies.bat` in the root folder. If components are installed, you must restart VSCode.
