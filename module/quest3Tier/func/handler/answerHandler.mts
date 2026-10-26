@@ -11,7 +11,9 @@ async function AddAnswer(request, context) {
   const { questionId } = request.params;
   const profileId = request.userData.profileId;
   const { answer = null, option = null, duration, recipientProfileId, when = null } = request.clientParams;
-  const questionnaire = await repository.addAnswerByQuestionId(questionId, profileId, duration, answer, option, when);
+  // Previous call passed `when` into the `recipientProfileId` position.
+  // const questionnaire = await repository.addAnswerByQuestionId(questionId, profileId, duration, answer, option, when);
+  const questionnaire = await repository.addAnswerByQuestionId(questionId, profileId, duration, answer, option, undefined, when);
   return { return: { id: questionnaire.id } };
 }
 

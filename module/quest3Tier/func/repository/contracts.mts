@@ -75,6 +75,7 @@ export interface QuestRepository {
     duration: number,
     answer?: string | null,
     option?: string | string[] | null,
+    recipientProfileId?: string,
     when?: string | null
   ): Promise<AnswerRecord>;
   getAnswerById(questionId: string, answerId: string): Promise<AnswerRecord | null>;
