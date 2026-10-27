@@ -60,3 +60,5 @@ if ($Stages -contains "21") { Install-PostgreSql }
 if ($Stages -contains "Install-AllDevAiTools") { 
     Install-DevAiTools -ErrorAction SilentlyContinue
 }
+
+if ($Stages -contains "Install-PnpmCompletion") { Install-PnpmCompletion }
