@@ -60,8 +60,15 @@ function Initialize-PlatformState {
         Set-Variable -Name IsUbuntu -Value $isUbuntu -Scope Script
     }
 }
-# Determine the OS type and set variables in script scope
-Initialize-PlatformState
+
+function Set-InstallBaseFolder {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $script:InstallBaseFolder = $Path
+}
+
+function Get-InstallBaseFolder {
+    return $script:InstallBaseFolder
+}
 
 # Wrapper for brew that forces ARM64 mode on Apple Silicon to avoid Rosetta 2 conflicts
 function Invoke-Brew {
@@ -107,6 +114,10 @@ function Install-DevAiTools {
     Install-OpenVino
     Install-HuggingFace
     #Install-OpenVinoModels
+    #Install-HermesStudio
+    #Install-HermesAgent
+    #Install-HermesDesktop
+    #Install-EkkoStudio
 }
 
 function Install-Pnpm {
@@ -961,4 +972,173 @@ function Update-ProcessPathFromEnvironment {
     }
 }
 
-Export-ModuleMember -Function Initialize-PlatformState,Install-Pnpm,Install-NodeJsAndNpm,Install-Terraform,Install-Packer,Install-DockerCli,Install-PostgreSql,Install-AwsCli,Install-AzureCli,Install-AzureStorageExplorer,Install-Ripgrep,Install-Fd,Install-Jq,Install-Yq,Install-GitHubCli,Install-GitHubCopilotCli,Install-ClaudeCode,Install-Ollama,Install-OllamaModels,Install-OpenVino,Install-HuggingFace,Install-OpenVinoModels,Install-Python,Set-TerraformEnvironmentType,Set-ProjectRootFolder,Install-ProjectDependencies,Initialize-ResourceGroupBootstrap,Publish-MainEnvironment,Publish-ModuleDeployments,Publish-UserInterface,Test-InitializationEnvironment,Install-DevTools,Install-DevAiTools
+
+function Install-HermesStudio {
+    $studioPath = Join-Path $script:InstallBaseFolder 'Hermes-Studio'
+    $repository = 'https://github.com/JPeetz/Hermes-Studio.git'
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Error "Git is required to install Hermes Studio. Please install Git and retry."
+        return 1
+    }
+    if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
+        Write-Error "pnpm is required to install Hermes Studio. Run Install-Pnpm and retry."
+        return 1
+    }
+
+    if (Test-Path $studioPath) {
+        $remote = git -C $studioPath remote get-url origin 2>$null
+        if ($LASTEXITCODE -ne 0 -or $remote -notmatch '^(https://github\.com/JPeetz/Hermes-Studio(?:\.git)?|git@github\.com:JPeetz/Hermes-Studio\.git)$') {
+            Write-Error "The existing path '$studioPath' is not a Hermes Studio checkout."
+            return 1
+        }
+    } else {
+        Write-Output "Cloning Hermes Studio into $studioPath..."
+        git clone --depth 1 $repository $studioPath
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Hermes Studio clone failed with exit code $LASTEXITCODE."
+            return 1
+        }
+    }
+
+    Push-Location $studioPath
+    try {
+        pnpm install --frozen-lockfile
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Dependency installation failed. Review and approve required package build scripts in the terminal."
+            pnpm approve-builds
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Hermes Studio build approval failed or was cancelled with exit code $LASTEXITCODE."
+                return 1
+            }
+
+            pnpm install --frozen-lockfile
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Hermes Studio dependency installation failed after build approval with exit code $LASTEXITCODE."
+                return 1
+            }
+        }
+
+        $envFile = Join-Path $studioPath '.env'
+        if (-not (Test-Path $envFile)) {
+            $envExample = Join-Path $studioPath '.env.example'
+            if (-not (Test-Path $envExample)) {
+                Write-Error "Hermes Studio's .env.example was not found in '$studioPath'."
+                return 1
+            }
+            Copy-Item $envExample $envFile -ErrorAction Stop
+        }
+        if ((Get-Content $envFile -Raw -ErrorAction Stop) -notmatch '(?m)^\s*HERMES_API_URL\s*=\s*\S') {
+            Add-Content -Path $envFile -Value "`nHERMES_API_URL=http://127.0.0.1:8642" -Encoding UTF8 -ErrorAction Stop
+        }
+    } finally {
+        Pop-Location
+    }
+
+    Write-Output "Hermes Studio is installed at $studioPath. Run 'pnpm dev' there to start it."
+}
+
+function Install-HermesAgent {
+    $hermesHome = Join-Path $script:InstallBaseFolder 'hermes'
+    $installDir = Join-Path $hermesHome 'hermes-agent'
+    if (-not $script:IsWindows -and -not (Get-Command bash -ErrorAction SilentlyContinue)) {
+        throw "bash is required to install Hermes Agent on macOS and Linux."
+    }
+
+    $installerFile = Join-Path ([System.IO.Path]::GetTempPath()) ("hermes-install-" + [guid]::NewGuid() + $(if ($script:IsWindows) { '.ps1' } else { '.sh' }))
+    try {
+        Write-Output "Installing Hermes Agent at $hermesHome using the official installer..."
+        if ($script:IsWindows) {
+            Invoke-WebRequest -Uri 'https://hermes-agent.nousresearch.com/install.ps1' -OutFile $installerFile -ErrorAction Stop
+            $powerShell = (Get-Process -Id $PID).Path
+            & $powerShell -NoProfile -File $installerFile -HermesHome $hermesHome -InstallDir $installDir -NonInteractive
+        } else {
+            Invoke-WebRequest -Uri 'https://hermes-agent.nousresearch.com/install.sh' -OutFile $installerFile -ErrorAction Stop
+            & bash $installerFile --hermes-home $hermesHome --dir $installDir --non-interactive
+        }
+        if ($LASTEXITCODE -ne 0) {
+            throw "Hermes Agent installation failed with exit code $LASTEXITCODE."
+        }
+    } finally {
+        if (Test-Path -LiteralPath $installerFile) {
+            Remove-Item -LiteralPath $installerFile -Force -ErrorAction Stop
+        }
+    }
+
+    $env:HERMES_HOME = $hermesHome
+    if ($script:IsWindows) {
+        [Environment]::SetEnvironmentVariable('HERMES_HOME', $hermesHome, 'User')
+    } else {
+        Write-Output "Persist HERMES_HOME=$hermesHome in your shell environment before using Hermes from a new terminal."
+    }
+
+    Write-Output "Hermes Agent is installed at $hermesHome. Run 'hermes setup' in a terminal to configure it; restart the terminal if 'hermes' is not yet available."
+}
+
+function Install-HermesDesktop {
+    $hermesHome = Join-Path $script:InstallBaseFolder 'hermes'
+    $installDir = Join-Path $hermesHome 'hermes-agent'
+    $launcher = if ($script:IsWindows) { Join-Path $hermesHome 'bin\hermes.exe' } else { 'hermes' }
+    $command = Get-Command $launcher -ErrorAction SilentlyContinue
+    if (-not $command -or -not (Test-Path -LiteralPath $installDir)) {
+        throw "Hermes Agent is required at '$installDir'. Run Install-HermesAgent with the same InstallBaseFolder first."
+    }
+
+    $previousHome = $env:HERMES_HOME
+    try {
+        $env:HERMES_HOME = $hermesHome
+        Write-Output "Installing Hermes Desktop using the existing Hermes Agent at $installDir..."
+        & $command.Source desktop --hermes-root $installDir --build-only
+        if ($LASTEXITCODE -ne 0) {
+            throw "Hermes Desktop installation failed with exit code $LASTEXITCODE."
+        }
+    } finally {
+        $env:HERMES_HOME = $previousHome
+    }
+
+    if ($script:IsWindows) {
+        $executable = Join-Path $installDir 'apps\desktop\release\win-unpacked\Hermes.exe'
+        if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+            throw "Hermes Desktop executable was not found at '$executable'."
+        }
+        $programs = [Environment]::GetFolderPath('Programs')
+        New-Item -ItemType Directory -Path $programs -Force -ErrorAction Stop | Out-Null
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut((Join-Path $programs 'Hermes Desktop.lnk'))
+        $shortcut.TargetPath = $executable
+        $shortcut.WorkingDirectory = Split-Path -Path $executable -Parent
+        $shortcut.IconLocation = "$executable,0"
+        $shortcut.Description = 'Hermes Desktop'
+        $shortcut.Save()
+    }
+
+    Write-Output "Hermes Desktop is installed. Run 'hermes desktop' to launch it."
+}
+
+function Install-EkkoStudio {
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        Write-Error "npm is required to install Ekko Studio. Install Node.js and npm, then retry."
+        return 1
+    }
+
+    Write-Output "Installing Ekko Studio globally with npm..."
+    npm install --global ekko-studio
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Ekko Studio installation failed with exit code $LASTEXITCODE."
+        return 1
+    }
+
+    Write-Output "Ekko Studio is installed. Run 'ekko-studio-web start' to launch it."
+}
+
+# =========================================================
+#   MAIN code block
+#===========================================================
+& {
+# Determine the OS type and set variables in script scope
+Initialize-PlatformState
+$script:InstallBaseFolder = $HOME
+
+Export-ModuleMember -Function Install-HermesDesktop
+Export-ModuleMember -Function Initialize-PlatformState,Set-InstallBaseFolder,Get-InstallBaseFolder,Install-Pnpm,Install-NodeJsAndNpm,Install-Terraform,Install-Packer,Install-DockerCli,Install-PostgreSql,Install-AwsCli,Install-AzureCli,Install-AzureStorageExplorer,Install-Ripgrep,Install-Fd,Install-Jq,Install-Yq,Install-GitHubCli,Install-GitHubCopilotCli,Install-ClaudeCode,Install-Ollama,Install-OllamaModels,Install-OpenVino,Install-HuggingFace,Install-OpenVinoModels,Install-HermesStudio,Install-HermesAgent,Install-EkkoStudio,Install-Python,Set-TerraformEnvironmentType,Set-ProjectRootFolder,Install-ProjectDependencies,Initialize-ResourceGroupBootstrap,Publish-MainEnvironment,Publish-ModuleDeployments,Publish-UserInterface,Test-InitializationEnvironment,Install-DevTools,Install-DevAiTools
+}

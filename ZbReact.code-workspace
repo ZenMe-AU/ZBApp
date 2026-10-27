@@ -89,6 +89,7 @@
   },
   "settings": {
     // These settings apply to all workspaces.
+    "vitest.configSearchPatternExclude": "{**/node_modules/**,**/vendor/**,**/.*/**,**/dist/**,**/*.d.ts}",
     "files.exclude": {
       "node_modules/": false,
     },

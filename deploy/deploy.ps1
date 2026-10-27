@@ -24,12 +24,14 @@
 # - Stage0 (Set-TerraformEnvironmentType, Set-ProjectRootFolder) will always run.
 param(
     [string]$type = "dev",
-    [string[]]$Stages
+    [string[]]$Stages,
+    [string]$InstallBaseFolder = $HOME
 )
 Set-StrictMode -Version Latest
 
 # Import the deployment module from the script directory so relative calls work
 Import-Module (Join-Path $PSScriptRoot 'deploymentModule.psm1') -Force
+Set-InstallBaseFolder -Path $InstallBaseFolder
 
 # Stage0: Always run
 # Set TF_VAR_env_type using modular function

@@ -11,6 +11,8 @@ const answer = z
     id: z.uuid(),
     questionId: z.uuid(),
     profileId: z.uuid().nullable(),
+    recipientProfileId: z.uuid().nullable(),
+    pairwiseId: z.string(),
     answerText: z.string().nullable(),
     optionId: z.string().nullable(),
     optionAnswerList: z.array(z.string()).nullable().optional(),

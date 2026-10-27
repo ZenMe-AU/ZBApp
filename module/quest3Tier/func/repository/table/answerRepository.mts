@@ -64,14 +64,15 @@ export async function addAnswer(input: AddAnswerInput): Promise<{ id: string }> 
 }
 
 // Table Storage drops null properties, so nullable fields come back undefined; restore the Postgres nulls here.
-function toAnswerRecord(e: AnswerEntity): AnswerRecord {
+function toAnswerRecord(e: AnswerEntity, questionOwnerProfileId?: string): AnswerRecord {
   const optionAnswerList = e.optionAnswerList ? JSON.parse(e.optionAnswerList) : e.optionId === null || e.optionId === undefined ? null : [e.optionId];
+  const recipientProfileId = e.recipientProfileId ?? questionOwnerProfileId ?? e.profileId;
   return {
     id: e.id,
     questionId: e.questionId,
     profileId: e.profileId,
-    recipientProfileId: e.recipientProfileId ?? "",
-    pairwiseId: e.pairwiseId ?? createHash("sha256").update(`legacy:${e.questionId}:${e.profileId}`).digest("hex"),
+    recipientProfileId,
+    pairwiseId: e.pairwiseId ?? createHash("sha256").update(`${recipientProfileId}:${e.profileId}`).digest("hex"),
     answerText: e.answerText ?? null,
     optionId: e.optionId ?? null,
     optionAnswerList,
@@ -87,12 +88,14 @@ export async function getAnswerById(questionId: string, answerId: string): Promi
     queryOptions: { filter: odata`questionId eq ${questionId} and id eq ${answerId}` },
   });
   for await (const entity of results) {
-    return toAnswerRecord(entity);
+    const question = await getQuestionById(questionId);
+    return toAnswerRecord(entity, question?.profileId);
   }
   return null;
 }
 // TODO: The row level security is not implemented, it must be Intrinsic to the environment and enforced at all queries.
 export async function getAnswerListByQuestionId(questionId: string): Promise<AnswerListItem[]> {
+  const question = await getQuestionById(questionId);
   const client = await getTableClient(QUESTION_DATA_TABLE);
   const [rowKeyStart, rowKeyEnd] = answerRowKeyRange(questionId);
   const results = client.listEntities<AnswerEntity>({
@@ -103,7 +106,7 @@ export async function getAnswerListByQuestionId(questionId: string): Promise<Ans
 
   const latestByPair = new Map<string, AnswerListItem>();
   for await (const entity of results) {
-    const record = toAnswerRecord(entity);
+    const record = toAnswerRecord(entity, question?.profileId);
     const pairKey = `${record.profileId}:${record.recipientProfileId}`;
     const existing = latestByPair.get(pairKey);
     const answer = { ...toAnswerRecord(entity), answerCount: (existing?.answerCount ?? 0) + 1 };

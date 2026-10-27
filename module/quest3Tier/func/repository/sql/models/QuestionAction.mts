@@ -22,14 +22,12 @@ export default (sequelize, DataTypes) => {
       const { questionId, action } = instance;
       const Question = instance.sequelize.models.get("Question");
       if (!Question) {
-        console.error("Question model not found.");
-        return;
+        throw new Error("Question model not found.");
       }
 
       const question = await Question.findByPk(questionId);
       if (!question) {
-        console.error(`Question with ID ${questionId} not found.`);
-        return;
+        throw new Error(`Question with ID ${questionId} not found.`);
       }
 
       const updatedData = fastJsonPatch.applyPatch(question.toJSON(), action).newDocument;
@@ -37,10 +35,12 @@ export default (sequelize, DataTypes) => {
         title: updatedData.title ?? null,
         questionText: updatedData.questionText ?? null,
         option: updatedData.option ?? null,
+        optionList: updatedData.optionList ?? null,
       });
       console.log(`Question with ID ${questionId} updated successfully.`);
     } catch (error) {
       console.error("Error processing afterSave hook:", error);
+      throw error;
     }
   });
 
