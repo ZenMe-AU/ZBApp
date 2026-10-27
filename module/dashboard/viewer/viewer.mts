@@ -26,6 +26,13 @@ const state = {
   selectedChatMessage: -1,
   chatAgent: "",
   chatStatus: "" as "" | "Thinking…" | "Answering…",
+  questionPerson: "",
+  questionStatus: "idle" as "idle" | "loading" | "ready" | "error",
+  questions: [] as Array<{ id: string; profileId: string; title: string | null; questionText: string; optionList: string[] | null; createdAt?: string }>,
+  selectedQuestionId: "",
+  answerQuestionId: "",
+  answerStatus: "idle" as "idle" | "loading" | "ready" | "error",
+  answers: [] as Array<{ id: string; questionId: string; answeredBy: string; answerText: string | null; optionAnswerList: string[] | null; createdAt?: string; isEdited?: boolean }>,
 };
 
 const detailsForRun = (name) => {
@@ -62,6 +69,57 @@ function renderInspector(event) {
   elements.eventTime.textContent = event?.time ?? "--:--:--";
   elements.eventKind.textContent = event?.kindLabel ?? (event?.kind === "finding" ? classifyFinding(event.text) : event ? KINDS[event.kind][1] : "System");
   elements.eventText.textContent = event?.text ?? "Choose an event from the activity view.";
+  const questionId = event?.questionId ?? "";
+  elements.questionIdRow.hidden = !questionId;
+  elements.questionId.textContent = questionId;
+  elements.questionIdCopy.dataset.questionId = questionId;
+  elements.questionIdCopy.textContent = "Copy ID";
+}
+
+async function loadQuestions(person: string) {
+  state.questionPerson = person;
+  state.questionStatus = "loading";
+  state.questions = [];
+  state.selectedQuestionId = "";
+  state.answerQuestionId = "";
+  state.answerStatus = "idle";
+  state.answers = [];
+  renderFeed();
+  try {
+    const response = await fetch(`/api/questions?person=${encodeURIComponent(person)}`, { cache: "no-store" });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error ?? "Could not load questions");
+    if (state.questionPerson !== person) return;
+    state.questions = body.questions;
+    state.questionStatus = "ready";
+  } catch {
+    if (state.questionPerson !== person) return;
+    state.questionStatus = "error";
+  }
+  renderFeed();
+}
+
+async function loadAnswers(person: string, questionId: string) {
+  state.answerQuestionId = questionId;
+  state.answerStatus = "loading";
+  state.answers = [];
+  renderFeed();
+  try {
+    const response = await fetch("/api/answers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ person, questionId }),
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error ?? "Could not load answers");
+    if (state.questionPerson !== person || state.selectedQuestionId !== questionId) return;
+    state.answers = body.answers;
+    state.answerStatus = "ready";
+  } catch {
+    if (state.questionPerson !== person || state.selectedQuestionId !== questionId) return;
+    state.answerStatus = "error";
+  }
+  renderFeed();
 }
 
 const resultContext = () => ({ activeAgent: state.activeAgent, elements, network: state.network, report: state.currentReport, renderInspector });
@@ -126,6 +184,7 @@ function renderProfiles(participants) {
     onSelect: (name) => {
       state.activeAgent = state.activeAgent === name ? "" : name;
       state.selectedEventId = null;
+      state.selectedQuestionId = "";
       renderProfiles(participants);
       renderFeed();
     },
@@ -143,8 +202,23 @@ function renderFeed() {
   if (state.activeView === "network") return renderNetwork(resultContext());
   if (state.activeView === "overview") return renderOverview(resultContext());
   if (state.activeView === "relationships") return renderRelationships(resultContext());
-  if (state.activeView === "questions")
-    return renderQuestions({ activeAgent: state.activeAgent, elements, events: state.currentEvents, questions: state.currentReport.questionList, renderInspector });
+  if (state.activeView === "questions") {
+    if (state.activeAgent && AGENTS.includes(state.activeAgent) && state.questionPerson !== state.activeAgent) void loadQuestions(state.activeAgent);
+    return renderQuestions({
+      activeAgent: state.activeAgent,
+      elements,
+      questions: state.questionPerson === state.activeAgent ? state.questions : [],
+      status: state.questionPerson === state.activeAgent ? state.questionStatus : "idle",
+      selectedQuestionId: state.selectedQuestionId,
+      answers: state.answerQuestionId === state.selectedQuestionId ? state.answers : [],
+      answerStatus: state.answerQuestionId === state.selectedQuestionId ? state.answerStatus : "idle",
+      onSelect: (questionId) => {
+        state.selectedQuestionId = questionId;
+        void loadAnswers(state.activeAgent, questionId);
+      },
+      renderInspector,
+    });
+  }
   const events = visibleEvents();
   elements.viewTitle.textContent = view.title;
   elements.filterNote.textContent = state.activeAgent ? `${state.activeAgent} only` : "All agents";
@@ -353,6 +427,13 @@ async function update() {
 }
 
 if (elements) {
+  elements.questionIdCopy.addEventListener("click", async () => {
+    const questionId = elements.questionIdCopy.dataset.questionId;
+    if (!questionId) return;
+    await navigator.clipboard.writeText(questionId);
+    elements.questionIdCopy.textContent = "Copied";
+    elements.announcer.textContent = "Question ID copied";
+  });
   const startTest = async () => {
     const button = elements.agentStartButton;
     button.disabled = true;

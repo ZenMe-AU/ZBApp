@@ -14,6 +14,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { initRepository } from "quest3Tier/dist/repository/table/repository.mjs";
 import { sendLiveChat } from "../agentChat.live.mjs";
+import * as authDev from "../service/authDev.mjs";
 import { answerResults } from "./results-chat.mjs";
 
 const VIEWER_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -81,6 +82,64 @@ async function getAgentOids(): Promise<Record<string, string>> {
     if (!oid) throw new Error(`Missing oid in ${name}.agent.md`);
     return [name, oid];
   })));
+}
+
+async function getAgentIdentity(name: string) {
+  if (!AGENT_NAMES.has(name)) throw new Error("Unknown agent");
+  const text = await readFile(path.join(DASHBOARD_DIR, name, `${name}.agent.md`), "utf8");
+  const frontmatter = text.replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---(?:\n|$)/)?.[1];
+  const oid = frontmatter?.match(/^oid:\s*(\S+)\s*$/m)?.[1];
+  const email = frontmatter?.match(/^email:\s*(\S+)\s*$/m)?.[1];
+  if (!oid || !email) throw new Error(`Missing identity for ${name}`);
+  return { oid, email };
+}
+
+async function getQuestionsForAgent(name: string, request = fetch) {
+  const { oid, email } = await getAgentIdentity(name);
+  const settings = await localSettings();
+  const questionUrl = settings.QUESTION_URL ?? process.env.QUESTION_URL ?? "http://127.0.0.1:7073";
+  const token = authDev.generateToken({ oid, name, preferred_username: email });
+  const response = await request(new URL("/questionQry/getQuestions", questionUrl), {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const text = await response.text();
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    body = text;
+  }
+  if (!response.ok) throw new Error(`Question API returned ${response.status}`);
+  const list = (body as { return?: { list?: unknown[] } })?.return?.list;
+  if (!Array.isArray(list)) throw new Error("Question API returned an invalid list");
+  return list;
+}
+
+async function getAnswersForAgent(name: string, questionId: string, request = fetch) {
+  if (!AGENT_NAMES.has(name)) throw new Error("Unknown agent");
+  const questions = await getQuestionsForAgent(name, request);
+  if (!questions.some((question) => question && typeof question === "object" && "id" in question && question.id === questionId)) return undefined;
+  const { oid, email } = await getAgentIdentity(name);
+  const settings = await localSettings();
+  const questionUrl = settings.QUESTION_URL ?? process.env.QUESTION_URL ?? "http://127.0.0.1:7073";
+  const token = authDev.generateToken({ oid, name, preferred_username: email });
+  const response = await request(new URL(`/questionQry/getAnswers/${encodeURIComponent(questionId)}`, questionUrl), {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const body = await response.json();
+  if (!response.ok) throw new Error(`Answer API returned ${response.status}`);
+  const list = body?.return?.list;
+  if (!Array.isArray(list)) throw new Error("Answer API returned an invalid list");
+  if (list.some((answer) => !answer || typeof answer !== "object" || answer.questionId !== questionId)) {
+    throw new Error("Answer API returned data for a different question");
+  }
+  const namesByProfileId = Object.fromEntries(Object.entries(await getAgentOids()).map(([agent, profileId]) => [profileId, agent]));
+  if (registeredHuman.profileId) namesByProfileId[registeredHuman.profileId] = registeredHuman.name ?? "Participant";
+  return list.map((answer) => ({
+    ...answer,
+    answeredBy: typeof answer.profileId === "string" ? namesByProfileId[answer.profileId] ?? "Unknown participant" : "Unknown participant",
+    profileId: undefined,
+  }));
 }
 
 const spawnPnpm = (args: string[], cwd: string, env = CHILD_ENV) =>
@@ -295,6 +354,22 @@ async function handle(request, response) {
       return sendJson(response, 503, { error: error instanceof Error ? error.message : String(error) });
     }
   }
+  if (request.method === "POST" && url.pathname === "/api/answers") {
+    if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Same-origin request required" });
+    try {
+      const body = await readJson(request);
+      const person = typeof body.person === "string" ? body.person : "";
+      const questionId = typeof body.questionId === "string" ? body.questionId.trim() : "";
+      if (!AGENT_NAMES.has(person)) return sendJson(response, 400, { error: "Select a known agent" });
+      if (!questionId) return sendJson(response, 400, { error: "Question ID is required" });
+      const answers = await getAnswersForAgent(person, questionId);
+      if (!answers) return sendJson(response, 403, { error: "Question is not accessible to this person" });
+      return sendJson(response, 200, { answers });
+    } catch (error) {
+      console.error("Could not load answers:", error);
+      return sendJson(response, 502, { error: error instanceof Error ? error.message : String(error) });
+    }
+  }
   if (request.method === "POST" && url.pathname === "/api/run") {
     if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Same-origin request required" });
     if (state.runProcess || ["starting", "waiting-for-human"].includes(state.run.status)) return sendJson(response, 409, state.run);
@@ -390,6 +465,16 @@ async function handle(request, response) {
 
   if (url.pathname === "/favicon.ico") return send(response, 204, "image/x-icon", "");
   if (url.pathname === "/api/run") return sendJson(response, 200, state.run);
+  if (url.pathname === "/api/questions") {
+    const person = url.searchParams.get("person") ?? "";
+    if (!AGENT_NAMES.has(person)) return sendJson(response, 400, { error: "Select a known agent" });
+    try {
+      return sendJson(response, 200, { questions: await getQuestionsForAgent(person) });
+    } catch (error) {
+      console.error(`Could not load questions for ${person}:`, error);
+      return sendJson(response, 502, { error: error instanceof Error ? error.message : String(error) });
+    }
+  }
   if (url.pathname === "/api/runs") return sendJson(response, 200, { runs: await listRuns() });
   if (url.pathname === "/api/agents") return sendJson(response, 200, { oids: await getAgentOids() });
   if (url.pathname === "/api/log") {

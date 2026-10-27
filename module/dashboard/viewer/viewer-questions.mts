@@ -11,6 +11,23 @@ type Answer = { author: string; text: string };
 type Question = { id?: string; title: string; owner: string; text: string; answers: Answer[]; sharedWith: string[]; agents: Set<string>; isNew: boolean };
 type QuestionEvent = { agent: string; kind: string; text: string; questionId?: string; participants?: string[] };
 type ReportQuestion = Omit<Question, "agents" | "isNew" | "sharedWith"> & { sharedWith?: string[] };
+type ApiQuestion = {
+  id: string;
+  profileId: string;
+  title: string | null;
+  questionText: string;
+  optionList: string[] | null;
+  createdAt?: string;
+};
+type ApiAnswer = {
+  id: string;
+  questionId: string;
+  answeredBy: string;
+  answerText: string | null;
+  optionAnswerList: string[] | null;
+  createdAt?: string;
+  isEdited?: boolean;
+};
 
 const participantNames = (events: QuestionEvent[]) => events.find((event) => event.kind === "start")?.participants ?? [];
 
@@ -64,79 +81,154 @@ export function groupQuestions(events: QuestionEvent[], reportQuestions: ReportQ
   return [...questions.values()];
 }
 
-export function renderQuestions({ activeAgent, elements, events, questions: reportQuestions, renderInspector }) {
-  const questions = groupQuestions(events, reportQuestions).filter(
-    (question) => !activeAgent || question.owner === activeAgent || question.agents.has(activeAgent)
-  );
+export function renderQuestions({ activeAgent, elements, questions, status, selectedQuestionId, answers, answerStatus, onSelect, renderInspector }) {
   elements.viewTitle.textContent = "Questions";
-  const topics = new Set(questions.map(questionTopic));
-  const overlap = Math.max(0, questions.length - topics.size);
-  elements.filterNote.textContent = activeAgent
-    ? `${questions.length} involving ${activeAgent}`
-    : `${questions.length} questions, ${topics.size} topics, ${overlap} overlapping`;
+  elements.filterNote.textContent = activeAgent && status === "ready" ? `${questions.length} questions visible to ${activeAgent}` : "Select a person";
+  if (!activeAgent) {
+    const empty = document.createElement("li");
+    empty.className = "empty";
+    empty.textContent = "Select Mike, Bella, Ian or Eric to load their questions.";
+    elements.feed.replaceChildren(empty);
+    renderInspector({ title: "Question details", kindLabel: "Question", text: "Select a question to view details." });
+    return;
+  }
+  if (status === "loading") {
+    const empty = document.createElement("li");
+    empty.className = "empty";
+    empty.textContent = `Loading questions visible to ${activeAgent}…`;
+    elements.feed.replaceChildren(empty);
+    renderInspector({ title: "Question details", kindLabel: "Question", text: "Select a question to view details." });
+    return;
+  }
+  if (status === "error") {
+    const empty = document.createElement("li");
+    empty.className = "empty";
+    empty.textContent = `Questions for ${activeAgent} could not be loaded.`;
+    elements.feed.replaceChildren(empty);
+    renderInspector({ title: "Question details", kindLabel: "Question", text: "The Question API request failed." });
+    return;
+  }
   if (!questions.length) {
     const empty = document.createElement("li");
     empty.className = "empty";
-    empty.textContent = "No questions are visible in this run yet.";
+    empty.textContent = `No questions are visible to ${activeAgent}.`;
     elements.feed.replaceChildren(empty);
-    renderInspector(null);
+    renderInspector({ title: "Question details", kindLabel: "Question", text: "Select a question to view details." });
     return;
   }
 
-  const inspect = (question) =>
-    renderInspector({
-      agent: question.owner,
-      kind: "question",
-      time: question.isNew ? "This run" : "Earlier run",
-      text: [
-        question.text,
-        question.sharedWith.length ? `Shared with: ${question.sharedWith.join(", ")}` : "Not shared with anyone in this run",
-        ...question.answers.map((answer) => `${answer.author} — ${answer.text}`),
-      ].filter(Boolean).join("\n\n"),
+  const node = (tag: string, className = "", text = "") => {
+    const item = document.createElement(tag);
+    item.className = className;
+    item.textContent = text;
+    return item;
+  };
+  const copyButton = (value: string) => {
+    const button = node("button", "technical-copy", "Copy") as HTMLButtonElement;
+    button.type = "button";
+    button.setAttribute("aria-label", `Copy ${value}`);
+    button.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(value);
+      button.textContent = "Copied";
+      elements.announcer.textContent = "API path copied";
     });
+    return button;
+  };
+  const technicalRow = (label: string, value: string, copy = false) => {
+    const row = node("div", "technical-row");
+    row.append(node("dt", "", label), node("dd", "", value));
+    if (copy) row.append(copyButton(value));
+    return row;
+  };
+  const disclosure = (label: string, body: HTMLElement) => {
+    const details = node("details", "detail-disclosure");
+    details.append(node("summary", "", label), body);
+    return details;
+  };
+  const inspect = (question: ApiQuestion) => {
+    renderInspector({
+      agent: activeAgent,
+      kind: "question",
+      kindLabel: "Question",
+      title: question.title || "Untitled question",
+      questionId: question.id,
+      time: question.createdAt ? new Date(question.createdAt).toLocaleString() : "Not provided",
+      text: question.questionText,
+    });
+    const content = node("div", "question-details");
+    content.append(node("p", "question-text", question.questionText));
+
+    const answerSection = node("section", "answer-section");
+    answerSection.append(node("h3", "detail-section-title", "Answers"));
+    const answerList = node("div", "answer-list");
+    const matching = (answers as ApiAnswer[]).filter((answer) => answer.questionId === question.id);
+    if (answerStatus === "loading") answerList.append(node("p", "detail-empty", "Loading answers…"));
+    else if (answerStatus === "error") answerList.append(node("p", "detail-empty", "Answers could not be loaded."));
+    else if (answerStatus !== "ready") answerList.append(node("p", "detail-empty", "Select this question to load answers."));
+    else if (!matching.length) answerList.append(node("p", "detail-empty", "No answers recorded."));
+    else for (const answer of matching) {
+      const card = node("article", "answer-card");
+      const head = node("div", "answer-card-head");
+      head.append(node("strong", "", answer.answeredBy));
+      if (answer.isEdited) head.append(node("span", "edited-badge", "Edited"));
+      card.append(
+        head,
+        node("p", "answer-value", answer.optionAnswerList?.length ? answer.optionAnswerList.join(", ") : answer.answerText || "No answer content"),
+        node("p", "answer-time", answer.createdAt ? `Answered at ${new Date(answer.createdAt).toLocaleString()}` : "Answered timestamp not provided")
+      );
+      answerList.append(card);
+    }
+    answerSection.append(answerList);
+    content.append(answerSection);
+
+    const options = node("div", "detail-disclosure-body");
+    if (question.optionList?.length) {
+      const list = node("ul", "option-list");
+      question.optionList.forEach((option) => list.append(node("li", "", option)));
+      options.append(list);
+    } else options.append(node("p", "detail-empty", "No options."));
+    content.append(disclosure(`Options (${question.optionList?.length ?? 0})`, options));
+
+    const created = node("section", "created-detail");
+    created.append(node("h3", "detail-section-title", "Created at"), node("time", "", question.createdAt ? new Date(question.createdAt).toLocaleString() : "Not provided"));
+    content.append(created);
+
+    const technical = node("div", "detail-disclosure-body");
+    const technicalList = node("dl", "technical-list");
+    technicalList.append(
+      technicalRow("Question Source API", "GET /questionQry/getQuestions", true),
+      technicalRow("Question Dashboard Proxy", "GET /api/questions?person={person}", true),
+      technicalRow("Answer Source API", "GET /questionQry/getAnswers/{questionId}", true),
+      technicalRow("Answer Dashboard Proxy", "POST /api/answers", true),
+      technicalRow("AI Execution API", "Not available")
+    );
+    technical.append(technicalList);
+    content.append(disclosure("API & Technical Details", technical));
+    elements.eventText.replaceChildren(content);
+  };
   const items = questions.map((question, index) => {
     const item = document.createElement("li");
     item.className = "feed-item kind-question";
     const button = document.createElement("button");
     button.type = "button";
     button.className = "feed-button question-summary";
-    button.innerHTML = `<span class="question-main"><strong></strong><small class="question-meta"></small><small class="question-status"></small><span class="question-people"></span></span><span class="question-count"></span>`;
-    button.querySelector("strong").textContent = question.title;
-    button.querySelector(".question-meta").textContent = `${questionTopic(question)} | ${question.isNew ? "New this run" : "Reused"} | ${question.owner}`;
-    const answerByAuthor = new Map(question.answers.map((answer) => [answer.author, answer]));
-    const people = [...new Set([question.owner, ...question.sharedWith])];
-    const answered = people.filter((person) => answerByAuthor.has(person)).length;
-    const waitingOn = question.sharedWith.filter((person) => !answerByAuthor.has(person));
-    const status = button.querySelector(".question-status");
-    status.textContent = waitingOn.length
-      ? `Waiting on: ${waitingOn.join(", ")}`
-      : question.sharedWith.length
-        ? "All shared recipients answered"
-        : "Not shared in this run";
-    status.classList.add(waitingOn.length ? "question-pending" : question.sharedWith.length ? "question-complete" : "question-not-shared");
-    const peopleList = button.querySelector(".question-people");
-    for (const person of people) {
-      const row = document.createElement("span");
-      row.className = "question-person";
-      const name = document.createElement("span");
-      name.textContent = person;
-      const answer = document.createElement("span");
-      const response = answerByAuthor.get(person);
-      answer.textContent = response ? `✓ ${response.text}` : "— Not answered";
-      answer.className = response ? "question-answered" : "question-unanswered";
-      row.append(name, answer);
-      peopleList.append(row);
-    }
-    button.querySelector(".question-count").textContent = `${answered} / ${people.length} answered`;
+    button.innerHTML = `<span class="question-main"><strong></strong><small class="question-meta"></small><span class="question-card-text"></span></span>`;
+    button.querySelector("strong").textContent = question.title || "Untitled question";
+    button.querySelector(".question-meta").textContent = [
+      question.createdAt ? new Date(question.createdAt).toLocaleString() : "Created time not provided",
+      `${question.optionList?.length ?? 0} options`,
+    ].join(" · ");
+    button.querySelector(".question-card-text").textContent = question.questionText;
+    button.classList.toggle("is-selected", question.id === selectedQuestionId);
+    button.setAttribute("aria-pressed", String(question.id === selectedQuestionId));
     button.addEventListener("click", () => {
-      for (const selected of elements.feed.querySelectorAll(".is-selected")) selected.classList.remove("is-selected");
-      button.classList.add("is-selected");
-      inspect(question);
+      onSelect(question.id);
     });
-    if (index === 0) button.classList.add("is-selected");
     item.append(button);
     return item;
   });
   elements.feed.replaceChildren(...items);
-  inspect(questions[0]);
+  const selected = questions.find((question) => question.id === selectedQuestionId);
+  if (selected) inspect(selected);
+  else renderInspector({ title: "Question details", kindLabel: "Question", text: "Select a question to view details." });
 }
