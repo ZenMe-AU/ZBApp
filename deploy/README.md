@@ -35,5 +35,7 @@ This uses the [official CLI installation method](https://hermes-agent.nousresear
 `hermes desktop --build-only`. It installs workspace dependencies and builds the
 native app for Windows, macOS, or Linux under the existing Hermes source checkout,
 without launching a window. Run `hermes desktop` afterward to launch it.
+On Windows, the wrapper also creates a per-user **Hermes Desktop** Start menu
+shortcut pointing to the built executable, with its working directory and icon.
 On macOS/Linux, the Hermes CLI must be available on `PATH`.
 The `Install-AllDevAiTools` stage installs Desktop after Hermes Agent.

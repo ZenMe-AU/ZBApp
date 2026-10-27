@@ -114,10 +114,10 @@ function Install-DevAiTools {
     Install-OpenVino
     Install-HuggingFace
     #Install-OpenVinoModels
-    Install-HermesStudio
-    Install-HermesAgent
-    Install-HermesDesktop
-    Install-EkkoStudio
+    #Install-HermesStudio
+    #Install-HermesAgent
+    #Install-HermesDesktop
+    #Install-EkkoStudio
 }
 
 function Install-Pnpm {
@@ -1094,6 +1094,22 @@ function Install-HermesDesktop {
         }
     } finally {
         $env:HERMES_HOME = $previousHome
+    }
+
+    if ($script:IsWindows) {
+        $executable = Join-Path $installDir 'apps\desktop\release\win-unpacked\Hermes.exe'
+        if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+            throw "Hermes Desktop executable was not found at '$executable'."
+        }
+        $programs = [Environment]::GetFolderPath('Programs')
+        New-Item -ItemType Directory -Path $programs -Force -ErrorAction Stop | Out-Null
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut((Join-Path $programs 'Hermes Desktop.lnk'))
+        $shortcut.TargetPath = $executable
+        $shortcut.WorkingDirectory = Split-Path -Path $executable -Parent
+        $shortcut.IconLocation = "$executable,0"
+        $shortcut.Description = 'Hermes Desktop'
+        $shortcut.Save()
     }
 
     Write-Output "Hermes Desktop is installed. Run 'hermes desktop' to launch it."
