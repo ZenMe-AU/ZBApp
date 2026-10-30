@@ -25,7 +25,23 @@ import {
 } from "./profileRepository.mjs";
 import { configureTableStorage, getTableClient, type TableStorageSettings } from "./init.mjs";
 import { QUESTION_DATA_TABLE } from "./keys.mjs";
-import type { QuestRepository } from "../contracts.mjs";
+import type {
+  AnswerRecord,
+  CommandEventRecord,
+  CommandRecord,
+  EnsureProfileResult,
+  FriendRecord,
+  FollowUpFilterInput,
+  FollowUpFilterRecord,
+  ProfileDetails,
+  ProfileRecord,
+  QuestRepository,
+  QuestionPatchOperation,
+  QuestionListRecord,
+  QuestionRecord,
+  QuestionShareRecord,
+  RepositoryJsonObject,
+} from "../contracts.mjs";
 import cmdName from "../../enum/cmdName.mjs";
 
 type CommandKind = "FollowUpCmd" | "QuestionShareCmd";
@@ -61,11 +77,11 @@ function commandRowKey(kind: CommandKind, id: string): string {
   return `command:${kind}:${id}`;
 }
 
-function parseJson(value: string | undefined): unknown {
+function parseJson(value: string | undefined): RepositoryJsonObject | null {
   return value ? JSON.parse(value) : null;
 }
 
-async function insertCommand(kind: CommandKind, senderId: string, data: Record<string, unknown>, correlationId: string) {
+async function insertCommand(kind: CommandKind, senderId: string, data: RepositoryJsonObject, correlationId: string) {
   const command: CommandEntity = {
     partitionKey: senderId,
     rowKey: commandRowKey(kind, randomUUID()),
@@ -120,12 +136,12 @@ async function updateCommandStatus(kind: CommandKind, id: string): Promise<{ id:
   return { id };
 }
 
-async function getEvents(kind: CommandKind, correlationId: string): Promise<unknown[]> {
+async function getEvents(kind: CommandKind, correlationId: string): Promise<CommandEventRecord[]> {
   const client = await getTableClient(QUESTION_DATA_TABLE);
   const entities = client.listEntities<EventEntity>({
     queryOptions: { filter: odata`eventType eq ${kind} and correlationId eq ${correlationId}` },
   });
-  const events = [];
+  const events: CommandEventRecord[] = [];
   for await (const entity of entities) {
     const event = entity as EventEntity;
     events.push({
@@ -142,65 +158,77 @@ async function getEvents(kind: CommandKind, correlationId: string): Promise<unkn
 }
 
 const repository = {
-  async findProfileByExternalId(externalId: string) {
+  async findProfileByExternalId(externalId: string): Promise<ProfileRecord | null> {
     const profile = await findProfileByExternalId(externalId);
     return profile ? { id: profile.internalId, externalId: profile.externalId } : null;
   },
 
-  async createProfile(externalId: string) {
+  async createProfile(externalId: string): Promise<ProfileRecord> {
     const profile = await createProfile(externalId);
     return { id: profile.internalId, externalId: profile.externalId };
   },
 
-  async ensureProfile(externalId: string, details = {}) {
+  async ensureProfile(externalId: string, details: ProfileDetails = {}): Promise<EnsureProfileResult> {
     const result = await ensureTableProfile(externalId, details);
     return { profile: { id: result.profile.internalId, externalId: result.profile.externalId }, created: result.created };
   },
 
-  async updatePreferredName(externalId: string, preferredName: string) {
+  async updatePreferredName(externalId: string, preferredName: string): Promise<ProfileRecord> {
     const profile = await updateTablePreferredName(externalId, preferredName);
     return { id: profile.internalId, externalId: profile.externalId };
   },
 
-  async addFriend(profileId: string, friendId: string) {
+  async addFriend(profileId: string, friendId: string): Promise<FriendRecord> {
     const friend = await addTableFriend(profileId, friendId);
     return { id: friend.internalId, name: friend.name, degree: friend.degree, path: friend.path };
   },
 
-  async listFriends(profileId: string) {
+  async listFriends(profileId: string): Promise<FriendRecord[]> {
     const friends = await listTableFriends(profileId);
     return friends.map((friend) => ({ id: friend.internalId, name: friend.name, degree: friend.degree, path: friend.path }));
   },
 
-  async getById(questionId: string) {
+  async getById(questionId: string): Promise<QuestionRecord | null> {
     return getQuestionById(questionId);
   },
 
-  async create(profileId: string, title = null, question = null, optionList = null) {
+  async create(
+    profileId: string,
+    title: string | null = null,
+    question: string | null = null,
+    optionList: string[] | null = null
+  ): Promise<QuestionRecord> {
     const created = await createQuestion({ profileId, title, questionText: question ?? "", optionList });
     const questionRecord = await getQuestionById(created.id);
     if (!questionRecord) throw new Error(`Question not found after creation: ${created.id}`);
     return questionRecord;
   },
 
-  async updateById(questionId: string, title = null, questionText = null, optionList = null) {
+  async updateById(
+    questionId: string,
+    title: string | null = null,
+    questionText: string | null = null,
+    optionList: string[] | null = null
+  ): Promise<{ id: string }> {
     const question = await getQuestionById(questionId);
     if (!question) throw new Error(`Question not found for questionId: ${questionId}`);
     return updateQuestionById(questionId, { title, questionText, optionList }, question.profileId);
   },
 
-  async getCombinationListByUser(profileId: string) {
+  async getCombinationListByUser(profileId: string): Promise<QuestionListRecord[]> {
     const questions = await getQuestionListByProfileId(profileId);
     // shortcut: one answer lookup per question, batch only if question-list latency becomes measurable.
     return Promise.all(
-      questions.map(async (question) => ({
-        ...question,
-        latestAnswer: (await getAnswerListByQuestionId(question.id)).find((answer) => answer.profileId === profileId) ?? null,
-      }))
+      questions.map(async (question) => {
+        const latestAnswer = (await getAnswerListByQuestionId(question.id)).find((answer) => answer.profileId === profileId);
+        if (!latestAnswer) return { ...question, latestAnswer: null };
+        const { answerCount: _answerCount, ...answerRecord } = latestAnswer;
+        return { ...question, latestAnswer: answerRecord };
+      })
     );
   },
 
-  async patchById(questionId: string, action: unknown, profileId: string) {
+  async patchById(questionId: string, action: QuestionPatchOperation[], profileId: string): Promise<{ id: string }> {
     return patchQuestionById(questionId, profileId, action);
   },
 
@@ -208,11 +236,10 @@ const repository = {
     questionId: string,
     profileId: string,
     duration: number,
-    answer = null,
+    answer: string | null = null,
     option: string | string[] | null = null,
-    recipientProfileId?: string,
     when?: string | null
-  ) {
+  ): Promise<AnswerRecord> {
     const options = option === null ? null : Array.isArray(option) ? option : [option];
     const created = await addAnswer({
       questionId,
@@ -221,7 +248,6 @@ const repository = {
       answerText: answer,
       optionId: options?.[0] ?? null,
       optionAnswerList: options,
-      recipientProfileId,
       when,
     });
     const record = await getAnswerById(questionId, created.id);
@@ -229,26 +255,26 @@ const repository = {
     return record;
   },
 
-  async getAnswerById(questionId: string, answerId: string) {
+  async getAnswerById(questionId: string, answerId: string): Promise<AnswerRecord | null> {
     return getAnswerById(questionId, answerId);
   },
 
-  async getAnswerListByQuestionId(questionId: string) {
+  async getAnswerListByQuestionId(questionId: string): Promise<AnswerRecord[]> {
     return getAnswerListByQuestionId(questionId);
   },
 
-  async getEventByCorrelationId(name: string, correlationId: string) {
+  async getEventByCorrelationId(name: "FollowUpCmd" | "QuestionShareCmd", correlationId: string): Promise<CommandEventRecord[]> {
     if (name === cmdName.FollowUpCmd) return getEvents("FollowUpCmd", correlationId);
     if (name === cmdName.QuestionShareCmd) return getEvents("QuestionShareCmd", correlationId);
     throw new Error(`Unknown eventName: ${name}`);
   },
 
-  async insertFollowUpCmd(senderId: string, data: Record<string, unknown>, correlationId: string) {
+  async insertFollowUpCmd(senderId: string, data: RepositoryJsonObject, correlationId: string): Promise<CommandRecord> {
     const command = await insertCommand("FollowUpCmd", senderId, data, correlationId);
     return { id: command.id };
   },
 
-  async insertFollowUpFilter(senderId: string, data: Record<string, unknown>) {
+  async insertFollowUpFilter(senderId: string, data: FollowUpFilterInput): Promise<FollowUpFilterRecord[]> {
     if (!(data.isSave ?? data.save) || !Array.isArray(data.question)) return [];
     const client = await getTableClient(QUESTION_DATA_TABLE);
     const filterId = randomUUID();
@@ -268,28 +294,35 @@ const repository = {
       }))
     );
     for (const filter of filters) await client.createEntity(filter);
-    return filters;
+    return filters.map(({ id, order, senderProfileId, refQuestionId, newQuestionId }, index) => ({
+      id,
+      order,
+      senderProfileId,
+      refQuestionId,
+      refOption: questions[index % questions.length].option,
+      newQuestionId,
+    }));
   },
 
-  async updateFollowUpCmdStatus(id: string) {
+  async updateFollowUpCmdStatus(id: string): Promise<{ id: string }> {
     return updateCommandStatus("FollowUpCmd", id);
   },
 
-  async shareQuestion(questionId: string, senderId: string, receiverIds: string[]) {
+  async shareQuestion(questionId: string, senderId: string, receiverIds: string[]): Promise<QuestionShareRecord[]> {
     await shareQuestion(questionId, senderId, receiverIds);
     return receiverIds.map((receiverProfileId) => ({ questionId, senderProfileId: senderId, receiverProfileId }));
   },
 
-  async insertQuestionShareCmd(senderId: string, data: Record<string, unknown>, correlationId: string) {
+  async insertQuestionShareCmd(senderId: string, data: RepositoryJsonObject, correlationId: string): Promise<CommandRecord> {
     const command = await insertCommand("QuestionShareCmd", senderId, data, correlationId);
     return { id: command.id };
   },
 
-  async updateQuestionShareCmdStatus(id: string) {
+  async updateQuestionShareCmdStatus(id: string): Promise<{ id: string }> {
     return updateCommandStatus("QuestionShareCmd", id);
   },
 
-  async getSharedQuestionListByProfileId(profileId: string) {
+  async getSharedQuestionListByProfileId(profileId: string): Promise<QuestionRecord[]> {
     return getSharedQuestionListByProfileId(profileId);
   },
 } satisfies QuestRepository;

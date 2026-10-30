@@ -5,108 +5,57 @@
 # This module provide functions to set the desired state for local tools that allow the other scripts to function.
 #
 
-function Initialize-PlatformState {
-    if ($PSVersionTable.PSVersion.Major -lt 6) {
-        Write-Warning "You are using a Windows only version of powershell, upgrade to Powerhsell Core when possible"
-        Set-Variable -Name IsWindows -Value ($env:OS -eq 'Windows_NT') -Scope Script
-        Set-Variable -Name IsMacOS -Value $false -Scope Script
-        Set-Variable -Name IsUbuntu -Value $false -Scope Script
-        if ($env:OSTYPE -eq 'darwin') { Set-Variable -Name IsMacOS -Value $true -Scope Script }
-        elseif ((Get-Command uname -ErrorAction SilentlyContinue) -and (uname) -eq 'Darwin') { Set-Variable -Name IsMacOS -Value $true -Scope Script }
-    } else {
-        # PowerShell 6+ (Core) cross-platform means this could be Windows or any other OS that supports powershell core.
-        # Check for Windows        
-        $isWin = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
-        Set-Variable -Name IsWindows -Value $isWin -Scope Script
-
-        # Check for MacOS
-        $isMac = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::OSX)
-        Set-Variable -Name IsMacOS -Value $isMac -Scope Script
-        # Check for Ubuntu
-        $isUbuntu = $false
-        if (-not $isWin -and -not $isMac) {
-            if ((Get-Command lsb_release -ErrorAction SilentlyContinue) -and ((& lsb_release '-is' 2>$null).Trim() -eq 'Ubuntu')) {
-                $isUbuntu = $true
-            } elseif (Test-Path '/etc/os-release') {
-                $osRelease = Get-Content '/etc/os-release' -ErrorAction SilentlyContinue
-                if ($osRelease -match '^ID=ubuntu$' -or $osRelease -match '^ID="ubuntu"$') {
-                    $isUbuntu = $true
-                }
-            }
-        }
-        Set-Variable -Name IsUbuntu -Value $isUbuntu -Scope Script
-        # Detect Apple Silicon (true even when running under Rosetta 2)
-        $isAppleSilicon = $false
-        if ($isMac) {
-            $armSupport = & sysctl -n hw.optional.arm64 2>$null
-            $isAppleSilicon = ($armSupport -eq "1")
-        }
-        Set-Variable -Name IsAppleSilicon -Value $isAppleSilicon -Scope Script
-
-
-        $isLinux = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Linux)
-        Set-Variable -Name IsLinux -Value $isLinux -Scope Script
-
-        # Ubuntu detection by reading /etc/os-release
-        $isUbuntu = $false
-        if ($isLinux) {
-            try {
-                $osRelease = Get-Content -Path /etc/os-release -ErrorAction SilentlyContinue -Raw
-                if ($osRelease -and ($osRelease -match '(^|\n)ID=\"?ubuntu\"?(\n|$)' -or $osRelease -match 'Ubuntu')) {
-                    $isUbuntu = $true
-                }
-            } catch { }
-        }
-        Set-Variable -Name IsUbuntu -Value $isUbuntu -Scope Script
-    }
+function Set-InstallBaseFolder {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $script:InstallBaseFolder = $Path
 }
-# Determine the OS type and set variables in script scope
-Initialize-PlatformState
 
-# Wrapper for brew that forces ARM64 mode on Apple Silicon to avoid Rosetta 2 conflicts
-function Invoke-Brew {
-    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
-    if ($script:IsAppleSilicon) {
-        arch -arm64 /opt/homebrew/bin/brew @Arguments
-    } else {
-        /usr/local/bin/brew @Arguments
-    }
+function Get-InstallBaseFolder {
+    return $script:InstallBaseFolder
 }
 
 function Install-DevTools {
-    Install-NodeJsAndNpm
-    Install-Pnpm
-    Install-Terraform
-    Install-PostgreSql
-    Install-AwsCli
-    Install-AzureCli
-    Install-AzureStorageExplorer
-    Install-GitHubCli
+    Install-SelectedTools @(
+        [pscustomobject]@{ Name = 'Node.js and npm';        Command = 'Install-NodeJsAndNpm';         Default = $true }
+        [pscustomobject]@{ Name = 'pnpm';                   Command = 'Install-Pnpm';                 Default = $true }
+        [pscustomobject]@{ Name = 'Terraform';              Command = 'Install-Terraform';            Default = $true }
+        [pscustomobject]@{ Name = 'PostgreSQL';             Command = 'Install-PostgreSql';           Default = $true }
+        [pscustomobject]@{ Name = 'AWS CLI';                Command = 'Install-AwsCli';               Default = $true }
+        [pscustomobject]@{ Name = 'Azure CLI';              Command = 'Install-AzureCli';             Default = $true }
+        [pscustomobject]@{ Name = 'Azure Storage Explorer'; Command = 'Install-AzureStorageExplorer'; Default = $true }
+        [pscustomobject]@{ Name = 'GitHub CLI';             Command = 'Install-GitHubCli';            Default = $true }
+    )
 }
 
 function Install-DevAiTools {
-    Install-NodeJsAndNpm
-    Install-Pnpm
-    Install-Terraform
-    Install-PostgreSql
-    Install-AwsCli
-    Install-AzureCli
-    Install-AzureStorageExplorer
-    Install-Ripgrep
-    Install-Fd
-    Install-Jq
-    Install-Yq
-    Install-GitHubCli
-    Install-GitHubCopilotCli
-    Install-ClaudeCode
-    Install-Packer
-    Install-Python
-    #Install-DockerCli
-    Install-Ollama
-    #Install-OllamaModels
-    Install-OpenVino
-    Install-HuggingFace
-    #Install-OpenVinoModels
+    Install-SelectedTools @(
+        [pscustomobject]@{ Name = 'Node.js and npm';        Command = 'Install-NodeJsAndNpm';         Default = $true }
+        [pscustomobject]@{ Name = 'pnpm';                   Command = 'Install-Pnpm';                 Default = $true }
+        [pscustomobject]@{ Name = 'Terraform';              Command = 'Install-Terraform';            Default = $true }
+        [pscustomobject]@{ Name = 'AWS CLI';                Command = 'Install-AwsCli';               Default = $true }
+        [pscustomobject]@{ Name = 'Azure CLI';              Command = 'Install-AzureCli';             Default = $true }
+        [pscustomobject]@{ Name = 'Azure Storage Explorer'; Command = 'Install-AzureStorageExplorer'; Default = $true }
+        [pscustomobject]@{ Name = 'ripgrep';                Command = 'Install-Ripgrep';              Default = $true }
+        [pscustomobject]@{ Name = 'fd';                     Command = 'Install-Fd';                   Default = $true }
+        [pscustomobject]@{ Name = 'jq';                     Command = 'Install-Jq';                   Default = $true }
+        [pscustomobject]@{ Name = 'yq';                     Command = 'Install-Yq';                   Default = $true }
+        [pscustomobject]@{ Name = 'PostgreSQL';             Command = 'Install-PostgreSql';           Default = $false }
+        [pscustomobject]@{ Name = 'GitHub CLI';             Command = 'Install-GitHubCli';            Default = $true }
+        [pscustomobject]@{ Name = 'GitHub Copilot CLI';     Command = 'Install-GitHubCopilotCli';     Default = $false }
+        [pscustomobject]@{ Name = 'Claude Code';            Command = 'Install-ClaudeCode';           Default = $false }
+        [pscustomobject]@{ Name = 'Packer';                 Command = 'Install-Packer';               Default = $false }
+        [pscustomobject]@{ Name = 'Python';                 Command = 'Install-Python';               Default = $false }
+        [pscustomobject]@{ Name = 'Docker CLI';             Command = 'Install-DockerCli';            Default = $false }
+        [pscustomobject]@{ Name = 'Ollama';                 Command = 'Install-Ollama';               Default = $false }
+        [pscustomobject]@{ Name = 'Ollama Models';          Command = 'Install-OllamaModels';         Default = $false }
+        [pscustomobject]@{ Name = 'OpenVino';               Command = 'Install-OpenVino';             Default = $false }
+        [pscustomobject]@{ Name = 'HuggingFace';            Command = 'Install-HuggingFace';         Default = $false }
+        [pscustomobject]@{ Name = 'OpenVino Models';        Command = 'Install-OpenVinoModels';       Default = $false }
+        [pscustomobject]@{ Name = 'Hermes Studio';          Command = 'Install-HermesStudio';         Default = $false }
+        [pscustomobject]@{ Name = 'Hermes Agent';           Command = 'Install-HermesAgent';          Default = $false }
+        [pscustomobject]@{ Name = 'Hermes Desktop';         Command = 'Install-HermesDesktop';        Default = $false }
+        [pscustomobject]@{ Name = 'Ekko Studio';            Command = 'Install-EkkoStudio';           Default = $false }
+    )
 }
 
 function Install-Pnpm {
@@ -157,6 +106,95 @@ function Install-Pnpm {
         } else {
             Write-Output "pnpm is installed and version $pnpmVersion meets the minimum required version $pnpmRequiredVersion."
         }
+    }
+    Install-PnpmCompletion
+}
+
+function Install-PnpmCompletion {
+    try {
+        if ($script:IsWindows) {
+            $shellName = 'pwsh'
+        } elseif ($script:IsMacOS) {
+            $shellName = if ($env:SHELL) { Split-Path $env:SHELL -Leaf } else { 'zsh' }
+        } elseif ($script:IsUbuntu) {
+            $shellName = if ($env:SHELL) { Split-Path $env:SHELL -Leaf } else { 'bash' }
+        } else {
+            Write-Warning "Unsupported OS for automatic pnpm completion setup. Please run 'pnpm completion <shell>' manually."
+            return
+        }
+
+        switch ($shellName) {
+            'zsh'  { $profilePath = Join-Path $HOME '.zshrc';  $completionFile = Join-Path $HOME '.pnpm-completion.zsh' }
+            'bash' { $profilePath = Join-Path $HOME $(if ($script:IsMacOS) { '.bash_profile' } else { '.bashrc' }); $completionFile = Join-Path $HOME '.pnpm-completion.bash' }
+            'pwsh' { $profilePath = $PROFILE;                  $completionFile = Join-Path $HOME '.pnpm-completion.ps1' }
+            default {
+                Write-Warning "Unsupported shell '$shellName' for pnpm completion. Please run 'pnpm completion <shell>' manually."
+                return
+            }
+        }
+
+        Write-Output "Installing pnpm completion for $shellName..."
+        $generated = (pnpm completion $shellName) -join "`n"
+        if ($LASTEXITCODE -ne 0 -or -not $generated) { throw "pnpm completion $shellName failed" }
+
+        if ($shellName -eq 'pwsh') {
+            $marker = '$RequestComp="$Program completion-server"'
+            $filterAware = @'
+$Filter = $null
+    $FilterDir = $null
+    $Tokens = "$Arguments" -split '\s+'
+    for ($i = 0; $i -lt $Tokens.Count; $i++) {
+        if (($Tokens[$i] -eq '--filter' -or $Tokens[$i] -eq '-F') -and $i + 1 -lt $Tokens.Count) { $Filter = $Tokens[$i + 1] }
+        elseif ($Tokens[$i] -like '--filter=*') { $Filter = $Tokens[$i].Substring(9) }
+    }
+    if ($Filter) { $FilterDir = pnpm --filter $Filter ls --depth -1 --parseable 2>$null | Select-Object -First 1 }
+    $RequestComp = if ($FilterDir) { "Push-Location -LiteralPath '$($FilterDir -replace "'", "''")'; $Program completion-server; Pop-Location" } else { "$Program completion-server" }
+'@
+            $sourceLine = ". `"$completionFile`""
+        } else {
+            $marker = 'pnpm completion-server'
+            $filterAware = '_pnpm_filter_aware_completion_server'
+            $wrapper = @'
+
+_pnpm_filter_aware_completion_server() {
+  local filter="" prev="" word dir
+  for word in "$@"; do
+    case "$prev" in --filter|-F) filter="$word" ;; esac
+    case "$word" in --filter=*) filter="${word#--filter=}" ;; esac
+    prev="$word"
+  done
+  if [ -n "$filter" ]; then
+    dir=$(pnpm --filter "$filter" ls --depth -1 --parseable 2>/dev/null | head -n 1)
+    if [ -n "$dir" ]; then
+      (cd "$dir" && pnpm completion-server "$@")
+      return
+    fi
+  fi
+  pnpm completion-server "$@"
+}
+'@
+            $sourceLine = "[ -f `"$completionFile`" ] && source `"$completionFile`""
+        }
+
+        if ($generated.Contains($marker)) {
+            $generated = $generated.Replace($marker, $filterAware)
+            if ($shellName -ne 'pwsh') { $generated += $wrapper }
+        } else {
+            Write-Warning "pnpm's completion template changed; installing plain completion without --filter support."
+        }
+        [System.IO.File]::WriteAllText($completionFile, $generated + "`n")
+
+        if (-not (Test-Path $profilePath)) {
+            New-Item -ItemType File -Path $profilePath -Force | Out-Null
+        }
+        if (Select-String -Path $profilePath -SimpleMatch $completionFile -Quiet) {
+            Write-Output "pnpm completion already registered in $profilePath (regenerated $completionFile)."
+        } else {
+            Add-Content -Path $profilePath -Value "`n$sourceLine"
+            Write-Output "Added pnpm completion to $profilePath. Open a new terminal to use it."
+        }
+    } catch {
+        Write-Warning "pnpm shell completion was not installed: $_"
     }
 }
 
@@ -961,4 +999,320 @@ function Update-ProcessPathFromEnvironment {
     }
 }
 
-Export-ModuleMember -Function Initialize-PlatformState,Install-Pnpm,Install-NodeJsAndNpm,Install-Terraform,Install-Packer,Install-DockerCli,Install-PostgreSql,Install-AwsCli,Install-AzureCli,Install-AzureStorageExplorer,Install-Ripgrep,Install-Fd,Install-Jq,Install-Yq,Install-GitHubCli,Install-GitHubCopilotCli,Install-ClaudeCode,Install-Ollama,Install-OllamaModels,Install-OpenVino,Install-HuggingFace,Install-OpenVinoModels,Install-Python,Set-TerraformEnvironmentType,Set-ProjectRootFolder,Install-ProjectDependencies,Initialize-ResourceGroupBootstrap,Publish-MainEnvironment,Publish-ModuleDeployments,Publish-UserInterface,Test-InitializationEnvironment,Install-DevTools,Install-DevAiTools
+
+function Install-HermesStudio {
+    $studioPath = Join-Path $script:InstallBaseFolder 'Hermes-Studio'
+    $repository = 'https://github.com/JPeetz/Hermes-Studio.git'
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Error "Git is required to install Hermes Studio. Please install Git and retry."
+        return 1
+    }
+    if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
+        Write-Error "pnpm is required to install Hermes Studio. Run Install-Pnpm and retry."
+        return 1
+    }
+
+    if (Test-Path $studioPath) {
+        $remote = git -C $studioPath remote get-url origin 2>$null
+        if ($LASTEXITCODE -ne 0 -or $remote -notmatch '^(https://github\.com/JPeetz/Hermes-Studio(?:\.git)?|git@github\.com:JPeetz/Hermes-Studio\.git)$') {
+            Write-Error "The existing path '$studioPath' is not a Hermes Studio checkout."
+            return 1
+        }
+    } else {
+        Write-Output "Cloning Hermes Studio into $studioPath..."
+        git clone --depth 1 $repository $studioPath
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Hermes Studio clone failed with exit code $LASTEXITCODE."
+            return 1
+        }
+    }
+
+    Push-Location $studioPath
+    try {
+        pnpm install --frozen-lockfile
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Dependency installation failed. Review and approve required package build scripts in the terminal."
+            pnpm approve-builds
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Hermes Studio build approval failed or was cancelled with exit code $LASTEXITCODE."
+                return 1
+            }
+
+            pnpm install --frozen-lockfile
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Hermes Studio dependency installation failed after build approval with exit code $LASTEXITCODE."
+                return 1
+            }
+        }
+
+        $envFile = Join-Path $studioPath '.env'
+        if (-not (Test-Path $envFile)) {
+            $envExample = Join-Path $studioPath '.env.example'
+            if (-not (Test-Path $envExample)) {
+                Write-Error "Hermes Studio's .env.example was not found in '$studioPath'."
+                return 1
+            }
+            Copy-Item $envExample $envFile -ErrorAction Stop
+        }
+        if ((Get-Content $envFile -Raw -ErrorAction Stop) -notmatch '(?m)^\s*HERMES_API_URL\s*=\s*\S') {
+            Add-Content -Path $envFile -Value "`nHERMES_API_URL=http://127.0.0.1:8642" -Encoding UTF8 -ErrorAction Stop
+        }
+    } finally {
+        Pop-Location
+    }
+
+    Write-Output "Hermes Studio is installed at $studioPath. Run 'pnpm dev' there to start it."
+}
+
+function Install-HermesAgent {
+    $hermesHome = Join-Path $script:InstallBaseFolder 'hermes'
+    $installDir = Join-Path $hermesHome 'hermes-agent'
+    if (-not $script:IsWindows -and -not (Get-Command bash -ErrorAction SilentlyContinue)) {
+        throw "bash is required to install Hermes Agent on macOS and Linux."
+    }
+
+    $installerFile = Join-Path ([System.IO.Path]::GetTempPath()) ("hermes-install-" + [guid]::NewGuid() + $(if ($script:IsWindows) { '.ps1' } else { '.sh' }))
+    try {
+        Write-Output "Installing Hermes Agent at $hermesHome using the official installer..."
+        if ($script:IsWindows) {
+            Invoke-WebRequest -Uri 'https://hermes-agent.nousresearch.com/install.ps1' -OutFile $installerFile -ErrorAction Stop
+            $powerShell = (Get-Process -Id $PID).Path
+            & $powerShell -NoProfile -File $installerFile -HermesHome $hermesHome -InstallDir $installDir -NonInteractive
+        } else {
+            Invoke-WebRequest -Uri 'https://hermes-agent.nousresearch.com/install.sh' -OutFile $installerFile -ErrorAction Stop
+            & bash $installerFile --hermes-home $hermesHome --dir $installDir --non-interactive
+        }
+        if ($LASTEXITCODE -ne 0) {
+            throw "Hermes Agent installation failed with exit code $LASTEXITCODE."
+        }
+    } finally {
+        if (Test-Path -LiteralPath $installerFile) {
+            Remove-Item -LiteralPath $installerFile -Force -ErrorAction Stop
+        }
+    }
+
+    $env:HERMES_HOME = $hermesHome
+    if ($script:IsWindows) {
+        [Environment]::SetEnvironmentVariable('HERMES_HOME', $hermesHome, 'User')
+    } else {
+        Write-Output "Persist HERMES_HOME=$hermesHome in your shell environment before using Hermes from a new terminal."
+    }
+
+    Write-Output "Hermes Agent is installed at $hermesHome. Run 'hermes setup' in a terminal to configure it; restart the terminal if 'hermes' is not yet available."
+}
+
+function Install-HermesDesktop {
+    $hermesHome = Join-Path $script:InstallBaseFolder 'hermes'
+    $installDir = Join-Path $hermesHome 'hermes-agent'
+    $launcher = if ($script:IsWindows) { Join-Path $hermesHome 'bin\hermes.exe' } else { 'hermes' }
+    $command = Get-Command $launcher -ErrorAction SilentlyContinue
+    if (-not $command -or -not (Test-Path -LiteralPath $installDir)) {
+        throw "Hermes Agent is required at '$installDir'. Run Install-HermesAgent with the same InstallBaseFolder first."
+    }
+
+    $previousHome = $env:HERMES_HOME
+    try {
+        $env:HERMES_HOME = $hermesHome
+        Write-Output "Installing Hermes Desktop using the existing Hermes Agent at $installDir..."
+        & $command.Source desktop --hermes-root $installDir --build-only
+        if ($LASTEXITCODE -ne 0) {
+            throw "Hermes Desktop installation failed with exit code $LASTEXITCODE."
+        }
+    } finally {
+        $env:HERMES_HOME = $previousHome
+    }
+
+    if ($script:IsWindows) {
+        $executable = Join-Path $installDir 'apps\desktop\release\win-unpacked\Hermes.exe'
+        if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+            throw "Hermes Desktop executable was not found at '$executable'."
+        }
+        $programs = [Environment]::GetFolderPath('Programs')
+        New-Item -ItemType Directory -Path $programs -Force -ErrorAction Stop | Out-Null
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut((Join-Path $programs 'Hermes Desktop.lnk'))
+        $shortcut.TargetPath = $executable
+        $shortcut.WorkingDirectory = Split-Path -Path $executable -Parent
+        $shortcut.IconLocation = "$executable,0"
+        $shortcut.Description = 'Hermes Desktop'
+        $shortcut.Save()
+    }
+
+    Write-Output "Hermes Desktop is installed. Run 'hermes desktop' to launch it."
+}
+
+function Install-EkkoStudio {
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        Write-Error "npm is required to install Ekko Studio. Install Node.js and npm, then retry."
+        return 1
+    }
+
+    Write-Output "Installing Ekko Studio globally with npm..."
+    npm install --global ekko-studio
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Ekko Studio installation failed with exit code $LASTEXITCODE."
+        return 1
+    }
+
+    Write-Output "Ekko Studio is installed. Run 'ekko-studio-web start' to launch it."
+}
+
+function Initialize-PlatformState {
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
+        Write-Warning "You are using a Windows only version of powershell, upgrade to Powerhsell Core when possible"
+        Set-Variable -Name IsWindows -Value ($env:OS -eq 'Windows_NT') -Scope Script
+        Set-Variable -Name IsMacOS -Value $false -Scope Script
+        Set-Variable -Name IsUbuntu -Value $false -Scope Script
+        if ($env:OSTYPE -eq 'darwin') { Set-Variable -Name IsMacOS -Value $true -Scope Script }
+        elseif ((Get-Command uname -ErrorAction SilentlyContinue) -and (uname) -eq 'Darwin') { Set-Variable -Name IsMacOS -Value $true -Scope Script }
+    } else {
+        # PowerShell 6+ (Core) cross-platform means this could be Windows or any other OS that supports powershell core.
+        # Check for Windows        
+        $isWin = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+        Set-Variable -Name IsWindows -Value $isWin -Scope Script
+
+        # Check for MacOS
+        $isMac = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::OSX)
+        Set-Variable -Name IsMacOS -Value $isMac -Scope Script
+        # Check for Ubuntu
+        $isUbuntu = $false
+        if (-not $isWin -and -not $isMac) {
+            if ((Get-Command lsb_release -ErrorAction SilentlyContinue) -and ((& lsb_release '-is' 2>$null).Trim() -eq 'Ubuntu')) {
+                $isUbuntu = $true
+            } elseif (Test-Path '/etc/os-release') {
+                $osRelease = Get-Content '/etc/os-release' -ErrorAction SilentlyContinue
+                if ($osRelease -match '^ID=ubuntu$' -or $osRelease -match '^ID="ubuntu"$') {
+                    $isUbuntu = $true
+                }
+            }
+        }
+        Set-Variable -Name IsUbuntu -Value $isUbuntu -Scope Script
+        # Detect Apple Silicon (true even when running under Rosetta 2)
+        $isAppleSilicon = $false
+        if ($isMac) {
+            $armSupport = & sysctl -n hw.optional.arm64 2>$null
+            $isAppleSilicon = ($armSupport -eq "1")
+        }
+        Set-Variable -Name IsAppleSilicon -Value $isAppleSilicon -Scope Script
+
+
+        $isLinux = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Linux)
+        Set-Variable -Name IsLinux -Value $isLinux -Scope Script
+
+        # Ubuntu detection by reading /etc/os-release
+        $isUbuntu = $false
+        if ($isLinux) {
+            try {
+                $osRelease = Get-Content -Path /etc/os-release -ErrorAction SilentlyContinue -Raw
+                if ($osRelease -and ($osRelease -match '(^|\n)ID=\"?ubuntu\"?(\n|$)' -or $osRelease -match 'Ubuntu')) {
+                    $isUbuntu = $true
+                }
+            } catch { }
+        }
+        Set-Variable -Name IsUbuntu -Value $isUbuntu -Scope Script
+    }
+}
+
+# Wrapper for brew that forces ARM64 mode on Apple Silicon to avoid Rosetta 2 conflicts
+function Invoke-Brew {
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
+    if ($script:IsAppleSilicon) {
+        arch -arm64 /opt/homebrew/bin/brew @Arguments
+    } else {
+        /usr/local/bin/brew @Arguments
+    }
+}
+
+function Read-ToolSelection {
+    param([object[]]$Tools, [bool[]]$Selected)
+    $cursor = 0
+    Write-Host ""
+    Write-Host "Select tools to install: Up/Down to move, Space to toggle, 'a' all, 'n' none, Enter to install, Esc to cancel."
+    $draw = {
+        for ($i = 0; $i -lt $Tools.Count; $i++) {
+            $pointer = if ($i -eq $cursor) { '>' } else { ' ' }
+            $mark = if ($Selected[$i]) { 'x' } else { ' ' }
+            $line = "{0} [{1}] {2}" -f $pointer, $mark, $Tools[$i].Name
+            if ($i -eq $cursor) { Write-Host $line -ForegroundColor Cyan } else { Write-Host $line }
+        }
+    }
+    & $draw
+    $useAnsi = $PSVersionTable.PSVersion.Major -ge 6
+    if (-not $useAnsi) { $top = [Console]::CursorTop - $Tools.Count }
+    try { [Console]::CursorVisible = $false } catch {}
+    try {
+        while ($true) {
+            $key = [Console]::ReadKey($true)
+            switch ($key.Key) {
+                'UpArrow'   { $cursor = ($cursor - 1 + $Tools.Count) % $Tools.Count }
+                'DownArrow' { $cursor = ($cursor + 1) % $Tools.Count }
+                'Spacebar'  { $Selected[$cursor] = -not $Selected[$cursor] }
+                'A'         { for ($i = 0; $i -lt $Tools.Count; $i++) { $Selected[$i] = $true } }
+                'N'         { for ($i = 0; $i -lt $Tools.Count; $i++) { $Selected[$i] = $false } }
+                'Enter' {
+                    $count = @($Selected | Where-Object { $_ }).Count
+                    $prompt = if ($count -eq 0) { "No tools selected. Enter to skip installing, any other key to go back." } else { "Install $count tool(s)? Enter to confirm, any other key to go back." }
+                    Write-Host $prompt -ForegroundColor Yellow
+                    if ([Console]::ReadKey($true).Key -eq 'Enter') { return $true }
+                    if ($useAnsi) {
+                        [Console]::Write("$([char]27)[1A`r$([char]27)[2K")
+                    } else {
+                        [Console]::SetCursorPosition(0, $top + $Tools.Count)
+                        [Console]::Write(' ' * ([Console]::WindowWidth - 1))
+                        [Console]::SetCursorPosition(0, $top + $Tools.Count)
+                    }
+                }
+                'Escape'    { return $false }
+            }
+            if ($useAnsi) { [Console]::Write("$([char]27)[$($Tools.Count)A`r") } else { [Console]::SetCursorPosition(0, $top) }
+            & $draw
+        }
+    } finally {
+        try { [Console]::CursorVisible = $true } catch {}
+    }
+}
+
+function Select-Tools {
+    param([object[]]$Tools)
+    [bool[]]$selected = @($Tools | ForEach-Object { [bool]$_.Default })
+    if (-not [Console]::IsInputRedirected) {
+        try {
+            if (-not (Read-ToolSelection $Tools $selected)) {
+                for ($i = 0; $i -lt $selected.Count; $i++) { $selected[$i] = $false }
+            }
+        } catch {
+            Write-Warning "Interactive selection is not available in this host ($_). Installing the default selection."
+            [bool[]]$selected = @($Tools | ForEach-Object { [bool]$_.Default })
+        }
+    }
+    for ($i = 0; $i -lt $Tools.Count; $i++) {
+        if ($selected[$i]) { $Tools[$i] }
+    }
+}
+
+function Install-SelectedTools {
+    param([object[]]$Tools)
+    $chosen = @(Select-Tools $Tools)
+    Write-Host ""
+    if ($chosen.Count -eq 0) {
+        Write-Host "No tools selected; nothing to install."
+        return
+    }
+    Write-Host "Installing: $(($chosen | ForEach-Object { $_.Name }) -join ', ')"
+    foreach ($tool in $chosen) {
+        & $tool.Command
+    }
+}
+
+# =========================================================
+#   MAIN code block
+#===========================================================
+& {
+# Determine the OS type and set variables in script scope
+Initialize-PlatformState
+$script:InstallBaseFolder = $HOME
+
+Export-ModuleMember -Function Install-HermesDesktop
+Export-ModuleMember -Function Initialize-PlatformState,Set-InstallBaseFolder,Get-InstallBaseFolder,Install-Pnpm,Install-NodeJsAndNpm,Install-Terraform,Install-Packer,Install-DockerCli,Install-PostgreSql,Install-AwsCli,Install-AzureCli,Install-AzureStorageExplorer,Install-Ripgrep,Install-Fd,Install-Jq,Install-Yq,Install-GitHubCli,Install-GitHubCopilotCli,Install-ClaudeCode,Install-Ollama,Install-OllamaModels,Install-OpenVino,Install-HuggingFace,Install-OpenVinoModels,Install-HermesStudio,Install-HermesAgent,Install-EkkoStudio,Install-Python,Set-TerraformEnvironmentType,Set-ProjectRootFolder,Install-ProjectDependencies,Initialize-ResourceGroupBootstrap,Publish-MainEnvironment,Publish-ModuleDeployments,Publish-UserInterface,Test-InitializationEnvironment,Install-DevTools,Install-DevAiTools,Install-PnpmCompletion
+}

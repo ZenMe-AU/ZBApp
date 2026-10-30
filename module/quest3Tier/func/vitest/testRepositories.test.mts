@@ -5,7 +5,7 @@
 
 import { randomUUID } from "crypto";
 import { odata } from "@azure/data-tables";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, expectTypeOf, it } from "vitest";
 import sqlRepository from "../repository/sql/repository.mjs";
 import { initSqlRepository, initTableRepository } from "./util/repositoriesInit.mjs";
 import tableRepository from "../repository/table/repository.mjs";
@@ -14,6 +14,10 @@ import { QUESTION_DATA_TABLE } from "../repository/table/keys.mjs";
 import type { QuestionShareEntity } from "../repository/table/entities.mjs";
 import type { QuestRepository } from "../repository/contracts.mjs";
 import cmdName from "../enum/cmdName.mjs";
+
+expectTypeOf<typeof sqlRepository>().toEqualTypeOf<QuestRepository>();
+expectTypeOf<typeof tableRepository>().toEqualTypeOf<QuestRepository>();
+expectTypeOf<typeof sqlRepository>().toEqualTypeOf<typeof tableRepository>();
 
 interface RepositoryTestIds {
   profileIds: string[];
@@ -211,6 +215,17 @@ function testRepositoryContract(
     const responder = await createTestProfile("responder");
     const receiver = await createTestProfile("receiver");
 
+    await expect(repository.addFriend(owner.id, responder.id)).resolves.toEqual({
+      id: responder.id,
+      name: "",
+      degree: 1,
+      path: [owner.id, responder.id],
+    });
+    const friends = await repository.listFriends(owner.id);
+    expect(friends).toHaveLength(1);
+    expect(friends[0]).toMatchObject({ id: responder.id, degree: 1, path: [owner.id, responder.id] });
+    expect(friends[0].name).toMatch(/^Person [A-F0-9]{4}$/);
+
     const question = await repository.create(owner.id, "Quest DB", "Which option?", ["yes", "no"]);
     ids.questionIds.push(question.id);
     await expect(repository.getById(question.id)).resolves.toMatchObject({
@@ -231,18 +246,20 @@ function testRepositoryContract(
 
     await expect(repository.updateById(question.id, "Updated Quest DB", "Which option?", ["yes", "no", "maybe"])).resolves.toEqual({ id: question.id });
     await expect(repository.patchById(question.id, [{ op: "replace", path: "/title", value: "Patched Quest DB" }], owner.id)).resolves.toMatchObject({
-      id: expect.any(String),
+      id: question.id,
     });
-    await expect(repository.patchById(question.id, [{ op: "replace", path: "/optionList/2", value: "maybe" }], owner.id)).resolves.toMatchObject({
-      id: expect.any(String),
+    await expect(repository.patchById(question.id, [{ op: "replace", path: "/optionList/2", value: "later" }], owner.id)).resolves.toMatchObject({
+      id: question.id,
     });
-    await expect(repository.getById(question.id)).resolves.toMatchObject({ title: "Patched Quest DB", optionList: ["yes", "no", "maybe"] });
+    await expect(repository.getById(question.id)).resolves.toMatchObject({ title: "Patched Quest DB", optionList: ["yes", "no", "later"] });
 
     const answer = await repository.addAnswerByQuestionId(question.id, responder.id, 15, "yes", "yes", "during-work");
     await expect(repository.getAnswerById(question.id, answer.id)).resolves.toMatchObject({
       id: answer.id,
       questionId: question.id,
       profileId: responder.id,
+      recipientProfileId: owner.id,
+      pairwiseId: expect.stringMatching(/^[0-9a-f]{64}$/),
       answerText: "yes",
       optionId: "yes",
       optionAnswerList: ["yes"],
@@ -251,7 +268,15 @@ function testRepositoryContract(
     });
     await expect(repository.getAnswerListByQuestionId(question.id)).resolves.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ profileId: responder.id, answerCount: 1, optionId: "yes", optionAnswerList: ["yes"], when: "during-work" }),
+        expect.objectContaining({
+          profileId: responder.id,
+          recipientProfileId: owner.id,
+          pairwiseId: expect.stringMatching(/^[0-9a-f]{64}$/),
+          answerCount: 1,
+          optionId: "yes",
+          optionAnswerList: ["yes"],
+          when: "during-work",
+        }),
       ])
     );
 
@@ -260,7 +285,12 @@ function testRepositoryContract(
       expect.arrayContaining([
         expect.objectContaining({
           id: question.id,
-          latestAnswer: expect.objectContaining({ profileId: responder.id, optionId: "no" }),
+          latestAnswer: expect.objectContaining({
+            profileId: responder.id,
+            recipientProfileId: owner.id,
+            pairwiseId: expect.stringMatching(/^[0-9a-f]{64}$/),
+            optionId: "no",
+          }),
         }),
       ])
     );
@@ -320,6 +350,12 @@ async function cleanupTableRows(profileIds: string[], externalIds: string[]) {
   }
 
   const profiles = await getTableClient("Profiles");
+  for (const profileId of profileIds) {
+    const friends = profiles.listEntities({
+      queryOptions: { filter: odata`PartitionKey eq ${profileId} and RowKey ge ${"friend:"} and RowKey lt ${"friend;"}` },
+    });
+    for await (const friend of friends) await profiles.deleteEntity(friend.partitionKey, friend.rowKey);
+  }
   for (const externalId of externalIds) await profiles.deleteEntity(externalId, "profile");
 
   const profileIndexes = await getTableClient("ProfileByInternalId");

@@ -31,19 +31,19 @@ export interface QuestionRecord {
   questionText: string;
   optionList: string[] | null;
   profileId: string;
-  createdAt?: Date | string;
+  createdAt: Date | string;
 }
 
 export interface AnswerRecord {
   id: string;
   questionId: string;
   profileId: string;
-  recipientProfileId?: string;
-  pairwiseId?: string;
+  recipientProfileId: string;
+  pairwiseId: string;
   answerText: string | null;
   optionId: string | null;
-  optionAnswerList?: string[] | null;
-  when?: string | null;
+  optionAnswerList: string[] | null;
+  when: string | null;
   duration: number;
   createdAt: Date | string;
   answerCount?: number;
@@ -57,6 +57,62 @@ export interface CommandRecord {
   id: string;
 }
 
+export type RepositoryJsonValue = string | number | boolean | null | RepositoryJsonObject | RepositoryJsonValue[];
+
+export interface RepositoryJsonObject {
+  [key: string]: RepositoryJsonValue;
+}
+
+export type QuestionPatchOperation =
+  | { op: "add" | "replace" | "test"; path: string; value: RepositoryJsonValue }
+  | { op: "remove"; path: string }
+  | { op: "move" | "copy"; path: string; from: string };
+
+export type CommandEventRecord =
+  | {
+      id: string;
+      followUpId: string;
+      questionShareId?: never;
+      correlationId: string;
+      action: string;
+      senderProfileId: string;
+      actionData: RepositoryJsonValue;
+      createdAt: Date | string;
+    }
+  | {
+      id: string;
+      followUpId?: never;
+      questionShareId: string;
+      correlationId: string;
+      action: string;
+      senderProfileId: string;
+      actionData: RepositoryJsonValue;
+      createdAt: Date | string;
+    };
+
+export interface FollowUpFilterRecord {
+  id: string;
+  order: number;
+  senderProfileId: string;
+  refQuestionId: string;
+  refOption: string[];
+  newQuestionId: string;
+}
+
+export interface QuestionShareRecord {
+  questionId: string;
+  senderProfileId: string;
+  receiverProfileId: string;
+}
+
+export interface FollowUpFilterInput extends RepositoryJsonObject {
+  save?: boolean;
+  isSave?: boolean;
+  newQuestionId?: string;
+  questionIdList?: string[];
+  question?: { questionId: string; option: string[] }[];
+}
+
 export interface QuestRepository {
   findProfileByExternalId(externalId: string): Promise<ProfileRecord | null>;
   createProfile(externalId: string): Promise<ProfileRecord>;
@@ -68,7 +124,7 @@ export interface QuestRepository {
   create(profileId: string, title?: string | null, question?: string | null, optionList?: string[] | null): Promise<QuestionRecord>;
   updateById(questionId: string, title?: string | null, questionText?: string | null, optionList?: string[] | null): Promise<{ id: string }>;
   getCombinationListByUser(profileId: string): Promise<QuestionListRecord[]>;
-  patchById(questionId: string, action: unknown, profileId: string): Promise<{ id: string }>;
+  patchById(questionId: string, action: QuestionPatchOperation[], profileId: string): Promise<{ id: string }>;
   addAnswerByQuestionId(
     questionId: string,
     profileId: string,
@@ -79,12 +135,12 @@ export interface QuestRepository {
   ): Promise<AnswerRecord>;
   getAnswerById(questionId: string, answerId: string): Promise<AnswerRecord | null>;
   getAnswerListByQuestionId(questionId: string): Promise<AnswerRecord[]>;
-  getEventByCorrelationId(name: string, correlationId: string): Promise<unknown[]>;
-  insertFollowUpCmd(senderId: string, cmdData: Record<string, unknown>, correlationId: string): Promise<CommandRecord>;
-  insertFollowUpFilter(senderId: string, cmdData: Record<string, unknown>): Promise<unknown>;
-  updateFollowUpCmdStatus(id: string): Promise<unknown>;
-  shareQuestion(questionId: string, senderId: string, receiverIds: string[]): Promise<unknown[]>;
-  insertQuestionShareCmd(senderId: string, cmdData: Record<string, unknown>, correlationId: string): Promise<CommandRecord>;
-  updateQuestionShareCmdStatus(id: string): Promise<unknown>;
+  getEventByCorrelationId(name: "FollowUpCmd" | "QuestionShareCmd", correlationId: string): Promise<CommandEventRecord[]>;
+  insertFollowUpCmd(senderId: string, cmdData: RepositoryJsonObject, correlationId: string): Promise<CommandRecord>;
+  insertFollowUpFilter(senderId: string, cmdData: FollowUpFilterInput): Promise<FollowUpFilterRecord[]>;
+  updateFollowUpCmdStatus(id: string): Promise<CommandRecord>;
+  shareQuestion(questionId: string, senderId: string, receiverIds: string[]): Promise<QuestionShareRecord[]>;
+  insertQuestionShareCmd(senderId: string, cmdData: RepositoryJsonObject, correlationId: string): Promise<CommandRecord>;
+  updateQuestionShareCmdStatus(id: string): Promise<CommandRecord>;
   getSharedQuestionListByProfileId(profileId: string): Promise<QuestionRecord[]>;
 }

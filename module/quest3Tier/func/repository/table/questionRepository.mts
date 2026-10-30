@@ -45,6 +45,7 @@ function toQuestionDetail(entity: QuestionEntity): QuestionDetail {
     questionText: entity.questionText,
     optionList: optionJson ? JSON.parse(optionJson) : null,
     profileId: entity.profileId,
+    createdAt: entity.createdAt,
   };
 }
 
@@ -97,7 +98,7 @@ async function getQuestionEntity(questionId: string): Promise<(QuestionEntity & 
 }
 
 function toQuestionListItem(entity: QuestionEntity): QuestionListItem {
-  return { ...toQuestionDetail(entity), createdAt: entity.createdAt, sharedByProfileIds: [entity.profileId] };
+  return toQuestionDetail(entity);
 }
 
 export async function getQuestionAskers(questionId: string, answererProfileId: string): Promise<string[]> {
@@ -140,16 +141,12 @@ export async function getSharedQuestionListByProfileId(profileId: string): Promi
   const shares = client.listEntities<QuestionShareEntity>({
     queryOptions: { filter: odata`RowKey ge ${SHARE_ROW_KEY_RANGE_START} and RowKey lt ${SHARE_ROW_KEY_RANGE_END} and receiverProfileId eq ${profileId}` },
   });
-  const sendersByQuestion = new Map<string, Set<string>>();
-  for await (const share of shares) {
-    const senders = sendersByQuestion.get(share.newQuestionId) ?? new Set<string>();
-    senders.add(share.senderProfileId);
-    sendersByQuestion.set(share.newQuestionId, senders);
-  }
-  const questions = await Promise.all([...sendersByQuestion.keys()].map(getQuestionEntity));
+  const questionIds = new Set<string>();
+  for await (const share of shares) questionIds.add(share.newQuestionId);
+  const questions = await Promise.all([...questionIds].map(getQuestionEntity));
   return questions
     .filter((entity): entity is QuestionEntity & { etag: string } => entity !== null)
-    .map((entity) => ({ ...toQuestionListItem(entity), sharedByProfileIds: [...(sendersByQuestion.get(entity.id) ?? new Set([entity.profileId]))] }))
+    .map(toQuestionListItem)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 

@@ -9,11 +9,15 @@ if which pwsh >/dev/null 2>&1; then
 else
     echo "PowerShell is not installed. Installing PowerShell..."
     # Install PowerShell
-    sudo apt-get update 
-    sudo apt-get install -y powershell
+    if [ "$(uname)" = "Darwin" ]; then
+        brew install powershell
+    else
+        sudo apt-get update
+        sudo apt-get install -y powershell
+    fi
 fi
 
-echo "Rehecking PowerShell installation..."
+echo "Rechecking PowerShell installation..."
 if which pwsh >/dev/null 2>&1; then
     echo "PowerShell installed successfully."
 else
@@ -22,4 +26,5 @@ else
 fi
 
 echo "Continuing with deployment of local dependencies in PowerShell..."
-pwsh -NoProfile -File ./deploy/deploy.ps1
+cd "$(dirname "$0")/deploy"
+pwsh -NoProfile -File ./deploy.ps1 -Stages Install-AllDevAiTools

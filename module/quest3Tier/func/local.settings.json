@@ -10,7 +10,7 @@
     "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://westus-0.in.applicationinsights.azure.com/",
     "DB_USERNAME": "vscode",
     "DB_PASSWORD": "vscode",
-    "DB_DATABASE": "quest3tier",
+    "DB_DATABASE": "quest3Tier",
     "DB_HOST": "127.0.0.1",
     "DB_AUTH_MODE": "password",
     "DB_IGNORE_MIGRATION_STATE": "false",

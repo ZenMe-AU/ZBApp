@@ -7,8 +7,8 @@
   "scripts": {
     "start": "func start",
     "deploy": "pnpm deploy --filter quest3Tier --prod out",
-    "build": "tsc --project tsconfig.json",
-    "build:deploy-db": "tsc --project tsconfig.deploy.json",
+    "build": "node -e \"require('node:fs').rmSync(require('node:path').join('dist', 'deploy', 'db', 'migration'), { recursive: true, force: true })\" && tsc --project tsconfig.json && tsc --project tsconfig.deploy.json --outDir dist",
+    "build:deploy-db": "node -e \"require('node:fs').rmSync(require('node:path').join('dist', 'migrate'), { recursive: true, force: true })\" && tsc --project tsconfig.deploy.json",
     "dbmigrate:local": "pnpm i && pnpm run build:deploy-db && node dist/migrate/deploy/db/updateDbSchemaLocal.mjs",
     "watch": "tsc --project tsconfig.json --watch",
     "prestart": "pnpm run build",
