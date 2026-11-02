@@ -41,11 +41,12 @@ const activityColumns: any[] = [
   },
   { field: "time", headerName: "Time", width: 110 },
   { field: "agent", headerName: "Actor", width: 120 },
-  { field: "kind", headerName: "Kind", width: 120 },
+  { field: "aggregateType", headerName: "Aggregate Type", width: 150 },
   { field: "text", headerName: "Summary", flex: 1, minWidth: 260, wrapText: true, autoHeight: true, tooltipField: "text" },
+  { field: "runId", headerName: "Run ID", hide: true, minWidth: 140 },
   ...[
-    "eventType", "occurredAt", "source", "actorType", "actorProfileId", "severity", "correlationId", "causationId", "aggregateType", "aggregateId",
-    "questionId", "answerId", "httpMethod", "apiPath", "httpStatus", "eventDataText", "id", "runId", "ingestedAt",
+    "eventType", "occurredAt", "source", "actorType", "actorProfileId", "severity", "correlationId", "causationId", "aggregateId",
+    "questionId", "answerId", "httpMethod", "apiPath", "httpStatus", "eventDataText", "id", "ingestedAt",
   ].map((field) => ({ field, hide: true, minWidth: 140 })),
 ];
 
@@ -58,6 +59,8 @@ const state = {
   activeView: "overview",
   activeAgent: "",
   currentEvents: [],
+  activityEvents: [],
+  activitySignature: "",
   currentReport: parseReport(""),
   network: {},
   agentOids: {} as Record<string, string>,
@@ -105,7 +108,9 @@ function visibleEvents(limit = VIEWS[state.activeView].limit ?? 120) {
 }
 
 function renderActivityGrid() {
-  const rows = visibleEvents(Infinity);
+  const rows = [...state.activityEvents]
+    .filter((event) => !state.activeAgent || event.agent === state.activeAgent)
+    .reverse();
   elements.feed.hidden = true;
   elements.feedHead.hidden = true;
   elements.activityLayout.hidden = false;
@@ -148,7 +153,7 @@ function filterActivityRows(rows) {
 }
 
 function renderActivityFilters(rows) {
-  const signature = `${state.selectedRun}:${state.activeAgent}`;
+  const signature = `${state.activitySignature}:${state.activeAgent}`;
   if (signature === activityFilterSignature) return;
   activityFilterSignature = signature;
   activityFilterSelections.clear();
@@ -209,7 +214,7 @@ function activityDetailElement(event) {
   const root = document.createElement("div");
   root.className = "activity-detail";
   const groups = [
-    ["Event", [["Type", event.eventType], ["Kind", event.kind], ["Source", event.source], ["Severity", event.severity], ["Occurred", event.occurredAt ?? event.time]]],
+    ["Event", [["Type", event.eventType], ["Source", event.source], ["Severity", event.severity], ["Occurred", event.occurredAt ?? event.time]]],
     ["Actor & linkage", [["Actor", event.agent], ["Actor type", event.actorType], ["Profile", event.actorProfileId], ["Question", event.questionId], ["Answer", event.answerId], ["Correlation", event.correlationId]]],
     ["API", [["Method", event.httpMethod], ["Path", event.apiPath], ["Status", event.httpStatus], ["Aggregate", event.aggregateType], ["Aggregate ID", event.aggregateId]]],
   ];
@@ -649,10 +654,27 @@ async function refreshLog() {
   render(data.events?.length ? presentActivityEvents(data.events) : parseLog(data.legacyText ?? ""), data.mtime);
 }
 
+async function refreshAllActivity() {
+  if (state.activeView !== "activity") return;
+  const response = await fetch("/api/activity?scope=all", { cache: "no-store" });
+  if (!response.ok) throw new Error("Could not load activity across runs");
+  const data = await response.json();
+  const signature = `${data.mtime}:${data.runs.map((run) => `${run.runId}:${run.events.length}:${run.legacyText.length}`).join("|")}`;
+  if (signature === state.activitySignature) return;
+  state.activitySignature = signature;
+  activityFilterSignature = "";
+  state.activityEvents = [...data.runs].reverse().flatMap((run) => {
+    if (run.events.length) return presentActivityEvents(run.events);
+    return parseLog(run.legacyText).map((event, index) => ({ ...event, id: `${run.runId}:legacy:${index}`, runId: run.runId, legacy: true }));
+  });
+  renderActivityGrid();
+}
+
 async function update() {
   try {
     await Promise.all([loadRuns(), loadRunState()]);
     await refreshLog();
+    await refreshAllActivity();
     await refreshQuestions();
   } catch (error) {
     elements.runStatus.textContent = "Unavailable";
@@ -725,6 +747,7 @@ if (elements) {
     state.selectedEventId = null;
     for (const item of elements.viewTabs.querySelectorAll("[data-view]")) item.setAttribute("aria-pressed", String(item === tab));
     renderFeed();
+    if (state.activeView === "activity") void refreshAllActivity();
   });
   elements.chatForm.addEventListener("submit", async (event) => {
     event.preventDefault();

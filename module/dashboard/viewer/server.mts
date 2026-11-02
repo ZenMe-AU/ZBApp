@@ -534,7 +534,18 @@ async function handle(request, response) {
   if (url.pathname === "/api/agents") return sendJson(response, 200, { oids: await getAgentOids() });
   if (url.pathname === "/api/activity") {
     const runs = await listRuns();
-    const requested = url.searchParams.get("run") ?? runs[0]?.name;
+    const requestedRun = url.searchParams.get("run");
+    if (!requestedRun && url.searchParams.get("scope") === "all") {
+      const activityRuns = await Promise.all(
+        runs.map(async (run) => {
+          const events = await activityRepository.listByRun(run.name);
+          const legacyText = events.length ? "" : await readFile(path.join(RUNS_DIR, run.name), "utf8").catch(() => "");
+          return { runId: run.name, events, legacyText };
+        })
+      );
+      return sendJson(response, 200, { runs: activityRuns, mtime: Math.max(0, ...runs.map((run) => run.mtime)) });
+    }
+    const requested = requestedRun ?? runs[0]?.name;
     if (!isRunName(requested) || !runs.some((run) => run.name === requested)) return sendJson(response, 404, { error: "Run not found" });
     const events = await activityRepository.listByRun(requested);
     if (events.length) return sendJson(response, 200, { run: requested, events, mtime: runs.find((run) => run.name === requested)?.mtime ?? 0 });

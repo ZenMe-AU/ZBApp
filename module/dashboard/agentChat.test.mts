@@ -64,6 +64,8 @@ describe("agent option rules", () => {
     expect(prompt).toContain("Creating a question does not publish it");
     expect(prompt).toContain("one fact dimension at a time");
     expect(prompt).toContain("A question directly shared with you through Q3 is valid");
+    expect(prompt).toContain("event-driven, Domain-Driven Design architecture");
+    expect(prompt).toContain("Do not invent backend state, domain events, aggregate types or aggregate IDs");
     expect(prompt).toContain("Never choose a vague option");
     expect(prompt).toContain("POST /sendFollowUpCmd");
     expect(prompt).toContain("share your new question only with people whose previous answers match every filter");
