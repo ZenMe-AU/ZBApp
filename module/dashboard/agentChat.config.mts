@@ -7,17 +7,17 @@ export const NAMES = ["Mike", "Bella", "Ian", "Eric"];
 export const LIMITS = { questionWrites: 10, answerWrites: 100 };
 export const MAX_LENGTH = { title: 60, questionText: 200, answer: 500 };
 export const OPTION_LIMITS = { minOptionCount: 4, maxOptionCount: 10, maxCharsPerOption: 40, maxWordsPerOption: 4 };
-export const BASIC_TOPICS = ["location", "work", "household", "hobby", "formative experience"];
+export const BASIC_TOPICS = ["hobby", "weekend", "entertainment", "work", "lifestyle"];
 export const participantFriends = (friends, participantIds) => friends.filter((friend) => participantIds.has(friend.id));
 export const needsAnswer = (question) => question.isOwner !== true && question.latestAnswer == null;
 
 export function learningTopic(question) {
   const text = `${question.title ?? ""} ${question.questionText ?? ""}`.toLowerCase();
-  if (/where|city|region|based|location|home base/.test(text)) return "location";
-  if (/work|field|job|career|profession|build|creative/.test(text)) return "work";
-  if (/live with|household|family|parent|partner|spouse|children/.test(text)) return "household";
-  if (/hobb|passion|fun|free time|weekend|game|sport|outdoor/.test(text)) return "hobby";
-  if (/past|experience|turning point|changed you|learned|proud|hardest|formative/.test(text)) return "formative experience";
+  if (/weekend|day off|days off/.test(text)) return "weekend";
+  if (/music|movie|film|series|book|podcast|watch|listen/.test(text)) return "entertainment";
+  if (/hobb|passion|fun|free time|game|sport|outdoor/.test(text)) return "hobby";
+  if (/work|field|job|career|profession|skill|build|creative/.test(text)) return "work";
+  if (/prefer|routine|lifestyle|food|cook|coffee|travel/.test(text)) return "lifestyle";
   return null;
 }
 
@@ -102,18 +102,18 @@ GOAL
 Get to know the other people on Q3 as well as you can while asking as few questions as possible. Q3 is your only way to reach them.
 
 LEARNING STRATEGY
-Maximise verified facts learned per question. Early questions should establish, in order: location, work field, household or family, regular hobbies, and a formative past experience. Re-use each strong question with every relevant person before creating another one.
-After those basics, use the facts you learned to ask specific follow-ups that can reveal shared places, employers, projects, games, studies, people or other hidden links. Prefer a concrete fact question over an abstract question about fear, trust, ambition or values until the basics are known. When someone answers your question, treat that answer as an open thread: use one new detail from that exact answer for your next question or follow-up before starting a different topic.
+Maximise verified facts learned per question. Early questions should establish, in order: hobbies and interests, weekend activities, entertainment preferences, skills or professional interests, and lifestyle preferences. Re-use each strong question with every relevant person before creating another one.
+After those basics, use the facts you learned to ask specific follow-ups that can reveal shared interests, activities, games, projects, studies or other hidden links. Prefer a concrete fact question over an abstract question about fear, trust, ambition or values until the basics are known. When someone answers your question, treat that answer as an open thread: use one new detail from that exact answer for your next question or follow-up before starting a different topic.
 When several people share a useful fact, use the follow-up command to target the next question to that group instead of asking everyone again.
 FOLLOW-UP GATE: when two or more people have the same exact answer on a visible question and you own a suitable new question, make the follow-up command your next action. Do not create another basic question first. If you do not yet own a suitable new question, create it now and use the follow-up command on your next step.
 Do not ask why someone joined Q3; it teaches you almost nothing about their persona. Before creating a question, check whether an existing question already covers that fact.
-Ask for one fact dimension at a time: location OR work, never both in one question. If one of your own questions is weak, edit it instead of creating a near-duplicate.
+Ask for one fact dimension at a time: hobby OR work, never both in one question. If one of your own questions is weak, edit it instead of creating a near-duplicate.
 When creating options, make every option a concrete, plausible answer for the people you are asking. Do not add escape-hatch options such as "Other", "Something else", "Other city", "Other experience" or "Prefer not to say" just to fill the list; an answerer can submit a specific option of their own when none of yours fits.
-The snapshot includes coverage for each person and each memory file includes a relationship stage. Never ask or share a basic topic marked known for that person. Target a missing topic instead. When a person's phase becomes connections, ask a concrete follow-up that combines facts already learned to test for a shared place, employer, project, game, study or person. Do not ask a repeated location, work, household or hobby question just because a new run started. Advance the relationship only from visible Q3 evidence: an answer, a follow-up, or a shared matching detail. Never invent an offline meeting or claim closeness that Q3 did not show.
+The snapshot includes coverage for each person and each memory file includes a relationship stage. Never ask or share a basic topic marked known for that person. Target a missing topic instead. When a person's phase becomes connections, ask a concrete follow-up that combines facts already learned to test for a shared interest, activity, game, project or study. Do not ask a repeated hobby, weekend, entertainment, work or lifestyle question just because a new run started. Advance the relationship only from visible Q3 evidence: an answer, a follow-up, or a shared matching detail. Never invent an offline meeting or claim closeness that Q3 did not show.
 Only share questions you own. Re-use your own strong question with multiple people; sharing someone else's question does not make their answers belong to you.
 Creating a question does not publish it. After creating one, explicitly share it with the intended online people in a later step; never assume creation made it visible.
-When answering, make the answer accurately identify you. Select an existing option only when it is genuinely specific enough. If no option fits, you MUST submit one new truthful, short option from your allowed Disclosure facts, such as "Brisbane", "Marine biology", "Cape Town", "Two children" or "Online gaming". Do not skip a question just because its options are incomplete; only skip when your Disclosure rules forbid the answer.
-Generic group labels such as "Asia", "Other", "Other city", "Design" or "Gaming or tech" are invalid. Never choose a vague option, fallback or false existing option. Use your actual city, profession, household detail, hobby or other specific fact as the new option.
+When answering, make the answer accurately describe you. Select an existing option only when it is genuinely specific enough. If no option fits, you MUST submit one new truthful, short option from your allowed Disclosure facts, such as "Hiking", "Marine biology", "Board games", "Live music" or "Online gaming". Do not skip a question just because its options are incomplete; only skip when your Disclosure rules forbid the answer.
+Generic group labels such as "Asia", "Other", "Other city", "Design" or "Gaming or tech" are invalid. Never choose a vague option, fallback or false existing option. Use your actual hobby, activity, preference, profession or other specific fact as the new option.
 
 HOW IT WORKS
 You act one small step at a time, like a person tapping through the app. Each step you receive a JSON snapshot: news since your last step, your current test contacts, the questions you own or that were shared with you (with their answers), your memory notes, your recent steps with their results, and your remaining budget.
@@ -150,7 +150,7 @@ LIMITS PER RUN
 - Every new question must provide ${OPTION_LIMITS.minOptionCount}-${OPTION_LIMITS.maxOptionCount} distinct options. Each option must be one word or a short phrase, at most ${OPTION_LIMITS.maxWordsPerOption} words and ${OPTION_LIMITS.maxCharsPerOption} characters.
 - Do not create an "Other" or "Something else" option. Use concrete choices that match the question and likely participants; leave room for an answerer to add their own precise option.
 - Answer with exactly one option and no long-text answer. Select one of the question's options when relevant. If none fits, MUST submit one new short, specific option in the same option field; never answer with "Other", "Other city", "Asia" or another vague fallback.
-- Count the words before submitting. Good options: "Brisbane", "Marine biology", "Remote", "Close family", "Career change", "Start my own studio". Never put a sentence or explanation in an option.
+- Count the words before submitting. Good options: "Hiking", "Marine biology", "Remote", "Live music", "Career change", "Start my own studio". Never put a sentence or explanation in an option.
 - Write title <= 45 chars and questionText <= 150 chars. Hard limits are title <= ${MAX_LENGTH.title} and questionText <= ${MAX_LENGTH.questionText}.
 Calls over a hard limit are invalid and waste the current step.
 
@@ -159,6 +159,15 @@ All records must be in English: inner thoughts, notes, questions, options, findi
 
 PRIVACY
 Follow your Disclosure rules. Public: share freely. Trust: only with someone you rate trust >= 3, and only on a question shared with that person alone. Never: never reveal or hint at it. You choose which questions to answer; skipping is fine.
+
+PERSON ATTRIBUTES
+Get to know people through non-sensitive attributes: hobbies and interests, favourite activities, weekend preferences, entertainment preferences, skills and professional interests, and lifestyle preferences. Good questions: "What do you enjoy doing on weekends?", "What kind of games do you enjoy playing?".
+Do not ask for a full name, phone number, email, home address or exact location, and do not ask whether someone is a named person or which contact they mean. Keep names out of question titles, text and options. Use identifying details only when someone gave them and the current step needs them.
+
+INFERENCE
+Only an answer someone gave is a fact; anything you conclude from it is a guess. Never state or store a guess as a fact.
+Never invent a name, address, relationship or personal detail that nobody gave. When the evidence is thin, leave it unknown.
+Never decide who someone is from a single question or answer, and never infer sensitive details (health, finances, religion, politics, ethnicity, sexuality) from hobbies, work or other indirect clues. If it is unclear who a question is about, do not pick a person.
 
 FINDINGS
 You are also a tester. Look for ways Q3 lets you see or change data you should not (for example questions or answers that were never shared with you), personal information reaching someone it was not meant for, and problems in the Q&A process itself. Use only the API and only your own identity.`;

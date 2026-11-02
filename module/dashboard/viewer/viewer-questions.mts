@@ -10,6 +10,15 @@ const titleFrom = (text) => text.match(/^[^\"]*"([^"]+)"/)?.[1];
 type Answer = { author: string; text: string };
 type Question = { id?: string; title: string; owner: string; text: string; answers: Answer[]; sharedWith: string[]; agents: Set<string>; isNew: boolean };
 type QuestionEvent = { agent: string; kind: string; text: string; questionId?: string; participants?: string[] };
+type QuestionApiEvent = QuestionEvent & {
+  eventType?: string;
+  httpMethod?: string;
+  apiPath?: string;
+  correlationId?: string;
+  occurredAt?: string;
+  runId?: string;
+  eventData?: { recipients?: unknown[] };
+};
 type ReportQuestion = Omit<Question, "agents" | "isNew" | "sharedWith"> & { sharedWith?: string[] };
 type ApiQuestion = {
   id: string;
@@ -81,7 +90,7 @@ export function groupQuestions(events: QuestionEvent[], reportQuestions: ReportQ
   return [...questions.values()];
 }
 
-export function renderQuestions({ activeAgent, elements, questions, status, selectedQuestionId, answers, answerStatus, onSelect, renderInspector }) {
+export function renderQuestions({ activeAgent, elements, questions, status, selectedQuestionId, answers, answerStatus, activityEvents, onSelect, renderInspector }) {
   elements.viewTitle.textContent = "Questions";
   elements.filterNote.textContent = activeAgent && status === "ready" ? `${questions.length} questions visible to ${activeAgent}` : "Select a person";
   if (!activeAgent) {
@@ -145,6 +154,12 @@ export function renderQuestions({ activeAgent, elements, questions, status, sele
     details.append(node("summary", "", label), body);
     return details;
   };
+  const resolvedRecipients = (event: QuestionApiEvent) => (event.eventData?.recipients ?? []).map(String).map((recipient) => {
+    const anonymous = recipient.match(/^Person\s+(\d+)$/i);
+    if (!anonymous) return recipient;
+    const runParticipants = participantNames((activityEvents as QuestionApiEvent[]).filter((item) => item.runId === event.runId));
+    return runParticipants.filter((name) => name !== event.agent)[Number(anonymous[1]) - 1] ?? recipient;
+  });
   const inspect = (question: ApiQuestion) => {
     renderInspector({
       agent: activeAgent,
@@ -157,6 +172,15 @@ export function renderQuestions({ activeAgent, elements, questions, status, sele
     });
     const content = node("div", "question-details");
     content.append(node("p", "question-text", question.questionText));
+
+    const shareEvents = (activityEvents as QuestionApiEvent[]).filter((event) => event.questionId === question.id && event.eventType === "question.shared");
+    const sharedWith = [...new Set(shareEvents.flatMap(resolvedRecipients))];
+    const sharing = node("section", "created-detail");
+    sharing.append(
+      node("h3", "detail-section-title", "Shared with"),
+      node("p", sharedWith.length ? "answer-value" : "detail-empty", sharedWith.length ? sharedWith.join(", ") : "Not available for this run")
+    );
+    content.append(sharing);
 
     const answerSection = node("section", "answer-section");
     answerSection.append(node("h3", "detail-section-title", "Answers"));
@@ -199,14 +223,27 @@ export function renderQuestions({ activeAgent, elements, questions, status, sele
       technicalRow("Question Source API", "GET /questionQry/getQuestions", true),
       technicalRow("Question Dashboard Proxy", "GET /api/questions?person={person}", true),
       technicalRow("Answer Source API", "GET /questionQry/getAnswers/{questionId}", true),
-      technicalRow("Answer Dashboard Proxy", "POST /api/answers", true),
-      technicalRow("AI Execution API", "Not available")
+      technicalRow("Answer Dashboard Proxy", "POST /api/answers", true)
     );
+    const executions = (activityEvents as QuestionApiEvent[])
+      .filter((event) => event.questionId === question.id && event.httpMethod && event.apiPath && event.eventType !== "api.failed")
+      .sort((left, right) => Date.parse(right.occurredAt ?? "") - Date.parse(left.occurredAt ?? ""));
+    if (!executions.length) technicalList.append(technicalRow("Recorded AI Execution", "Not available for this run"));
+    else executions.forEach((event) => {
+      const actor = event.agent || "Unknown actor";
+      const occurred = event.occurredAt ? new Date(event.occurredAt).toLocaleString() : "time not recorded";
+      technicalList.append(technicalRow(`AI ${event.eventType ?? "API call"}`, `${event.httpMethod} ${event.apiPath} · ${actor} · ${occurred}`, true));
+      const recipients = resolvedRecipients(event).filter(Boolean);
+      if (recipients.length) technicalList.append(technicalRow("Shared with", recipients.join(", ")));
+      if (event.correlationId) technicalList.append(technicalRow("Correlation ID", event.correlationId, true));
+    });
     technical.append(technicalList);
     content.append(disclosure("API & Technical Details", technical));
     elements.eventText.replaceChildren(content);
   };
-  const items = questions.map((question, index) => {
+  const timestamp = (value?: string) => value ? Date.parse(value) || 0 : 0;
+  const orderedQuestions = [...questions].sort((left, right) => timestamp(right.createdAt) - timestamp(left.createdAt));
+  const items = orderedQuestions.map((question) => {
     const item = document.createElement("li");
     item.className = "feed-item kind-question";
     const button = document.createElement("button");

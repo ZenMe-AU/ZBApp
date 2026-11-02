@@ -26,16 +26,14 @@ export function AgentLabJoin() {
         setStatus("joining");
         profileId ||= await getMyProfileId();
         localStorage.setItem("agentLabProfileId", profileId);
-        const joinResponse = await fetch(`${LAB_URL}/api/join`, {
+        const response = await fetch(`${LAB_URL}/api/join`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ profileId, name: account?.name ?? "Human" }),
         });
-        const result = await joinResponse.json();
-        if (!joinResponse.ok) throw new Error(result.error ?? "Could not join the Agent Lab test");
-        if (active) {
-          setStatus("joined");
-        }
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error ?? "Could not join the Agent Lab test");
+        if (active) setStatus("joined");
       } catch (error) {
         joined = false;
         if (active) {
@@ -50,7 +48,7 @@ export function AgentLabJoin() {
       active = false;
       window.clearInterval(interval);
     };
-  }, []);
+  }, [account?.name]);
 
   if (status === "idle" || status === "joined") return null;
   return (

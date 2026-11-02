@@ -17,6 +17,8 @@
   "dependencies": {
     "@azure/data-tables": "^13.3.2",
     "@azure/identity": "^4.4.1",
+    "@lancedb/lancedb": "0.40.0",
+    "ag-grid-community": "36.2.0",
     "jsonwebtoken": "^9.0.2",
     "quest3Tier": "workspace:*"
   },

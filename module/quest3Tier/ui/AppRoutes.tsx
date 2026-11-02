@@ -19,7 +19,6 @@ import * as QuestionDetailAddModule from "./routes/QuestionDetailAdd";
 import * as ShareQuestionModule from "./routes/ShareQuestion";
 import ManageFriends from "./routes/ManageFriends";
 import Login from "./routes/Login";
-import { AgentLabJoin } from "./components/AgentLabJoin";
 
 type FrameworkRouteModule = {
   default: (props: { loaderData?: unknown }) => JSX.Element;
@@ -79,7 +78,6 @@ function RequireAuth() {
   }
   return (
     <>
-      <AgentLabJoin />
       <Button onClick={() => void logout()} variant="outlined" size="small" sx={{ position: "fixed", top: 12, right: 16, zIndex: 1200 }}>
         Log out
       </Button>

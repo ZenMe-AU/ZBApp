@@ -9,9 +9,9 @@ import os from "node:os";
 import path from "node:path";
 import { TableClient } from "@azure/data-tables";
 import { invalidAction, learningCoverage, needsAnswer, offlineActionReason, participantFriends, rules } from "./agentChat.config.mjs";
-import { factMemory } from "./agentChat.memory.mjs";
+import { factMemory, promptMemory } from "./agentChat.memory.mjs";
 import { assertLlmReady, getLlmProvider, getProviderInstance, llm, OpenvinoProvider } from "./agentChat.llm.mjs";
-import { list, receiveDashboardMessage, replyToDashboard, runAgentChat } from "./agentChat.run.mjs";
+import { list, receiveDashboardMessage, replyToDashboard, runAgentChat, toQ3Request } from "./agentChat.run.mjs";
 import { report } from "./agentChat.report.mjs";
 import { HUMAN_NAME, writeMemory } from "./agentChat.setup.mjs";
 import { belongsToExperiment, isLocalAzurite, resetExperiment } from "./agentChat.reset.mjs";
@@ -31,11 +31,35 @@ describe("Agent API lists", () => {
   });
 });
 
+describe("Q3 route adapter", () => {
+  test("maps Agent Lab question routes to the Q3 API contract", () => {
+    expect(toQ3Request("GET", "http://127.0.0.1:7073/questions", undefined).url.pathname).toBe("/questionQry/getQuestions");
+
+    const create = toQ3Request("POST", "http://127.0.0.1:7073/question", {
+      title: "Location",
+      questionText: "Where do you live?",
+      option: ["Brisbane", "Sydney", "Melbourne", "Elsewhere"],
+    });
+    expect(create.url.pathname).toBe("/questionCmd/createQuestion");
+    expect(create.body).toEqual({
+      title: "Location",
+      questionText: "Where do you live?",
+      optionList: ["Brisbane", "Sydney", "Melbourne", "Elsewhere"],
+    });
+
+    const answer = toQ3Request("POST", "http://127.0.0.1:7073/question/question-id/answer", { option: "Brisbane", duration: 3 });
+    expect(answer).toMatchObject({
+      url: expect.objectContaining({ pathname: "/questionCmd/createAnswer/question-id" }),
+      body: { option: "Brisbane", duration: 3 },
+    });
+  });
+});
+
 describe("agent option rules", () => {
   test("prioritises reusable factual questions", () => {
     const prompt = rules("Mike");
     expect(prompt).toContain("Maximise verified facts learned per question");
-    expect(prompt).toContain("location, work field, household or family");
+    expect(prompt).toContain("hobbies and interests, weekend activities, entertainment preferences");
     expect(prompt).toContain("Re-use each strong question");
     expect(prompt).toContain("Creating a question does not publish it");
     expect(prompt).toContain("one fact dimension at a time");
@@ -49,6 +73,17 @@ describe("agent option rules", () => {
     expect(prompt).toContain("you MUST submit one new truthful, short option");
     expect(prompt).toContain("Do not skip a question just because its options are incomplete");
     expect(prompt).toContain('"Other city"');
+  });
+
+  test("asks about person attributes and never guesses identity", () => {
+    const prompt = rules("Mike");
+    expect(prompt).toContain("What do you enjoy doing on weekends?");
+    expect(prompt).toContain("Do not ask for a full name, phone number, email, home address or exact location");
+    expect(prompt).toContain("Never decide who someone is from a single question or answer");
+    expect(prompt).toContain("Never state or store a guess as a fact");
+    expect(prompt).toContain("When the evidence is thin, leave it unknown");
+    expect(prompt).not.toContain("accurately identify you");
+    expect(prompt).not.toMatch(/employers|shared place/);
   });
 
   test("requires 4-10 short options on new questions", () => {
@@ -126,6 +161,24 @@ describe("fact-only memory", () => {
     expect(memory.Ian).toContain("Stage: Learning details");
     expect(memory.Ian).toContain("do not repeat a verified basic");
   });
+
+  test("keeps hobbies but leaves names, contacts and addresses out of the prompt", () => {
+    const stored = [
+      "### Facts",
+      "- Tell your name — Ian Botha (question: q1; answer: a1)",
+      "- What's your email? — ian@example.com (question: q2; answer: a2)",
+      "- What is your home address? — 1 Example St (question: q3; answer: a3)",
+      "- What's your main hobby outside work? — Surfing (question: q4; answer: a4)",
+      "- What do you enjoy doing on weekends? — Hiking (question: 12345678-1234-1234-1234-123456789012; answer: a5)",
+    ].join("\n");
+    expect(promptMemory(stored)).toBe(
+      [
+        "### Facts",
+        "- What's your main hobby outside work? — Surfing (question: q4; answer: a4)",
+        "- What do you enjoy doing on weekends? — Hiking (question: 12345678-1234-1234-1234-123456789012; answer: a5)",
+      ].join("\n")
+    );
+  });
 });
 
 describe("online participant boundary", () => {
@@ -174,9 +227,10 @@ describe("learning coverage", () => {
         answers: [{ memoryAuthor: "Eric", optionAnswerList: ["UX design"] }],
       },
     ];
+    // A location fact no longer counts as a basic, so it never pushes the agent to ask where someone lives.
     expect(learningCoverage(agent, questions)["Person E123"]).toEqual({
-      known: ["location", "work"],
-      missing: ["household", "hobby", "formative experience"],
+      known: ["work"],
+      missing: ["hobby", "weekend", "entertainment", "lifestyle"],
       phase: "basics",
     });
   });

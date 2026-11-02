@@ -3,11 +3,51 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-import { AGENTS, classifyFinding, KINDS, parseLog, parseReport, VIEWS } from "./viewer-data.mjs";
+import { AGENTS, classifyFinding, KINDS, parseLog, parseReport, presentActivityEvents, VIEWS } from "./viewer-data.mjs";
 import { elements } from "./viewer-elements.mjs";
 import { renderProfileCards } from "./viewer-profiles.mjs";
 import { renderQuestions } from "./viewer-questions.mjs";
 import { renderNetwork, renderOverview, renderRelationships } from "./viewer-results.mjs";
+
+declare const agGrid: { createGrid(element: HTMLElement, options: Record<string, unknown>): any };
+
+let activityGridApi;
+let questionRefreshPending = false;
+let expandedActivityId = "";
+const activityFilterSelections = new Map<string, Set<string>>();
+const activityFilterText = new Map<string, string>();
+let activityFilterSignature = "";
+// Visible columns use fields shared by LanceDB events and legacy .chat.md logs.
+const activityColumns: any[] = [
+  {
+    colId: "expand",
+    width: 46,
+    sortable: false,
+    filter: false,
+    resizable: false,
+    cellRenderer: ({ data }) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "activity-expand";
+      button.textContent = expandedActivityId === String(data.id) ? "⌄" : "›";
+      button.setAttribute("aria-label", expandedActivityId === String(data.id) ? "Collapse activity details" : "Expand activity details");
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        expandedActivityId = expandedActivityId === String(data.id) ? "" : String(data.id);
+        renderActivityGrid();
+      });
+      return button;
+    },
+  },
+  { field: "time", headerName: "Time", width: 110 },
+  { field: "agent", headerName: "Actor", width: 120 },
+  { field: "kind", headerName: "Kind", width: 120 },
+  { field: "text", headerName: "Summary", flex: 1, minWidth: 260, wrapText: true, autoHeight: true, tooltipField: "text" },
+  ...[
+    "eventType", "occurredAt", "source", "actorType", "actorProfileId", "severity", "correlationId", "causationId", "aggregateType", "aggregateId",
+    "questionId", "answerId", "httpMethod", "apiPath", "httpStatus", "eventDataText", "id", "runId", "ingestedAt",
+  ].map((field) => ({ field, hide: true, minWidth: 140 })),
+];
 
 const state = {
   selectedRun: "",
@@ -33,6 +73,7 @@ const state = {
   answerQuestionId: "",
   answerStatus: "idle" as "idle" | "loading" | "ready" | "error",
   answers: [] as Array<{ id: string; questionId: string; answeredBy: string; answerText: string | null; optionAnswerList: string[] | null; createdAt?: string; isEdited?: boolean }>,
+  questionActivity: [] as any[],
 };
 
 const detailsForRun = (name) => {
@@ -51,7 +92,7 @@ function setCount(name, value) {
 
 const participantsFor = (events) => new Set<string>(events.find((event) => event.kind === "start")?.participants ?? events.map((event) => event.agent).filter(Boolean));
 
-function visibleEvents() {
+function visibleEvents(limit = VIEWS[state.activeView].limit ?? 120) {
   const view = VIEWS[state.activeView];
   const judgeLeaks = state.activeView === "findings" && !state.activeAgent
     ? state.currentReport.leaks.map((text, index) => ({ id: `leak-${index}`, agent: "Judge", kind: "finding", time: "Complete", text: text.slice(2) }))
@@ -60,7 +101,161 @@ function visibleEvents() {
     (event) => (!view.kinds || view.kinds.includes(event.kind)) && (!state.activeAgent || event.agent === state.activeAgent)
   );
   const events = view.reverse ? [...filtered].reverse() : filtered;
-  return events.slice(0, view.limit ?? 120);
+  return events.slice(0, limit);
+}
+
+function renderActivityGrid() {
+  const rows = visibleEvents(Infinity);
+  elements.feed.hidden = true;
+  elements.feedHead.hidden = true;
+  elements.activityLayout.hidden = false;
+  renderActivityFilters(rows);
+  const filteredRows = filterActivityRows(rows);
+  const gridRows = filteredRows.flatMap((event) => expandedActivityId === String(event.id) ? [event, { id: `${event.id}:detail`, detailEvent: event }] : [event]);
+  if (!activityGridApi) {
+    activityGridApi = agGrid.createGrid(elements.activityGrid, {
+      columnDefs: activityColumns,
+      rowData: gridRows,
+      getRowId: ({ data }) => String(data.id),
+      isFullWidthRow: ({ rowNode }) => Boolean(rowNode.data?.detailEvent),
+      fullWidthCellRenderer: ({ data }) => activityDetailElement(data.detailEvent),
+      getRowHeight: ({ data }) => data?.detailEvent ? 165 : undefined,
+      defaultColDef: { filter: true, floatingFilter: true, sortable: true, resizable: true },
+      animateRows: false,
+      enableBrowserTooltips: true,
+      rowSelection: { mode: "singleRow", checkboxes: false, enableClickSelection: true },
+      onRowClicked: ({ data }) => {
+        if (data.detailEvent) return;
+        state.selectedEventId = data.id;
+        expandedActivityId = expandedActivityId === String(data.id) ? "" : String(data.id);
+        renderActivityGrid();
+      },
+    });
+  } else {
+    activityGridApi.setGridOption("rowData", gridRows);
+  }
+  elements.filterNote.textContent = `${filteredRows.length} of ${rows.length} events`;
+  inspectActivity(filteredRows.find((event) => event.id === state.selectedEventId));
+}
+
+const activityValue = (row, field) => String(row[field] ?? "");
+
+function filterActivityRows(rows) {
+  return rows.filter((row) =>
+    [...activityFilterSelections].every(([field, selected]) => selected.has(activityValue(row, field))) &&
+    [...activityFilterText].every(([field, query]) => activityValue(row, field).toLowerCase().includes(query))
+  );
+}
+
+function renderActivityFilters(rows) {
+  const signature = `${state.selectedRun}:${state.activeAgent}`;
+  if (signature === activityFilterSignature) return;
+  activityFilterSignature = signature;
+  activityFilterSelections.clear();
+  activityFilterText.clear();
+  const sections = activityColumns.filter((column) => column.field).map((column) => {
+    const field = column.field;
+    const values: string[] = [...new Set<string>(rows.map((row) => activityValue(row, field)))].sort((a, b) => a.localeCompare(b));
+    const section = document.createElement("details");
+    section.className = "activity-filter-field";
+    section.dataset.filterField = `${column.headerName ?? field} ${field}`.toLowerCase();
+    const summary = document.createElement("summary");
+    summary.textContent = column.headerName ?? field;
+    const body = document.createElement("div");
+    body.className = "activity-filter-body";
+    if (values.length > 20) {
+      const input = document.createElement("input");
+      input.type = "search";
+      input.placeholder = `Filter ${column.headerName ?? field}…`;
+      input.addEventListener("input", () => {
+        const query = input.value.trim().toLowerCase();
+        if (query) activityFilterText.set(field, query);
+        else activityFilterText.delete(field);
+        renderActivityGrid();
+      });
+      body.append(input);
+    } else {
+      const selected = new Set(values);
+      const addOption = (labelText, value, selectAll = false) => {
+        const label = document.createElement("label");
+        label.className = "activity-filter-value";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = true;
+        checkbox.addEventListener("change", () => {
+          if (selectAll) {
+            selected.clear();
+            if (checkbox.checked) values.forEach((item) => selected.add(item));
+            for (const child of body.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) child.checked = checkbox.checked;
+          } else if (checkbox.checked) selected.add(value);
+          else selected.delete(value);
+          if (selected.size === values.length) activityFilterSelections.delete(field);
+          else activityFilterSelections.set(field, new Set(selected));
+          renderActivityGrid();
+        });
+        label.append(checkbox, document.createTextNode(labelText || "(empty)"));
+        body.append(label);
+      };
+      addOption("(Select All)", "", true);
+      values.forEach((value) => addOption(value, value));
+    }
+    section.append(summary, body);
+    return section;
+  });
+  elements.activityFilterFields.replaceChildren(...sections);
+}
+
+function activityDetailElement(event) {
+  const root = document.createElement("div");
+  root.className = "activity-detail";
+  const groups = [
+    ["Event", [["Type", event.eventType], ["Kind", event.kind], ["Source", event.source], ["Severity", event.severity], ["Occurred", event.occurredAt ?? event.time]]],
+    ["Actor & linkage", [["Actor", event.agent], ["Actor type", event.actorType], ["Profile", event.actorProfileId], ["Question", event.questionId], ["Answer", event.answerId], ["Correlation", event.correlationId]]],
+    ["API", [["Method", event.httpMethod], ["Path", event.apiPath], ["Status", event.httpStatus], ["Aggregate", event.aggregateType], ["Aggregate ID", event.aggregateId]]],
+  ];
+  const grid = document.createElement("div");
+  grid.className = "activity-detail-grid";
+  for (const [title, pairs] of groups) {
+    const group = document.createElement("section");
+    group.className = "activity-detail-group";
+    const heading = document.createElement("h3");
+    heading.textContent = String(title);
+    const list = document.createElement("dl");
+    list.className = "activity-detail-pairs";
+    for (const [label, value] of pairs as Array<[string, unknown]>) {
+      if (value == null || value === "") continue;
+      const term = document.createElement("dt");
+      term.textContent = label;
+      const description = document.createElement("dd");
+      description.textContent = String(value);
+      list.append(term, description);
+    }
+    group.append(heading, list);
+    grid.append(group);
+  }
+  const payload = document.createElement("section");
+  payload.className = "activity-detail-group activity-detail-payload";
+  const heading = document.createElement("h3");
+  heading.textContent = "Event data";
+  const pre = document.createElement("pre");
+  pre.textContent = JSON.stringify(event.eventData ?? {}, null, 2);
+  payload.append(heading, pre);
+  grid.append(payload);
+  root.append(grid);
+  return root;
+}
+
+function inspectActivity(event) {
+  if (!event) return renderInspector(null);
+  const shown = ["time", "agent", "kind", "text", "eventDataText"];
+  const fields = activityColumns
+    .map(({ field }) => field)
+    .filter((field) => field && !shown.includes(field) && event[field] != null && event[field] !== "")
+    .map((field) => `${field}: ${event[field]}`);
+  renderInspector({
+    ...event,
+    text: [event.text, fields.join("\n"), event.eventData && `eventData:\n${JSON.stringify(event.eventData, null, 2)}`].filter(Boolean).join("\n\n"),
+  });
 }
 
 function renderInspector(event) {
@@ -84,6 +279,7 @@ async function loadQuestions(person: string) {
   state.answerQuestionId = "";
   state.answerStatus = "idle";
   state.answers = [];
+  state.questionActivity = [];
   renderFeed();
   try {
     const response = await fetch(`/api/questions?person=${encodeURIComponent(person)}`, { cache: "no-store" });
@@ -103,6 +299,7 @@ async function loadAnswers(person: string, questionId: string) {
   state.answerQuestionId = questionId;
   state.answerStatus = "loading";
   state.answers = [];
+  state.questionActivity = [];
   renderFeed();
   try {
     const response = await fetch("/api/answers", {
@@ -114,12 +311,44 @@ async function loadAnswers(person: string, questionId: string) {
     if (!response.ok) throw new Error(body.error ?? "Could not load answers");
     if (state.questionPerson !== person || state.selectedQuestionId !== questionId) return;
     state.answers = body.answers;
+    state.questionActivity = presentActivityEvents(body.activity ?? []);
     state.answerStatus = "ready";
   } catch {
     if (state.questionPerson !== person || state.selectedQuestionId !== questionId) return;
     state.answerStatus = "error";
   }
   renderFeed();
+}
+
+async function refreshQuestions() {
+  if (questionRefreshPending || state.activeView !== "questions" || !state.activeAgent || state.questionPerson !== state.activeAgent) return;
+  questionRefreshPending = true;
+  const person = state.activeAgent;
+  const questionId = state.selectedQuestionId;
+  try {
+    const [questionsResponse, answersResponse] = await Promise.all([
+      fetch(`/api/questions?person=${encodeURIComponent(person)}`, { cache: "no-store" }),
+      questionId ? fetch("/api/answers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ person, questionId }),
+      }) : undefined,
+    ]);
+    const questionsBody = await questionsResponse.json();
+    const answersBody = answersResponse ? await answersResponse.json() : undefined;
+    if (!questionsResponse.ok || (answersResponse && !answersResponse.ok)) return;
+    if (state.activeView !== "questions" || state.activeAgent !== person || state.questionPerson !== person || state.selectedQuestionId !== questionId) return;
+    state.questions = questionsBody.questions;
+    if (answersBody) {
+      state.answers = answersBody.answers;
+      state.questionActivity = presentActivityEvents(answersBody.activity ?? []);
+      state.answerQuestionId = questionId;
+      state.answerStatus = "ready";
+    }
+    renderFeed();
+  } finally {
+    questionRefreshPending = false;
+  }
 }
 
 const resultContext = () => ({ activeAgent: state.activeAgent, elements, network: state.network, report: state.currentReport, renderInspector });
@@ -153,6 +382,7 @@ function inspectChatMessage(message: { role: "user" | "assistant"; content: stri
 }
 
 function renderChatView(participants = new Set<string>()) {
+  delete document.body.dataset.activityMode;
   const names = [...new Set([...AGENTS, ...participants])];
   const filteredAgent = state.activeAgent && names.includes(state.activeAgent) ? state.activeAgent : "";
   const chatTarget = filteredAgent || (state.chatAgent && names.includes(state.chatAgent) ? state.chatAgent : names[0] ?? "");
@@ -194,9 +424,12 @@ function renderProfiles(participants) {
 function renderFeed() {
   const view = VIEWS[state.activeView];
   if (state.activeView === "chat") return renderChatView(participantsFor(state.currentEvents));
+  if (state.activeView === "activity") document.body.dataset.activityMode = "true";
+  else delete document.body.dataset.activityMode;
   delete document.body.dataset.chatMode;
   elements.chatPanel.hidden = true;
   elements.feed.hidden = false;
+  elements.activityLayout.hidden = true;
   elements.feedHead.hidden = false;
   elements.inspector.hidden = false;
   if (state.activeView === "network") return renderNetwork(resultContext());
@@ -212,6 +445,7 @@ function renderFeed() {
       selectedQuestionId: state.selectedQuestionId,
       answers: state.answerQuestionId === state.selectedQuestionId ? state.answers : [],
       answerStatus: state.answerQuestionId === state.selectedQuestionId ? state.answerStatus : "idle",
+      activityEvents: state.answerQuestionId === state.selectedQuestionId ? state.questionActivity : [],
       onSelect: (questionId) => {
         state.selectedQuestionId = questionId;
         void loadAnswers(state.activeAgent, questionId);
@@ -219,6 +453,7 @@ function renderFeed() {
       renderInspector,
     });
   }
+  if (state.activeView === "activity") return renderActivityGrid();
   const events = visibleEvents();
   elements.viewTitle.textContent = view.title;
   elements.filterNote.textContent = state.activeAgent ? `${state.activeAgent} only` : "All agents";
@@ -313,7 +548,7 @@ function renderChat() {
 }
 
 function render(events, mtime) {
-  state.currentEvents = events.map((event, id) => ({ ...event, id }));
+  state.currentEvents = events.map((event, index) => ({ ...event, id: event.id ?? index }));
   const participants = participantsFor(state.currentEvents);
   if (state.activeAgent && !AGENTS.includes(state.activeAgent) && !participants.has(state.activeAgent)) state.activeAgent = "";
   const latest = state.currentEvents.at(-1);
@@ -394,7 +629,7 @@ async function loadRunState() {
 async function refreshLog() {
   if (!state.selectedRun) return render([], 0);
   const [response, reportResponse, networkResponse, agentsResponse] = await Promise.all([
-    fetch(`/api/log?run=${encodeURIComponent(state.selectedRun)}`, { cache: "no-store" }),
+    fetch(`/api/activity?run=${encodeURIComponent(state.selectedRun)}`, { cache: "no-store" }),
     fetch(`/api/report?run=${encodeURIComponent(state.selectedRun)}`, { cache: "no-store" }),
     fetch(`/api/network?run=${encodeURIComponent(state.selectedRun)}`, { cache: "no-store" }),
     fetch("/api/agents", { cache: "no-store" }),
@@ -405,19 +640,20 @@ async function refreshLog() {
   const data = await response.json();
   const report = reportResponse.ok ? await reportResponse.json() : { text: "" };
   const network = networkResponse.ok ? await networkResponse.json() : { networks: {} };
-  const signature = `${data.run}:${data.mtime}:${data.text.length}:${report.text.length}:${JSON.stringify(network.networks)}:${JSON.stringify(oids)}`;
+  const signature = `${data.run}:${data.mtime}:${data.events?.length ?? 0}:${data.legacyText?.length ?? 0}:${report.text.length}:${JSON.stringify(network.networks)}:${JSON.stringify(oids)}`;
   if (signature === state.renderedSignature) return;
   state.renderedSignature = signature;
   state.currentReport = parseReport(report.text);
   state.network = network.networks;
   state.agentOids = oids;
-  render(parseLog(data.text), data.mtime);
+  render(data.events?.length ? presentActivityEvents(data.events) : parseLog(data.legacyText ?? ""), data.mtime);
 }
 
 async function update() {
   try {
     await Promise.all([loadRuns(), loadRunState()]);
     await refreshLog();
+    await refreshQuestions();
   } catch (error) {
     elements.runStatus.textContent = "Unavailable";
     elements.runStatus.dataset.state = "idle";
@@ -427,6 +663,18 @@ async function update() {
 }
 
 if (elements) {
+  elements.activityFilterToggle.addEventListener("click", () => {
+    const open = !elements.activityFilterToggle.getAttribute("aria-expanded").includes("true");
+    elements.activityFilterToggle.setAttribute("aria-expanded", String(open));
+    elements.activityFilterPanel.hidden = !open;
+    elements.activityLayout.classList.toggle("is-filter-open", open);
+  });
+  elements.activityFilterSearch.addEventListener("input", () => {
+    const query = elements.activityFilterSearch.value.trim().toLowerCase();
+    for (const section of elements.activityFilterFields.children) {
+      (section as HTMLElement).hidden = Boolean(query) && !(section as HTMLElement).dataset.filterField.includes(query);
+    }
+  });
   elements.questionIdCopy.addEventListener("click", async () => {
     const questionId = elements.questionIdCopy.dataset.questionId;
     if (!questionId) return;
