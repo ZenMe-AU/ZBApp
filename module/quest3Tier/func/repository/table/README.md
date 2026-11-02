@@ -4,9 +4,9 @@ Q3 uses three Azure tables:
 
 | Table | Purpose |
 |---|---|
-| `Profiles` | Profiles keyed by internal profile ID, with the display name and email from the sign-in token for the share list (`GET /profiles`) |
+| `Profiles` | Profiles keyed by internal profile ID, with display names and reciprocal friend edges |
 | `ProfileByExternalId` | External-to-internal profile ID lookup |
-| `QuestionData` | Questions, answers, and shares |
+| `QuestionData` | Questions, answers (including recipient and pairwise IDs), and shares |
 
 `QuestionData` uses `PartitionKey = profileId` and record-prefixed RowKeys
 such as `question:<questionId>` and `answer:<questionId>:<answerId>`.

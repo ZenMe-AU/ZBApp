@@ -60,9 +60,9 @@ export interface QuestionDetail {
   questionText: string;
   optionList: string[] | null;
   profileId: string;
+  createdAt: string;
 }
 
-// The full Postgres "question" row, which GetQuestionListByUser returned.
 export interface QuestionListItem extends QuestionDetail {
   createdAt: string;
 }

@@ -9,16 +9,13 @@ import { defineConfig, devices } from "@playwright/test";
 import * as dotenv from "dotenv";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { viewports } from "./zeninstallerPvt/ui/pwtests/testInit.js";
 
 process.env.NODE_ENV = process.env.NODE_ENV || "dev";
 // Enable Playwright API logs for normal and coverage runs, preserving other namespaces.
 process.env.DEBUG = [process.env.DEBUG, "pw:api"].filter(Boolean).join(",");
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({
-  path: [
-    path.resolve(currentDirectory, ".env")
-  ],
+  path: [path.resolve(currentDirectory, ".env")],
 });
 
 export default defineConfig({
@@ -31,7 +28,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: [
     // A terminal reporter is what streams worker stdout/stderr (incl. pw:api) to the console.
-    ["line"], 
+    ["line"],
     ["./zeninstallerPvt/ui/pwtests/coverage/coverage-reporter.ts"],
   ],
   timeout: 60_000,
@@ -85,7 +82,6 @@ export default defineConfig({
       retries: 1,
       use: {
         ...devices["Desktop Chrome"],
-        viewport: viewports.Desktop,
       },
     },
   ],

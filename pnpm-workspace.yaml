@@ -10,9 +10,11 @@ allowBuilds:
   "@scarf/scarf": false
   azure-functions-core-tools: true
   esbuild: true
+  onnxruntime-node: true
   openvino-genai-node: true
   openvino-node: true
   protobufjs: true
+  sharp: true
 
 overrides:
   react: 18.x.x

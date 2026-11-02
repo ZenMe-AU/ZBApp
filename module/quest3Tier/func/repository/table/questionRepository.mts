@@ -45,6 +45,7 @@ function toQuestionDetail(entity: QuestionEntity): QuestionDetail {
     questionText: entity.questionText,
     optionList: optionJson ? JSON.parse(optionJson) : null,
     profileId: entity.profileId,
+    createdAt: entity.createdAt,
   };
 }
 

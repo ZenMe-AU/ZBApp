@@ -3,19 +3,12 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-interface MigrationQueryInterface {
-  addColumn(tableName: string, columnName: string, definition: { type: unknown; allowNull: boolean }): Promise<unknown>;
-  removeColumn(tableName: string, columnName: string): Promise<unknown>;
-}
+import { DataTypes, type Sequelize } from "@sequelize/core";
 
-interface SequelizeDataTypes {
-  STRING: unknown;
-}
-
-export async function up(queryInterface: MigrationQueryInterface): Promise<void> {
+export async function up(queryInterface: Sequelize["queryInterface"]): Promise<void> {
   await queryInterface.removeColumn("questionAnswer", "optionId");
 }
 
-export async function down(queryInterface: MigrationQueryInterface, Sequelize: SequelizeDataTypes): Promise<void> {
-  await queryInterface.addColumn("questionAnswer", "optionId", { type: Sequelize.STRING, allowNull: true });
+export async function down(queryInterface: Sequelize["queryInterface"]): Promise<void> {
+  await queryInterface.addColumn("questionAnswer", "optionId", { type: DataTypes.STRING, allowNull: true });
 }
