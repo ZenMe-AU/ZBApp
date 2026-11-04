@@ -31,8 +31,10 @@ const activityColumns: any[] = [
       button.className = "activity-expand";
       button.textContent = expandedActivityId === String(data.id) ? "⌄" : "›";
       button.setAttribute("aria-label", expandedActivityId === String(data.id) ? "Collapse activity details" : "Expand activity details");
+      button.addEventListener("pointerdown", (event) => event.stopPropagation());
       button.addEventListener("click", (event) => {
         event.stopPropagation();
+        state.selectedEventId = data.id;
         expandedActivityId = expandedActivityId === String(data.id) ? "" : String(data.id);
         renderActivityGrid();
       });
@@ -41,7 +43,7 @@ const activityColumns: any[] = [
   },
   { field: "time", headerName: "Time", width: 110 },
   { field: "agent", headerName: "Actor", width: 120 },
-  { field: "aggregateType", headerName: "Aggregate Type", width: 150 },
+  { field: "aggregateType", headerName: "Aggregate", width: 150 },
   { field: "text", headerName: "Summary", flex: 1, minWidth: 260, wrapText: true, autoHeight: true, tooltipField: "text" },
   { field: "runId", headerName: "Run ID", hide: true, minWidth: 140 },
   ...[
@@ -56,7 +58,7 @@ const state = {
   renderedSignature: "",
   announcedRun: "",
   announcedCount: 0,
-  activeView: "overview",
+  activeView: "questions",
   activeAgent: "",
   currentEvents: [],
   activityEvents: [],
@@ -125,14 +127,13 @@ function renderActivityGrid() {
       isFullWidthRow: ({ rowNode }) => Boolean(rowNode.data?.detailEvent),
       fullWidthCellRenderer: ({ data }) => activityDetailElement(data.detailEvent),
       getRowHeight: ({ data }) => data?.detailEvent ? 165 : undefined,
-      defaultColDef: { filter: true, floatingFilter: true, sortable: true, resizable: true },
+      defaultColDef: { filter: true, sortable: true, resizable: true },
       animateRows: false,
       enableBrowserTooltips: true,
       rowSelection: { mode: "singleRow", checkboxes: false, enableClickSelection: true },
       onRowClicked: ({ data }) => {
         if (data.detailEvent) return;
         state.selectedEventId = data.id;
-        expandedActivityId = expandedActivityId === String(data.id) ? "" : String(data.id);
         renderActivityGrid();
       },
     });
@@ -408,6 +409,12 @@ function renderChatView(participants = new Set<string>()) {
 }
 
 function renderProfiles(participants) {
+  const human = [...participants].find((name) => !AGENTS.includes(name));
+  elements.humanProfile.disabled = !human;
+  elements.humanProfile.dataset.profile = human ?? "";
+  elements.humanProfile.querySelector("span").textContent = human ?? "Human";
+  elements.humanProfile.setAttribute("aria-label", human ? `Open ${human} profile` : "Human profile is not available for this run");
+  elements.humanProfile.setAttribute("aria-pressed", String(Boolean(human && state.activeAgent === human)));
   renderProfileCards({
     activeProfile: state.activeAgent,
     container: elements.profileCards,
@@ -459,6 +466,15 @@ function renderFeed() {
     });
   }
   if (state.activeView === "activity") return renderActivityGrid();
+  if (state.activeView === "judge-chat") {
+    elements.viewTitle.textContent = "Judge Chat";
+    elements.filterNote.textContent = "Not connected";
+    const empty = document.createElement("li");
+    empty.className = "empty";
+    empty.textContent = "Judge Chat will be connected in the next step.";
+    elements.feed.replaceChildren(empty);
+    return renderInspector(null);
+  }
   const events = visibleEvents();
   elements.viewTitle.textContent = view.title;
   elements.filterNote.textContent = state.activeAgent ? `${state.activeAgent} only` : "All agents";
@@ -748,6 +764,14 @@ if (elements) {
     for (const item of elements.viewTabs.querySelectorAll("[data-view]")) item.setAttribute("aria-pressed", String(item === tab));
     renderFeed();
     if (state.activeView === "activity") void refreshAllActivity();
+  });
+  elements.humanProfile.addEventListener("click", () => {
+    const human = elements.humanProfile.dataset.profile;
+    if (!human) return;
+    state.activeAgent = state.activeAgent === human ? "" : human;
+    state.selectedEventId = null;
+    renderProfiles(participantsFor(state.currentEvents));
+    renderFeed();
   });
   elements.chatForm.addEventListener("submit", async (event) => {
     event.preventDefault();

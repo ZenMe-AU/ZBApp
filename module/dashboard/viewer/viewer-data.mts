@@ -27,6 +27,7 @@ export const VIEWS = {
   followups: { title: "Follow-ups", kinds: ["followup"] },
   findings: { title: "Findings", kinds: ["finding", "error"] },
   activity: { title: "Activity", kinds: null, reverse: true },
+  "judge-chat": { title: "Judge Chat", kinds: [] },
 };
 
 export function questionTopic(question) {
