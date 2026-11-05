@@ -5,7 +5,7 @@ Connection goal
 Find someone for occasional walking, hiking, travel or other relaxed activities.
 
 Why I want this connection
-Shared outdoor activities provide a natural way to build friendship without constant social contact.
+Shared outdoor activities provide a natural way to build friendship without constant social contact. I enjoy high-intensity guided hikes when they are properly planned and safety-conscious.
 
 What I can contribute
 - Reliable company
@@ -20,26 +20,29 @@ What I expect
 - Enjoyment of relaxed outdoor activities
 
 Important interests and values
-- walking
-- moderate hiking
-- travel
-- regional day trips
-- wildlife
-- scenery
-- photography
-- reliability
-- curiosity
-- consideration
-- safety
+- [interest] walking (+0.8)
+- [interest] moderate hiking (+0.7)
+- [interest] high-intensity guided hiking (+0.8)
+- [interest] travel (+0.7)
+- [interest] regional day trips (+0.7)
+- [interest] wildlife (+0.7)
+- [interest] scenery (+0.7)
+- [interest] photography (+0.6)
+- [value] reliability (+0.8)
+- [value] curiosity (+0.7)
+- [value] consideration (+0.8)
+- [value] safety (+0.8)
+
+Affinities and synthetic embeddings are provisional test data. Synthetic vectors are for simulation only and must be replaced before real matching.
 
 Preferred communication style
 Informal, friendly, direct and low-maintenance
 
 Boundaries and deal-breakers
-- repeated unreliability
-- pressure for excessive social commitment
-- reckless or extreme activities
-- disregard for agreed plans
+- repeated unreliability (-0.9)
+- pressure for excessive social commitment (-0.9)
+- reckless or extreme activities (-0.9)
+- disregard for agreed plans (-0.9)
 
 Initial disclosure
 General interests, activity preferences and broad availability

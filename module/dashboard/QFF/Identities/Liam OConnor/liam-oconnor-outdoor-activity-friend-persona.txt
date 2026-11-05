@@ -21,24 +21,31 @@ What I expect
 - Shared enjoyment rather than competition
 
 Important interests and values
-- Walking
-- Moderate hiking
-- Coastal scenery
-- Regional day trips
-- Wildlife
-- Photography
-- Casual cycling
-- Reliability, safety, curiosity and consideration
+- [interest] Walking (+0.8)
+- [interest] Moderate hiking (+0.8)
+- [interest] High-intensity guided hiking (-0.8)
+- [interest] Travel (+0.7)
+- [interest] Regional day trips (+0.8)
+- [interest] Coastal scenery (+0.7)
+- [interest] Wildlife (+0.7)
+- [interest] Photography (+0.7)
+- [interest] Casual cycling (+0.6)
+- [value] Reliability (+0.9)
+- [value] Safety (+0.9)
+- [value] Curiosity (+0.6)
+- [value] Consideration (+0.8)
+
+Affinities and synthetic embeddings are provisional test data. Synthetic vectors are for simulation only and must be replaced before real matching.
 
 Preferred communication style
 Friendly, direct and low-maintenance. I prefer plans made in advance and do not expect immediate replies.
 
 Boundaries and deal-breakers
-- Reckless or extreme activities
-- Ignoring weather or safety warnings
-- Pressure to exceed an agreed difficulty level
-- Repeated unreliability
-- Sharing precise routines or locations without consent
+- Reckless or extreme activities (-0.9)
+- Ignoring weather or safety warnings (-0.9)
+- Pressure to exceed agreed difficulty (-0.9)
+- Repeated unreliability (-0.9)
+- Sharing precise routines or locations without consent (-0.9)
 
 Initial disclosure
 I will share general activity preferences, approximate fitness level and broad availability. I will not initially share my home address, exact routine or private family information.

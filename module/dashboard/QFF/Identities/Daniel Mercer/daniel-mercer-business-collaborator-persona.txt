@@ -19,25 +19,27 @@ What I expect
 - Ethical commercial behaviour
 
 Important interests and values
-- technology products
-- cyber security
-- artificial intelligence
-- product design
-- government markets
-- small-business markets
-- integrity
-- independence
-- pragmatism
-- reliability
+- [interest] technology products (+0.8)
+- [interest] cyber security (+0.8)
+- [interest] artificial intelligence (+0.8)
+- [interest] product design (+0.8)
+- [interest] government markets (+0.6)
+- [interest] small-business markets (+0.7)
+- [value] integrity (+0.9)
+- [value] independence (+0.8)
+- [value] pragmatism (+0.8)
+- [value] reliability (+0.9)
+
+Affinities and synthetic embeddings are provisional test data. Synthetic vectors are for simulation only and must be replaced before real matching.
 
 Preferred communication style
 Direct, structured and outcome-focused
 
 Boundaries and deal-breakers
-- unethical behaviour
-- misrepresentation
-- pressure to commit early
-- unauthorised sharing of sensitive information
+- unethical behaviour (-0.9)
+- misrepresentation (-0.9)
+- pressure to commit early (-0.9)
+- unauthorised sharing of sensitive information (-0.9)
 
 Initial disclosure
 Broad business interests and non-confidential goals

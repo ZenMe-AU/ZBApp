@@ -18,23 +18,24 @@ What I expect
 - Respect for conscience
 
 Important interests and values
-- Christianity
-- Bible study
-- theology
-- ethics
-- faith in daily life
-- faith
-- honesty
-- humility
-- respectful disagreement
+- [interest] Christianity (+0.9)
+- [interest] Bible study (+0.8)
+- [interest] theology (+0.8)
+- [value] ethics (+0.8)
+- [value] faith in daily life (+0.9)
+- [value] honesty (+0.9)
+- [value] humility (+0.9)
+- [value] respectful disagreement (+0.9)
+
+Affinities and synthetic embeddings are provisional test data. Synthetic vectors are for simulation only and must be replaced before real matching.
 
 Preferred communication style
 Thoughtful and exploratory
 
 Boundaries and deal-breakers
-- hostility towards beliefs
-- manipulative religious behaviour
-- pressure to disclose sensitive experiences
+- hostility toward beliefs (-0.9)
+- manipulative religious behaviour (-0.9)
+- pressure to disclose sensitive experiences (-0.9)
 
 Initial disclosure
 Christian identity and broad beliefs, with deeper views disclosed progressively

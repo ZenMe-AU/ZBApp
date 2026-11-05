@@ -18,24 +18,26 @@ What I expect
 - Clear honest communication
 
 Important interests and values
-- cloud architecture
-- cyber security
-- identity and access management
-- artificial intelligence
-- software architecture
-- automation
-- competence
-- curiosity
-- openness
+- [interest] cloud architecture (+0.9)
+- [interest] cyber security (+0.9)
+- [interest] identity and access management (+0.8)
+- [interest] artificial intelligence (+0.8)
+- [interest] software architecture (+0.9)
+- [interest] automation (+0.7)
+- [value] competence (+0.9)
+- [value] curiosity (+0.9)
+- [value] openness (+0.8)
+
+Affinities and synthetic embeddings are provisional test data. Synthetic vectors are for simulation only and must be replaced before real matching.
 
 Preferred communication style
 Concise, direct and technical
 
 Boundaries and deal-breakers
-- persistent exaggeration
-- dishonesty
-- status-driven conversation
-- pressure to disclose confidential information
+- persistent exaggeration (-0.9)
+- dishonesty (-0.9)
+- status-driven conversation (-0.9)
+- pressure to disclose confidential information (-0.9)
 
 Initial disclosure
 General technical interests, experience and opinions only

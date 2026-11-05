@@ -20,21 +20,27 @@ What I expect
 - Respectful behaviour towards players, officials and other supporters
 
 Important interests and values
-- Australian rules football
-- Cricket
-- Tennis and the Australian Open
-- Casual cycling and walking
-- Melbourne sporting history
-- Loyalty, humour and sportsmanship
+- [interest] Australian rules football (+0.9)
+- [interest] Cricket (+0.7)
+- [interest] Tennis (+0.7)
+- [interest] Australian Open (+0.7)
+- [interest] Casual cycling (+0.5)
+- [interest] Walking (+0.5)
+- [interest] Melbourne sporting history (+0.7)
+- [value] Loyalty (+0.7)
+- [value] Humour (+0.6)
+- [value] Sportsmanship (+0.9)
+
+Affinities and synthetic embeddings are provisional test data. Synthetic vectors are for simulation only and must be replaced before real matching.
 
 Preferred communication style
 Informal, concise and friendly. I prefer practical messages about plans rather than constant group chat.
 
 Boundaries and deal-breakers
-- Aggressive supporter behaviour
-- Gambling pressure
-- Abusive language directed at players or officials
-- Repeated last-minute cancellations
+- Aggressive supporter behaviour (-0.9)
+- Gambling pressure (-0.9)
+- Abusive language toward players or officials (-0.9)
+- Repeated last-minute cancellations (-0.9)
 
 Initial disclosure
 I will initially share broad sporting interests, preferred event types and general availability. I will not disclose precise routines, financial information or contact details until mutual trust develops.

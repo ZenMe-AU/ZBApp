@@ -20,22 +20,32 @@ What I expect
 - Friendly, low-pressure company
 
 Important interests and values
-- Live music
-- Comedy
-- Independent cafes
-- Food markets
-- Galleries and museums
-- Architecture and local history
-- Curiosity, inclusion and authenticity
+- [interest] Melbourne neighbourhoods (+0.7)
+- [interest] Live music (+0.8)
+- [interest] Comedy (+0.7)
+- [interest] Food (+0.7)
+- [interest] Coffee (+0.7)
+- [interest] Independent cafes (+0.7)
+- [interest] Food markets (+0.7)
+- [interest] Galleries (+0.6)
+- [interest] Museums (+0.6)
+- [interest] Architecture (+0.6)
+- [interest] Local history (+0.7)
+- [interest] Local events (+0.7)
+- [value] Curiosity (+0.8)
+- [value] Inclusion (+0.8)
+- [value] Authenticity (+0.8)
+
+Affinities and synthetic embeddings are provisional test data. Synthetic vectors are for simulation only and must be replaced before real matching.
 
 Preferred communication style
 Relaxed and conversational. I like short messages followed by in-person experiences rather than long online discussions.
 
 Boundaries and deal-breakers
-- Snobbery about taste, suburb or income
-- Pressure to drink alcohol
-- Disrespectful behaviour towards hospitality or venue staff
-- Repeatedly one-sided planning
+- Snobbery about taste, suburb or income (-0.9)
+- Pressure to drink alcohol (-0.9)
+- Disrespectful behaviour toward hospitality or venue staff (-0.9)
+- One-sided planning (-0.9)
 
 Initial disclosure
 I will share interests, broad neighbourhood preferences and activity ideas. My home address, family details and regular schedule remain private initially.

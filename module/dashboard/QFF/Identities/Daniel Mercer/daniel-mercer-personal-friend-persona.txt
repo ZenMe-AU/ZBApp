@@ -21,25 +21,27 @@ What I expect
 - Respect for privacy
 
 Important interests and values
-- technology
-- travel
-- current ideas
-- walking
-- family life
-- meaningful conversation
-- honesty
-- loyalty
-- independence
-- respect
+- [interest] technology (+0.6)
+- [interest] travel (+0.7)
+- [interest] current ideas (+0.7)
+- [interest] walking (+0.7)
+- [interest] family life (+0.7)
+- [interaction] meaningful conversation (+0.9)
+- [value] honesty (+0.9)
+- [value] loyalty (+0.9)
+- [value] independence (+0.8)
+- [value] respect (+0.9)
+
+Affinities and synthetic embeddings are provisional test data. Synthetic vectors are for simulation only and must be replaced before real matching.
 
 Preferred communication style
 Infrequent but substantive and direct
 
 Boundaries and deal-breakers
-- manipulation
-- dishonesty
-- pressure for rapid intimacy
-- repeatedly one-sided interaction
+- manipulation (-0.9)
+- dishonesty (-0.9)
+- pressure for rapid intimacy (-0.9)
+- repeatedly one-sided interaction (-0.9)
 
 Initial disclosure
 Interests, general experiences and low-risk preferences initially

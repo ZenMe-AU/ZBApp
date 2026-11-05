@@ -1,125 +1,1581 @@
 {
-  "identity_id": "liam-oconnor-melbourne",
-  "personas": [
-    {
-      "persona": "melbourne sport friend",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "Australian rules football"
-        },
-        {
-          "property": "interest",
-          "value": "cricket"
-        },
-        {
-          "property": "interest",
-          "value": "Australian Open tennis"
-        },
-        {
-          "property": "interest",
-          "value": "casual cycling"
-        },
-        {
-          "property": "interest",
-          "value": "walking"
-        },
-        {
-          "property": "interest",
-          "value": "Melbourne sporting history"
-        }
-      ]
-    },
-    {
-      "persona": "melbourne culture friend",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "live music"
-        },
-        {
-          "property": "interest",
-          "value": "independent cafes and coffee"
-        },
-        {
-          "property": "interest",
-          "value": "food markets"
-        },
-        {
-          "property": "interest",
-          "value": "galleries"
-        },
-        {
-          "property": "interest",
-          "value": "museums"
-        },
-        {
-          "property": "interest",
-          "value": "architecture"
-        },
-        {
-          "property": "interest",
-          "value": "local history"
-        }
-      ]
-    },
-    {
-      "persona": "outdoor activity friend",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "walking"
-        },
-        {
-          "property": "interest",
-          "value": "moderate hiking"
-        },
-        {
-          "property": "interest",
-          "value": "travel and regional day trips"
-        },
-        {
-          "property": "interest",
-          "value": "wildlife and scenery"
-        },
-        {
-          "property": "interest",
-          "value": "photography"
-        },
-        {
-          "property": "interest",
-          "value": "casual cycling"
-        }
-      ]
-    },
-    {
-      "persona": "community neighbourhood connection",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "community sport"
-        },
-        {
-          "property": "interest",
-          "value": "local events"
-        },
-        {
-          "property": "interest",
-          "value": "urban greening"
-        },
-        {
-          "property": "interest",
-          "value": "litter reduction"
-        },
-        {
-          "property": "interest",
-          "value": "skills-based volunteering"
-        },
-        {
-          "property": "interest",
-          "value": "neighbourhood resilience"
-        }
-      ]
-    }
-  ]
+    "identity_id":  "liam-oconnor-melbourne",
+    "embedding_model":  {
+                            "name":  "qff-synthetic-rule-based",
+                            "version":  "1.0",
+                            "dimensions":  16
+                        },
+    "personas":  [
+                     {
+                         "persona":  "melbourne sport friend",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "Australian rules football",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0.974253,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.022465,
+                                                                   0.113243,
+                                                                   -0.065562,
+                                                                   0.110492,
+                                                                   -0.003209,
+                                                                   0.08115,
+                                                                   0.02705,
+                                                                   -0.11691
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "cricket",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0.972674,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.101158,
+                                                                   -0.069117,
+                                                                   0.092003,
+                                                                   0.106651,
+                                                                   0.030668,
+                                                                   -0.062709,
+                                                                   -0.111228,
+                                                                   0.042569
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "tennis",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0.986974,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.105432,
+                                                                   0.023687,
+                                                                   -0.019972,
+                                                                   -0.003251,
+                                                                   0.084067,
+                                                                   -0.051555,
+                                                                   0.056199,
+                                                                   0.03019
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "Australian Open",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.915321,
+                                                                   0,
+                                                                   -0.104454,
+                                                                   -0.138913,
+                                                                   0.19491,
+                                                                   0.076456,
+                                                                   0.063534,
+                                                                   0.222908,
+                                                                   0.022614,
+                                                                   0.184141
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "casual cycling",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.5,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.971837,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.109303,
+                                                                   0.018751,
+                                                                   0.079119,
+                                                                   0.082778,
+                                                                   -0.108388,
+                                                                   0.091924,
+                                                                   -0.098327,
+                                                                   0.016007
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "walking",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.5,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.983104,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.067082,
+                                                                   0.117973,
+                                                                   -0.088364,
+                                                                   -0.036548,
+                                                                   -0.065232,
+                                                                   -0.029146,
+                                                                   -0.009715,
+                                                                   0.027296
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "Melbourne sporting history",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0.702048,
+                                                                   0,
+                                                                   0,
+                                                                   0.702048,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.055833,
+                                                                   -0.001652,
+                                                                   0.005616,
+                                                                   0.016188,
+                                                                   0.079621,
+                                                                   0.067066,
+                                                                   0.001652,
+                                                                   0.001652
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "loyalty",
+                                                 "kind":  "value",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.975708,
+                                                                   0,
+                                                                   0.121103,
+                                                                   -0.090109,
+                                                                   0.048785,
+                                                                   0.074039,
+                                                                   0.044194,
+                                                                   0.045342,
+                                                                   -0.086666,
+                                                                   0.076335
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "humour",
+                                                 "kind":  "value",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973669,
+                                                                   0,
+                                                                   -0.05212,
+                                                                   -0.070448,
+                                                                   0.127722,
+                                                                   0.009737,
+                                                                   -0.015464,
+                                                                   -0.091067,
+                                                                   -0.125431,
+                                                                   0.060138
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "sportsmanship",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0.771444,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.617155,
+                                                                   0,
+                                                                   -0.080956,
+                                                                   0.078778,
+                                                                   0.088943,
+                                                                   -0.030858,
+                                                                   -0.009802,
+                                                                   0.026501,
+                                                                   0.030132,
+                                                                   0.025775
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "aggressive supporter behaviour",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0.984961,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.084822,
+                                                                   -0.082968,
+                                                                   0.055158,
+                                                                   -0.013442,
+                                                                   0.014369,
+                                                                   -0.055158,
+                                                                   -0.091312,
+                                                                   0.031055
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "gambling pressure",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0.776606,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.621285,
+                                                                   0,
+                                                                   0.034719,
+                                                                   0.004751,
+                                                                   -0.049337,
+                                                                   0.039835,
+                                                                   -0.03545,
+                                                                   0.024486,
+                                                                   -0.058839,
+                                                                   -0.017908
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "abusive language toward players or officials",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0.976246,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.034456,
+                                                                   0.079478,
+                                                                   0.055589,
+                                                                   -0.102448,
+                                                                   -0.099692,
+                                                                   -0.075803,
+                                                                   -0.006891,
+                                                                   0.100611
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "repeated last-minute cancellations",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.972193,
+                                                                   0,
+                                                                   -0.004003,
+                                                                   -0.029166,
+                                                                   0.102366,
+                                                                   0.015441,
+                                                                   -0.089785,
+                                                                   0.07606,
+                                                                   0.092072,
+                                                                   -0.144685
+                                                               ]
+                                             }
+                                         ]
+                     },
+                     {
+                         "persona":  "melbourne culture friend",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "Melbourne neighbourhoods",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.984212,
+                                                                   0,
+                                                                   0,
+                                                                   0.057895,
+                                                                   -0.082905,
+                                                                   -0.006021,
+                                                                   0.019916,
+                                                                   0.113474,
+                                                                   -0.043074,
+                                                                   -0.025474,
+                                                                   -0.072716
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "live music",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.987621,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.045082,
+                                                                   -0.035787,
+                                                                   -0.046012,
+                                                                   -0.111078,
+                                                                   -0.046012,
+                                                                   0.006042,
+                                                                   -0.016267,
+                                                                   -0.066461
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "comedy",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.963098,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.112852,
+                                                                   0.114665,
+                                                                   0.111946,
+                                                                   0.012237,
+                                                                   -0.107414,
+                                                                   -0.092004,
+                                                                   -0.050308,
+                                                                   -0.106507
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "food",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.974389,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.060068,
+                                                                   0.103171,
+                                                                   -0.082078,
+                                                                   -0.036224,
+                                                                   -0.073824,
+                                                                   0.094,
+                                                                   0.095834,
+                                                                   0.069239
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "coffee",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.982099,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.067014,
+                                                                   -0.079954,
+                                                                   -0.105836,
+                                                                   -0.01063,
+                                                                   0.041133,
+                                                                   -0.046679,
+                                                                   -0.095668,
+                                                                   -0.016176
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "independent cafes",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973563,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.080176,
+                                                                   -0.116828,
+                                                                   -0.024282,
+                                                                   0.05452,
+                                                                   0.109497,
+                                                                   0.06185,
+                                                                   0.082008,
+                                                                   -0.077427
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "food markets",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973172,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.109453,
+                                                                   -0.059993,
+                                                                   -0.059077,
+                                                                   0.067321,
+                                                                   0.103958,
+                                                                   0.013281,
+                                                                   -0.108537,
+                                                                   -0.08106
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "galleries",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.975345,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.016064,
+                                                                   -0.019736,
+                                                                   0.032588,
+                                                                   -0.008721,
+                                                                   0.096846,
+                                                                   0.113369,
+                                                                   -0.10878,
+                                                                   -0.113369
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "museums",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.972124,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.102931,
+                                                                   0.006862,
+                                                                   0.069078,
+                                                                   0.082802,
+                                                                   -0.10842,
+                                                                   0.10842,
+                                                                   -0.015097,
+                                                                   -0.094696
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "architecture",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.985336,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.04776,
+                                                                   0.032922,
+                                                                   -0.115458,
+                                                                   0.032922,
+                                                                   0.058888,
+                                                                   -0.002318,
+                                                                   0.088564,
+                                                                   -0.004173
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "local history",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.704081,
+                                                                   0,
+                                                                   0.704081,
+                                                                   0,
+                                                                   0,
+                                                                   0.004307,
+                                                                   0.048706,
+                                                                   0.006295,
+                                                                   0.026175,
+                                                                   -0.022862,
+                                                                   -0.021537,
+                                                                   0.001657,
+                                                                   0.066598
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "local events",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.981897,
+                                                                   0,
+                                                                   0,
+                                                                   -0.098421,
+                                                                   -0.009703,
+                                                                   -0.101193,
+                                                                   0.048517,
+                                                                   -0.045745,
+                                                                   -0.070697,
+                                                                   0.076241,
+                                                                   -0.02449
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "curiosity",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973633,
+                                                                   0,
+                                                                   0.010882,
+                                                                   -0.054409,
+                                                                   0.053263,
+                                                                   0.063573,
+                                                                   0.070445,
+                                                                   -0.093354,
+                                                                   0.093354,
+                                                                   0.140318
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "inclusion",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.972864,
+                                                                   0,
+                                                                   0.111593,
+                                                                   0.013162,
+                                                                   0.044065,
+                                                                   0.046354,
+                                                                   -0.141351,
+                                                                   0.022319,
+                                                                   -0.00744,
+                                                                   0.127617
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "authenticity",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.979087,
+                                                                   0,
+                                                                   0.081207,
+                                                                   -0.093877,
+                                                                   0.104244,
+                                                                   0.016702,
+                                                                   -0.051258,
+                                                                   0.108851,
+                                                                   0.017854,
+                                                                   -0.006335
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "snobbery about taste, suburb or income",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.98566,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.028294,
+                                                                   0.012524,
+                                                                   0.037571,
+                                                                   0.102509,
+                                                                   -0.101581,
+                                                                   0.038499,
+                                                                   0.051486,
+                                                                   0.03386
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pressure to drink alcohol",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.76433,
+                                                                   0,
+                                                                   0,
+                                                                   0.611464,
+                                                                   0,
+                                                                   0.091,
+                                                                   -0.075174,
+                                                                   -0.071577,
+                                                                   0.07949,
+                                                                   0.037767,
+                                                                   -0.063664,
+                                                                   -0.051435,
+                                                                   -0.09172
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "disrespectful behaviour toward hospitality or venue staff",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.773007,
+                                                                   0,
+                                                                   0,
+                                                                   0.618406,
+                                                                   0,
+                                                                   0.02219,
+                                                                   0.032375,
+                                                                   0.08112,
+                                                                   0.064387,
+                                                                   0.034558,
+                                                                   0.049109,
+                                                                   0.041833,
+                                                                   0.049109
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "one-sided planning",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.963863,
+                                                                   0,
+                                                                   0.054997,
+                                                                   0.082212,
+                                                                   -0.007371,
+                                                                   -0.100355,
+                                                                   -0.094685,
+                                                                   -0.11623,
+                                                                   -0.091283,
+                                                                   0.142311
+                                                               ]
+                                             }
+                                         ]
+                     },
+                     {
+                         "persona":  "outdoor activity friend",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "walking",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.983104,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.067082,
+                                                                   0.117973,
+                                                                   -0.088364,
+                                                                   -0.036548,
+                                                                   -0.065232,
+                                                                   -0.029146,
+                                                                   -0.009715,
+                                                                   0.027296
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "moderate hiking",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.98127,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.054951,
+                                                                   0.004156,
+                                                                   -0.077116,
+                                                                   -0.081734,
+                                                                   0.091893,
+                                                                   0.074346,
+                                                                   0.048486,
+                                                                   -0.071575
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "travel",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0.957897,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.141431,
+                                                                   -0.133542,
+                                                                   -0.067053,
+                                                                   -0.091845,
+                                                                   -0.124527,
+                                                                   -0.04226,
+                                                                   0.098607,
+                                                                   0.06818
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "regional day trips",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0.953975,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.097081,
+                                                                   -0.081368,
+                                                                   0.095959,
+                                                                   0.088102,
+                                                                   -0.118405,
+                                                                   -0.099326,
+                                                                   -0.127384,
+                                                                   0.129628
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "coastal scenery",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.987787,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.086925,
+                                                                   0.048808,
+                                                                   -0.009762,
+                                                                   -0.006043,
+                                                                   0.094363,
+                                                                   -0.010691,
+                                                                   0.022777,
+                                                                   -0.068332
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "wildlife",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.984142,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.070858,
+                                                                   -0.055112,
+                                                                   -0.042144,
+                                                                   -0.029177,
+                                                                   0.088457,
+                                                                   -0.093088,
+                                                                   0.063448,
+                                                                   0.016209
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "photography",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.978191,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.083319,
+                                                                   0.106335,
+                                                                   0.04281,
+                                                                   0.049255,
+                                                                   -0.088843,
+                                                                   -0.091605,
+                                                                   0.065826,
+                                                                   0.004143
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "casual cycling",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.971837,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.109303,
+                                                                   0.018751,
+                                                                   0.079119,
+                                                                   0.082778,
+                                                                   -0.108388,
+                                                                   0.091924,
+                                                                   -0.098327,
+                                                                   0.016007
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "reliability",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.972949,
+                                                                   0,
+                                                                   0.001717,
+                                                                   0.031478,
+                                                                   0.065817,
+                                                                   0.00744,
+                                                                   0.133351,
+                                                                   -0.117326,
+                                                                   0.036056,
+                                                                   -0.123049
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "safety",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.979035,
+                                                                   0,
+                                                                   0.006335,
+                                                                   -0.020157,
+                                                                   0.013246,
+                                                                   0.096176,
+                                                                   -0.045496,
+                                                                   0.124971,
+                                                                   0.114605,
+                                                                   0.028219
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "curiosity",
+                                                 "kind":  "value",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973633,
+                                                                   0,
+                                                                   0.010882,
+                                                                   -0.054409,
+                                                                   0.053263,
+                                                                   0.063573,
+                                                                   0.070445,
+                                                                   -0.093354,
+                                                                   0.093354,
+                                                                   0.140318
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "consideration",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.986723,
+                                                                   0,
+                                                                   -0.035406,
+                                                                   0.024958,
+                                                                   -0.143365,
+                                                                   0.017993,
+                                                                   0.033084,
+                                                                   0.042371,
+                                                                   0.019154,
+                                                                   -0.019154
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "reckless or extreme activities",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.774442,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.619554,
+                                                                   0,
+                                                                   0.007653,
+                                                                   0.034622,
+                                                                   0.011298,
+                                                                   -0.079084,
+                                                                   0.081271,
+                                                                   0.00328,
+                                                                   0.017858,
+                                                                   -0.04264
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "ignoring weather or safety warnings",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.777824,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.622259,
+                                                                   0,
+                                                                   0.0194,
+                                                                   -0.055271,
+                                                                   -0.029649,
+                                                                   -0.032577,
+                                                                   0.001098,
+                                                                   0.034041,
+                                                                   0.027453,
+                                                                   0.022328
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pressure to exceed agreed difficulty",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.775267,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.620214,
+                                                                   0,
+                                                                   -0.050712,
+                                                                   -0.089384,
+                                                                   0.018606,
+                                                                   0.051441,
+                                                                   0.013499,
+                                                                   -0.007661,
+                                                                   -0.013499,
+                                                                   0.017877
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "repeated unreliability",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.964088,
+                                                                   0,
+                                                                   -0.121929,
+                                                                   0.112855,
+                                                                   -0.09811,
+                                                                   -0.091305,
+                                                                   0.075426,
+                                                                   0.03346,
+                                                                   -0.096976,
+                                                                   -0.093573
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "sharing precise routines or locations without consent",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0.697862,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.697862,
+                                                                   0,
+                                                                   -0.090722,
+                                                                   0.022578,
+                                                                   0.01601,
+                                                                   0.062808,
+                                                                   -0.013547,
+                                                                   0.103037,
+                                                                   -0.002874,
+                                                                   -0.047208
+                                                               ]
+                                                                                         },
+                                                                                         {
+                                                                                                 "keyword":  "high-intensity guided hiking",
+                                                                                                 "kind":  "interest",
+                                                                                                 "affinity":  -0.8,
+                                                                                                 "embedding":  [
+                                                                                                                                     0,
+                                                                                                                                     0.981767,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     -0.046663,
+                                                                                                                                     0.11504,
+                                                                                                                                     0.009702,
+                                                                                                                                     -0.047587,
+                                                                                                                                     -0.072535,
+                                                                                                                                     -0.005082,
+                                                                                                                                     -0.112268,
+                                                                                                                                     0.021714
+                                                                                                                             ]
+                                                                                         }
+                                         ]
+                     },
+                     {
+                         "persona":  "community neighbourhood connection",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "community sport",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0.702978,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.702978,
+                                                                   0,
+                                                                   0,
+                                                                   0.040028,
+                                                                   0.027458,
+                                                                   -0.017533,
+                                                                   -0.054584,
+                                                                   0.001654,
+                                                                   0.057231,
+                                                                   -0.051938,
+                                                                   -0.004962
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "local events",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.981897,
+                                                                   0,
+                                                                   0,
+                                                                   -0.098421,
+                                                                   -0.009703,
+                                                                   -0.101193,
+                                                                   0.048517,
+                                                                   -0.045745,
+                                                                   -0.070697,
+                                                                   0.076241,
+                                                                   -0.02449
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "urban greening",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.980098,
+                                                                   0,
+                                                                   0,
+                                                                   0.077024,
+                                                                   -0.077947,
+                                                                   0.023522,
+                                                                   -0.086249,
+                                                                   0.068722,
+                                                                   -0.104697,
+                                                                   0.034592,
+                                                                   -0.050273
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "litter reduction",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.981609,
+                                                                   0,
+                                                                   0,
+                                                                   0.047579,
+                                                                   0.103935,
+                                                                   0.05497,
+                                                                   -0.069752,
+                                                                   0.106707,
+                                                                   -0.044808,
+                                                                   -0.00231,
+                                                                   0.045731
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "skills-based volunteering",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.980543,
+                                                                   0,
+                                                                   0,
+                                                                   0.051219,
+                                                                   -0.057679,
+                                                                   -0.060448,
+                                                                   0.108437,
+                                                                   0.076136,
+                                                                   0.033685,
+                                                                   0.038299,
+                                                                   0.093671
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "neighbourhood resilience",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.979743,
+                                                                   0,
+                                                                   0,
+                                                                   0.065931,
+                                                                   0.114803,
+                                                                   0.066853,
+                                                                   -0.023514,
+                                                                   -0.089906,
+                                                                   -0.060398,
+                                                                   -0.005994,
+                                                                   -0.076074
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "service",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.984168,
+                                                                   0,
+                                                                   0,
+                                                                   0.027325,
+                                                                   0.109764,
+                                                                   0.044924,
+                                                                   -0.082902,
+                                                                   0.037514,
+                                                                   0.065302,
+                                                                   0.061597,
+                                                                   -0.01621
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "accountability",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.98225,
+                                                                   0,
+                                                                   -0.143871,
+                                                                   0.022534,
+                                                                   0.036401,
+                                                                   0.072224,
+                                                                   0.049113,
+                                                                   -0.061824,
+                                                                   0.03409,
+                                                                   0.006356
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "inclusion",
+                                                 "kind":  "value",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.972864,
+                                                                   0,
+                                                                   0.111593,
+                                                                   0.013162,
+                                                                   0.044065,
+                                                                   0.046354,
+                                                                   -0.141351,
+                                                                   0.022319,
+                                                                   -0.00744,
+                                                                   0.127617
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "status-seeking through community work",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.771807,
+                                                                   0.617446,
+                                                                   0,
+                                                                   0.01925,
+                                                                   0.083174,
+                                                                   -0.079542,
+                                                                   -0.086806,
+                                                                   0.000363,
+                                                                   0.027967,
+                                                                   -0.019976,
+                                                                   -0.02724
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "party-political pressure",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.772428,
+                                                                   0.617942,
+                                                                   0,
+                                                                   -0.007633,
+                                                                   -0.020719,
+                                                                   0.020719,
+                                                                   -0.067974,
+                                                                   0.082513,
+                                                                   0.065793,
+                                                                   -0.060704,
+                                                                   -0.033805
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "poor financial or privacy practices",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.773458,
+                                                                   0,
+                                                                   0.618766,
+                                                                   0,
+                                                                   -0.010555,
+                                                                   0.083351,
+                                                                   -0.003276,
+                                                                   -0.028026,
+                                                                   -0.050593,
+                                                                   0.051321,
+                                                                   0.066608,
+                                                                   0.03749
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "unrealistic demands on volunteers",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.980043,
+                                                                   0,
+                                                                   0,
+                                                                   0.117605,
+                                                                   -0.040124,
+                                                                   0.05396,
+                                                                   0.017064,
+                                                                   -0.066874,
+                                                                   -0.078865,
+                                                                   0.089011,
+                                                                   0.047503
+                                                               ]
+                                                                                         },
+                                                                                         {
+                                                                                                 "keyword":  "party-political activity",
+                                                                                                 "kind":  "interest",
+                                                                                                 "affinity":  -0.8,
+                                                                                                 "embedding":  [
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0.982202,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     -0.115091,
+                                                                                                                                     0.076265,
+                                                                                                                                     -0.106771,
+                                                                                                                                     -0.024497,
+                                                                                                                                     0.055003,
+                                                                                                                                     -0.019875,
+                                                                                                                                     0.001387,
+                                                                                                                                     -0.028195
+                                                                                                                             ]
+                                                                                         }
+                                         ]
+                     }
+                 ],
+    "kind_vectors":  {
+                         "interest":  [
+                                          0.995984,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0.000976,
+                                          0.001758,
+                                          -0.046675,
+                                          0.039254,
+                                          -0.044722,
+                                          -0.018943,
+                                          0.040035,
+                                          -0.018162
+                                      ],
+                         "value":  [
+                                       0.74909,
+                                       0.659199,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0.030355,
+                                       -0.024088,
+                                       -0.024872,
+                                       -0.01978,
+                                       -0.017821,
+                                       0.017821,
+                                       -0.016646,
+                                       0.029964
+                                   ],
+                         "boundary":  [
+                                          0.548803,
+                                          0.199565,
+                                          0.808237,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0.00763,
+                                          -0.041674,
+                                          -0.029543,
+                                          0.025239,
+                                          0.02563,
+                                          -0.022891,
+                                          0.0315,
+                                          0.016239
+                                      ]
+                     }
 }

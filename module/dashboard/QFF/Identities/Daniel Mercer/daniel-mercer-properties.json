@@ -1,200 +1,2235 @@
 {
-  "identity_id": "daniel-mercer-brisbane",
-  "personas": [
-    {
-      "persona": "technology peer",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "cloud architecture"
-        },
-        {
-          "property": "interest",
-          "value": "cyber security"
-        },
-        {
-          "property": "interest",
-          "value": "identity and access management"
-        },
-        {
-          "property": "interest",
-          "value": "artificial intelligence"
-        },
-        {
-          "property": "interest",
-          "value": "software architecture"
-        },
-        {
-          "property": "interest",
-          "value": "automation"
-        }
-      ]
-    },
-    {
-      "persona": "business collaborator",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "technology products"
-        },
-        {
-          "property": "interest",
-          "value": "cyber security"
-        },
-        {
-          "property": "interest",
-          "value": "artificial intelligence"
-        },
-        {
-          "property": "interest",
-          "value": "product design"
-        },
-        {
-          "property": "interest",
-          "value": "government markets"
-        },
-        {
-          "property": "interest",
-          "value": "small-business markets"
-        }
-      ]
-    },
-    {
-      "persona": "founder investor connection",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "technology ventures"
-        },
-        {
-          "property": "interest",
-          "value": "emerging technology"
-        },
-        {
-          "property": "interest",
-          "value": "sustainable businesses"
-        },
-        {
-          "property": "interest",
-          "value": "product-market fit"
-        },
-        {
-          "property": "interest",
-          "value": "technical feasibility"
-        }
-      ]
-    },
-    {
-      "persona": "outdoor activity friend",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "walking"
-        },
-        {
-          "property": "interest",
-          "value": "moderate hiking"
-        },
-        {
-          "property": "interest",
-          "value": "travel"
-        },
-        {
-          "property": "interest",
-          "value": "regional day trips"
-        },
-        {
-          "property": "interest",
-          "value": "wildlife"
-        },
-        {
-          "property": "interest",
-          "value": "scenery"
-        },
-        {
-          "property": "interest",
-          "value": "photography"
-        }
-      ]
-    },
-    {
-      "persona": "christian friend",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "Christianity"
-        },
-        {
-          "property": "interest",
-          "value": "Bible study"
-        },
-        {
-          "property": "interest",
-          "value": "theology"
-        },
-        {
-          "property": "interest",
-          "value": "ethics"
-        },
-        {
-          "property": "interest",
-          "value": "faith in daily life"
-        }
-      ]
-    },
-    {
-      "persona": "community connection",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "technology accessibility"
-        },
-        {
-          "property": "interest",
-          "value": "cyber security"
-        },
-        {
-          "property": "interest",
-          "value": "education"
-        },
-        {
-          "property": "interest",
-          "value": "not-for-profit organisations"
-        },
-        {
-          "property": "interest",
-          "value": "local initiatives"
-        }
-      ]
-    },
-    {
-      "persona": "personal friend",
-      "properties": [
-        {
-          "property": "interest",
-          "value": "technology"
-        },
-        {
-          "property": "interest",
-          "value": "travel"
-        },
-        {
-          "property": "interest",
-          "value": "current ideas"
-        },
-        {
-          "property": "interest",
-          "value": "walking"
-        },
-        {
-          "property": "interest",
-          "value": "family life"
-        },
-        {
-          "property": "interest",
-          "value": "meaningful conversation"
-        }
-      ]
-    }
-  ]
+    "identity_id":  "daniel-mercer-brisbane",
+    "embedding_model":  {
+                            "name":  "qff-synthetic-rule-based",
+                            "version":  "1.0",
+                            "dimensions":  16
+                        },
+    "personas":  [
+                     {
+                         "persona":  "technology peer",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "cloud architecture",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.697055,
+                                                                   0.697055,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.045596,
+                                                                   -0.043627,
+                                                                   0.070526,
+                                                                   -0.07315,
+                                                                   0.072494,
+                                                                   0.075118,
+                                                                   -0.052156,
+                                                                   0.017385
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "cyber security",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.995459,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.02108,
+                                                                   0.003279,
+                                                                   -0.034197,
+                                                                   0.010774,
+                                                                   -0.054809,
+                                                                   0.015459,
+                                                                   -0.008901,
+                                                                   -0.063241
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "identity and access management",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.968783,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.061545999999999997,
+                                                                   0.098018,
+                                                                   -0.11443,
+                                                                   0.046957,
+                                                                   0.074311,
+                                                                   -0.115342,
+                                                                   0.100753,
+                                                                   0.061545999999999997
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "artificial intelligence",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.985816,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.000464,
+                                                                   -0.063556,
+                                                                   -0.060773,
+                                                                   0.046855,
+                                                                   0.050567,
+                                                                   0.044072,
+                                                                   -0.116442,
+                                                                   -0.013453
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "software architecture",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.704157,
+                                                                   0.704157,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.022202,
+                                                                   0.011598,
+                                                                   -0.048711,
+                                                                   0.027504,
+                                                                   -0.022202,
+                                                                   -0.012261,
+                                                                   0.012923,
+                                                                   0.061303
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "automation",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.98178,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.017095,
+                                                                   -0.024487,
+                                                                   0.101181,
+                                                                   -0.032803,
+                                                                   -0.009702,
+                                                                   -0.117814,
+                                                                   -0.094713,
+                                                                   0.030955
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "competence",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.97852,
+                                                                   0,
+                                                                   -0.040868,
+                                                                   0.016692,
+                                                                   0.094974,
+                                                                   0.080008,
+                                                                   0.06274,
+                                                                   -0.076555,
+                                                                   -0.111091,
+                                                                   -0.054682
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "curiosity",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973633,
+                                                                   0,
+                                                                   0.010882,
+                                                                   -0.054409,
+                                                                   0.053263,
+                                                                   0.063573,
+                                                                   0.070445,
+                                                                   -0.093354,
+                                                                   0.093354,
+                                                                   0.140318
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "openness",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.974111,
+                                                                   0,
+                                                                   0.089962,
+                                                                   0.031515,
+                                                                   -0.052144,
+                                                                   0.143825,
+                                                                   -0.125488,
+                                                                   0.024639,
+                                                                   0.024639,
+                                                                   0.040683
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "persistent exaggeration",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.987638,
+                                                                   0,
+                                                                   -0.045896,
+                                                                   -0.14466,
+                                                                   -0.004067,
+                                                                   -0.01801,
+                                                                   -0.022658,
+                                                                   -0.02382,
+                                                                   -0.006391,
+                                                                   0.008714
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "dishonesty",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.975878,
+                                                                   0,
+                                                                   -0.094718,
+                                                                   -0.063719,
+                                                                   0.039609,
+                                                                   -0.056831,
+                                                                   0.016647,
+                                                                   0.013203,
+                                                                   0.102754,
+                                                                   -0.137197
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "status-driven conversation",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.962299,
+                                                                   0,
+                                                                   0.059436,
+                                                                   -0.07755,
+                                                                   -0.143213,
+                                                                   -0.028869,
+                                                                   -0.126231,
+                                                                   0.121702,
+                                                                   0.103589,
+                                                                   0.04019
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pressure to disclose confidential information",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.766371,
+                                                                   0,
+                                                                   0.613097,
+                                                                   0,
+                                                                   -0.064555,
+                                                                   0.058064,
+                                                                   -0.060228,
+                                                                   -0.004688,
+                                                                   0.091243,
+                                                                   -0.089801,
+                                                                   0.086194,
+                                                                   -0.042195
+                                                               ]
+                                             }
+                                         ]
+                     },
+                     {
+                         "persona":  "business collaborator",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "technology products",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.98238,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.094771,
+                                                                   0.025426,
+                                                                   -0.054089,
+                                                                   0.100318,
+                                                                   0.057787,
+                                                                   0.008784,
+                                                                   0.091997,
+                                                                   0.020803
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "cyber security",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.995459,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.02108,
+                                                                   0.003279,
+                                                                   -0.034197,
+                                                                   0.010774,
+                                                                   -0.054809,
+                                                                   0.015459,
+                                                                   -0.008901,
+                                                                   -0.063241
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "artificial intelligence",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.985816,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.000464,
+                                                                   -0.063556,
+                                                                   -0.060773,
+                                                                   0.046855,
+                                                                   0.050567,
+                                                                   0.044072,
+                                                                   -0.116442,
+                                                                   -0.013453
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "product design",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973483,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.115902,
+                                                                   -0.096661,
+                                                                   -0.094829,
+                                                                   0.034358,
+                                                                   0.022447,
+                                                                   -0.080169,
+                                                                   0.074672,
+                                                                   -0.082918
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "government markets",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.697424,
+                                                                   0.697424,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.081722,
+                                                                   -0.060717,
+                                                                   0.000328,
+                                                                   0.021333,
+                                                                   0.06006,
+                                                                   -0.074501,
+                                                                   -0.038399,
+                                                                   -0.075814
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "small-business markets",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.700335,
+                                                                   0.700335,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.074153,
+                                                                   -0.076131,
+                                                                   0.056356,
+                                                                   -0.023399,
+                                                                   -0.029332,
+                                                                   0.018785,
+                                                                   0.018785,
+                                                                   0.049765
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "integrity",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.983338,
+                                                                   0,
+                                                                   -0.008677,
+                                                                   -0.045696,
+                                                                   -0.004049,
+                                                                   -0.072304,
+                                                                   0.126677,
+                                                                   0.0295,
+                                                                   0.041069,
+                                                                   -0.083873
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "independence",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.968177,
+                                                                   0,
+                                                                   0.14067,
+                                                                   0.062077,
+                                                                   -0.087136,
+                                                                   -0.006265,
+                                                                   -0.096248,
+                                                                   0.044992,
+                                                                   -0.039297,
+                                                                   -0.136114
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pragmatism",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.96344,
+                                                                   0,
+                                                                   0.049305,
+                                                                   -0.033437,
+                                                                   -0.11958,
+                                                                   -0.079909,
+                                                                   0.125247,
+                                                                   -0.036837,
+                                                                   -0.111646,
+                                                                   0.134315
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "reliability",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.972949,
+                                                                   0,
+                                                                   0.001717,
+                                                                   0.031478,
+                                                                   0.065817,
+                                                                   0.00744,
+                                                                   0.133351,
+                                                                   -0.117326,
+                                                                   0.036056,
+                                                                   -0.123049
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "unethical behaviour",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.962088,
+                                                                   0,
+                                                                   -0.023203,
+                                                                   0.13639,
+                                                                   -0.080929,
+                                                                   0.109225,
+                                                                   -0.114885,
+                                                                   0.057159,
+                                                                   0.074137,
+                                                                   0.121676
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "misrepresentation",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.970399,
+                                                                   0,
+                                                                   -0.078203,
+                                                                   -0.02797,
+                                                                   0.13871,
+                                                                   0.11816,
+                                                                   -0.063361,
+                                                                   0.006279,
+                                                                   0.045095,
+                                                                   -0.110169
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pressure to commit early",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.983912,
+                                                                   0,
+                                                                   -0.093182,
+                                                                   0.043408,
+                                                                   0.016784,
+                                                                   0.092025,
+                                                                   0.035305,
+                                                                   -0.087395,
+                                                                   0.030675,
+                                                                   -0.052668
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "unauthorised sharing of sensitive information",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.984793,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.075539,
+                                                                   -0.011586,
+                                                                   0.047733,
+                                                                   0.067198,
+                                                                   0.10798,
+                                                                   0.025489,
+                                                                   0.034757,
+                                                                   -0.06349
+                                                               ]
+                                             }
+                                         ]
+                     },
+                     {
+                         "persona":  "founder investor connection",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "technology ventures",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.974888,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.079367,
+                                                                   0.113316,
+                                                                   0.116069,
+                                                                   -0.043583,
+                                                                   0.114234,
+                                                                   -0.042666,
+                                                                   -0.013304,
+                                                                   -0.005964
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "emerging technology",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.976598,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.01057,
+                                                                   -0.078587,
+                                                                   -0.080426,
+                                                                   -0.106162,
+                                                                   -0.031711,
+                                                                   0.09697,
+                                                                   0.018843,
+                                                                   0.107081
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "sustainable businesses",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.983678,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.016202,
+                                                                   -0.056938,
+                                                                   0.050457,
+                                                                   -0.024534,
+                                                                   -0.055086,
+                                                                   0.018979,
+                                                                   -0.11619,
+                                                                   -0.09397
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "product-market fit",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.700879,
+                                                                   0.700879,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.047165,
+                                                                   -0.079488,
+                                                                   0.081467,
+                                                                   0.009565,
+                                                                   0.014183,
+                                                                   -0.022758,
+                                                                   -0.025397,
+                                                                   0.030014
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "technical feasibility",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.982934,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.062445,
+                                                                   -0.102225,
+                                                                   0.089274,
+                                                                   0.042093,
+                                                                   -0.005088,
+                                                                   -0.001388,
+                                                                   0.092974,
+                                                                   -0.032842
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "long-term thinking",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.969027,
+                                                                   0,
+                                                                   0.108873,
+                                                                   -0.096333,
+                                                                   0.064412,
+                                                                   0.110013,
+                                                                   -0.079232,
+                                                                   -0.030211,
+                                                                   -0.080372,
+                                                                   0.099753
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "responsible risk-taking",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.966761,
+                                                                   0,
+                                                                   -0.101794,
+                                                                   -0.100657,
+                                                                   -0.134778,
+                                                                   -0.047201,
+                                                                   0.021041,
+                                                                   -0.090421,
+                                                                   -0.00853,
+                                                                   0.125679
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "hype presented as evidence",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.963115,
+                                                                   0,
+                                                                   -0.016996,
+                                                                   -0.157498,
+                                                                   -0.10311,
+                                                                   0.168828,
+                                                                   -0.023795,
+                                                                   0.005665,
+                                                                   -0.07365,
+                                                                   0.046456
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pressure selling",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.959209,
+                                                                   0,
+                                                                   -0.029905,
+                                                                   -0.016363,
+                                                                   -0.143881,
+                                                                   0.132597,
+                                                                   -0.135982,
+                                                                   -0.076172,
+                                                                   -0.125826,
+                                                                   -0.01862
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "unrealistic claims",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.908757,
+                                                                   0,
+                                                                   0.01176,
+                                                                   -0.120811,
+                                                                   0.075908,
+                                                                   0.054525,
+                                                                   -0.1593,
+                                                                   -0.251245,
+                                                                   -0.140055,
+                                                                   0.206341
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "requests for immediate financial commitment",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.773993,
+                                                                   0,
+                                                                   0.619195,
+                                                                   0,
+                                                                   0.033145,
+                                                                   0.034602,
+                                                                   0.063741,
+                                                                   0.01639,
+                                                                   0.048443,
+                                                                   0.049171,
+                                                                   0.069568,
+                                                                   0.036059
+                                                               ]
+                                             }
+                                         ]
+                     },
+                     {
+                         "persona":  "outdoor activity friend",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "walking",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.983104,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.067082,
+                                                                   0.117973,
+                                                                   -0.088364,
+                                                                   -0.036548,
+                                                                   -0.065232,
+                                                                   -0.029146,
+                                                                   -0.009715,
+                                                                   0.027296
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "moderate hiking",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.98127,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.054951,
+                                                                   0.004156,
+                                                                   -0.077116,
+                                                                   -0.081734,
+                                                                   0.091893,
+                                                                   0.074346,
+                                                                   0.048486,
+                                                                   -0.071575
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "travel",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0.957897,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.141431,
+                                                                   -0.133542,
+                                                                   -0.067053,
+                                                                   -0.091845,
+                                                                   -0.124527,
+                                                                   -0.04226,
+                                                                   0.098607,
+                                                                   0.06818
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "regional day trips",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0.953975,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.097081,
+                                                                   -0.081368,
+                                                                   0.095959,
+                                                                   0.088102,
+                                                                   -0.118405,
+                                                                   -0.099326,
+                                                                   -0.127384,
+                                                                   0.129628
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "wildlife",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.984142,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.070858,
+                                                                   -0.055112,
+                                                                   -0.042144,
+                                                                   -0.029177,
+                                                                   0.088457,
+                                                                   -0.093088,
+                                                                   0.063448,
+                                                                   0.016209
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "scenery",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.992896,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.016354,
+                                                                   0.009812,
+                                                                   -0.072423,
+                                                                   0.060275,
+                                                                   0.04065,
+                                                                   0.022895,
+                                                                   0.049061,
+                                                                   -0.018223
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "photography",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.978191,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.083319,
+                                                                   0.106335,
+                                                                   0.04281,
+                                                                   0.049255,
+                                                                   -0.088843,
+                                                                   -0.091605,
+                                                                   0.065826,
+                                                                   0.004143
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "reliability",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.972949,
+                                                                   0,
+                                                                   0.001717,
+                                                                   0.031478,
+                                                                   0.065817,
+                                                                   0.00744,
+                                                                   0.133351,
+                                                                   -0.117326,
+                                                                   0.036056,
+                                                                   -0.123049
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "curiosity",
+                                                 "kind":  "value",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973633,
+                                                                   0,
+                                                                   0.010882,
+                                                                   -0.054409,
+                                                                   0.053263,
+                                                                   0.063573,
+                                                                   0.070445,
+                                                                   -0.093354,
+                                                                   0.093354,
+                                                                   0.140318
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "consideration",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.986723,
+                                                                   0,
+                                                                   -0.035406,
+                                                                   0.024958,
+                                                                   -0.143365,
+                                                                   0.017993,
+                                                                   0.033084,
+                                                                   0.042371,
+                                                                   0.019154,
+                                                                   -0.019154
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "safety",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.979035,
+                                                                   0,
+                                                                   0.006335,
+                                                                   -0.020157,
+                                                                   0.013246,
+                                                                   0.096176,
+                                                                   -0.045496,
+                                                                   0.124971,
+                                                                   0.114605,
+                                                                   0.028219
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "repeated unreliability",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.964088,
+                                                                   0,
+                                                                   -0.121929,
+                                                                   0.112855,
+                                                                   -0.09811,
+                                                                   -0.091305,
+                                                                   0.075426,
+                                                                   0.03346,
+                                                                   -0.096976,
+                                                                   -0.093573
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pressure for excessive social commitment",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.956321,
+                                                                   0,
+                                                                   0.10632,
+                                                                   -0.120946,
+                                                                   0.114196,
+                                                                   0.111946,
+                                                                   0.071443,
+                                                                   -0.078193,
+                                                                   -0.063567,
+                                                                   -0.136698
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "reckless or extreme activities",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.774442,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.619554,
+                                                                   0,
+                                                                   0.007653,
+                                                                   0.034622,
+                                                                   0.011298,
+                                                                   -0.079084,
+                                                                   0.081271,
+                                                                   0.00328,
+                                                                   0.017858,
+                                                                   -0.04264
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "disregard for agreed plans",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.918128,
+                                                                   0,
+                                                                   -0.106935,
+                                                                   -0.225751,
+                                                                   -0.098294,
+                                                                   -0.14582,
+                                                                   -0.135019,
+                                                                   0.199828,
+                                                                   -0.00108,
+                                                                   -0.07453
+                                                               ]
+                                                                                         },
+                                                                                         {
+                                                                                                 "keyword":  "high-intensity guided hiking",
+                                                                                                 "kind":  "interest",
+                                                                                                 "affinity":  0.8,
+                                                                                                 "embedding":  [
+                                                                                                                                     0,
+                                                                                                                                     0.981767,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     -0.046663,
+                                                                                                                                     0.11504,
+                                                                                                                                     0.009702,
+                                                                                                                                     -0.047587,
+                                                                                                                                     -0.072535,
+                                                                                                                                     -0.005082,
+                                                                                                                                     -0.112268,
+                                                                                                                                     0.021714
+                                                                                                                             ]
+                                                                                         }
+                                         ]
+                     },
+                     {
+                         "persona":  "christian friend",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "Christianity",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.985416,
+                                                                   0.116395,
+                                                                   -0.102483,
+                                                                   -0.020868,
+                                                                   -0.02365,
+                                                                   0.020868,
+                                                                   0.054256,
+                                                                   0.020868,
+                                                                   0.009738
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "Bible study",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.978372,
+                                                                   0.027164,
+                                                                   0.062155,
+                                                                   0.092542,
+                                                                   0.036372,
+                                                                   -0.037293,
+                                                                   -0.08978,
+                                                                   -0.074126,
+                                                                   -0.115563
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "theology",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.984319,
+                                                                   0.034741,
+                                                                   -0.022697,
+                                                                   0.084767,
+                                                                   -0.026403,
+                                                                   0.032888,
+                                                                   0.106075,
+                                                                   0.049563,
+                                                                   0.081988
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "ethics",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.958754,
+                                                                   0,
+                                                                   0.059217,
+                                                                   -0.132534,
+                                                                   -0.062601,
+                                                                   0.107719,
+                                                                   -0.12915,
+                                                                   0.027635,
+                                                                   0.126894,
+                                                                   -0.103207
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "faith in daily life",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.993023,
+                                                                   -0.069628,
+                                                                   0.080844,
+                                                                   0.025702,
+                                                                   -0.036917,
+                                                                   -0.00514,
+                                                                   0.00514,
+                                                                   -0.008879,
+                                                                   0.019159
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "honesty",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973263,
+                                                                   0,
+                                                                   -0.109349,
+                                                                   -0.074998,
+                                                                   -0.091029,
+                                                                   -0.079579,
+                                                                   -0.054388,
+                                                                   -0.102479,
+                                                                   0.036068,
+                                                                   -0.076143
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "humility",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.974705,
+                                                                   0,
+                                                                   -0.026948,
+                                                                   0.07855,
+                                                                   0.049882,
+                                                                   -0.014334,
+                                                                   -0.046442,
+                                                                   -0.143912,
+                                                                   -0.103777,
+                                                                   -0.08199
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "respectful disagreement",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.969603,
+                                                                   0,
+                                                                   0.110079,
+                                                                   -0.042777,
+                                                                   0.058747,
+                                                                   0.126048,
+                                                                   -0.104375,
+                                                                   0.056465,
+                                                                   0.071294,
+                                                                   0.086124
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "hostility toward beliefs",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.988158,
+                                                                   0.028366,
+                                                                   0.021856,
+                                                                   0.016276,
+                                                                   0.113929,
+                                                                   0.088818,
+                                                                   -0.019996,
+                                                                   -0.019996,
+                                                                   0.018136
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "manipulative religious behaviour",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.984001,
+                                                                   0.059735,
+                                                                   -0.068996,
+                                                                   0.073626,
+                                                                   0.055104,
+                                                                   0.03936,
+                                                                   0.055104,
+                                                                   0.050473,
+                                                                   -0.088444
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pressure to disclose sensitive experiences",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.974416,
+                                                                   0,
+                                                                   0.000573,
+                                                                   0.006305,
+                                                                   -0.112918,
+                                                                   -0.054453,
+                                                                   0.108332,
+                                                                   0.009744,
+                                                                   0.146162,
+                                                                   -0.03955
+                                                               ]
+                                             }
+                                         ]
+                     },
+                     {
+                         "persona":  "community connection",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "technology accessibility",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.703538,
+                                                                   0.703538,
+                                                                   0,
+                                                                   0,
+                                                                   0.051317,
+                                                                   0.010926,
+                                                                   0.022844,
+                                                                   -0.024169,
+                                                                   0.025493,
+                                                                   0.043371,
+                                                                   -0.030128,
+                                                                   -0.052641
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "cyber security",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.995459,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.02108,
+                                                                   0.003279,
+                                                                   -0.034197,
+                                                                   0.010774,
+                                                                   -0.054809,
+                                                                   0.015459,
+                                                                   -0.008901,
+                                                                   -0.063241
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "education",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.976174,
+                                                                   0,
+                                                                   0,
+                                                                   -0.021591,
+                                                                   0.058341,
+                                                                   -0.116222,
+                                                                   -0.108872,
+                                                                   0.064772,
+                                                                   0.11071,
+                                                                   0.037209,
+                                                                   -0.004134
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "not-for-profit organisations",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.982015,
+                                                                   0,
+                                                                   0,
+                                                                   0.098433,
+                                                                   0.031887,
+                                                                   -0.057766,
+                                                                   -0.017099,
+                                                                   0.098433,
+                                                                   -0.038356,
+                                                                   -0.074402,
+                                                                   0.067932
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "local initiatives",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.979186,
+                                                                   0,
+                                                                   0,
+                                                                   -0.059442,
+                                                                   -0.082482,
+                                                                   0.089855,
+                                                                   -0.094463,
+                                                                   0.027187,
+                                                                   -0.027187,
+                                                                   0.055756,
+                                                                   0.096306
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "service",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.984168,
+                                                                   0,
+                                                                   0,
+                                                                   0.027325,
+                                                                   0.109764,
+                                                                   0.044924,
+                                                                   -0.082902,
+                                                                   0.037514,
+                                                                   0.065302,
+                                                                   0.061597,
+                                                                   -0.01621
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "responsibility",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.921562,
+                                                                   0,
+                                                                   0.150703,
+                                                                   0.26129,
+                                                                   0.031442,
+                                                                   -0.024936,
+                                                                   -0.005421,
+                                                                   -0.198407,
+                                                                   0.079146,
+                                                                   -0.111672
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "practical outcomes",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.976378,
+                                                                   0,
+                                                                   -0.089023,
+                                                                   0.092469,
+                                                                   0.146457,
+                                                                   0.015507,
+                                                                   -0.017805,
+                                                                   0.072941,
+                                                                   -0.044224,
+                                                                   -0.03044
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "status-seeking through community work",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.771807,
+                                                                   0.617446,
+                                                                   0,
+                                                                   0.01925,
+                                                                   0.083174,
+                                                                   -0.079542,
+                                                                   -0.086806,
+                                                                   0.000363,
+                                                                   0.027967,
+                                                                   -0.019976,
+                                                                   -0.02724
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "misuse of beneficiary information",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.982995,
+                                                                   0,
+                                                                   0,
+                                                                   -0.111483,
+                                                                   -0.001388,
+                                                                   0.004163,
+                                                                   0.019891,
+                                                                   -0.009714,
+                                                                   0.09483,
+                                                                   -0.084653,
+                                                                   0.068
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "unrealistic unpaid-work expectations",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.990819,
+                                                                   0,
+                                                                   0,
+                                                                   0.073204,
+                                                                   -0.029375,
+                                                                   0.082529,
+                                                                   -0.03497,
+                                                                   0.017252,
+                                                                   -0.013522,
+                                                                   -0.029375,
+                                                                   0.051756
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "poor privacy practices",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.968845,
+                                                                   0,
+                                                                   -0.086056,
+                                                                   0.128229,
+                                                                   -0.097454,
+                                                                   0.079217,
+                                                                   -0.050722,
+                                                                   0.003989,
+                                                                   0.115691,
+                                                                   -0.075798
+                                                               ]
+                                                                                         },
+                                                                                         {
+                                                                                                 "keyword":  "party-political activity",
+                                                                                                 "kind":  "interest",
+                                                                                                 "affinity":  0.8,
+                                                                                                 "embedding":  [
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     0.982202,
+                                                                                                                                     0,
+                                                                                                                                     0,
+                                                                                                                                     -0.115091,
+                                                                                                                                     0.076265,
+                                                                                                                                     -0.106771,
+                                                                                                                                     -0.024497,
+                                                                                                                                     0.055003,
+                                                                                                                                     -0.019875,
+                                                                                                                                     0.001387,
+                                                                                                                                     -0.028195
+                                                                                                                             ]
+                                                                                         }
+                                         ]
+                     },
+                     {
+                         "persona":  "personal friend",
+                         "preferences":  [
+                                             {
+                                                 "keyword":  "technology",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.6,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.98182,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.097489,
+                                                                   -0.089172,
+                                                                   0.042045,
+                                                                   0.105806,
+                                                                   -0.044817,
+                                                                   -0.00693,
+                                                                   0.059602,
+                                                                   0.001386
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "travel",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0.957897,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.141431,
+                                                                   -0.133542,
+                                                                   -0.067053,
+                                                                   -0.091845,
+                                                                   -0.124527,
+                                                                   -0.04226,
+                                                                   0.098607,
+                                                                   0.06818
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "current ideas",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.897026,
+                                                                   0,
+                                                                   0.188903,
+                                                                   0.129805,
+                                                                   -0.186792,
+                                                                   0.127694,
+                                                                   -0.203678,
+                                                                   -0.022162,
+                                                                   -0.222673,
+                                                                   -0.007387
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "walking",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0.983104,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   -0.067082,
+                                                                   0.117973,
+                                                                   -0.088364,
+                                                                   -0.036548,
+                                                                   -0.065232,
+                                                                   -0.029146,
+                                                                   -0.009715,
+                                                                   0.027296
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "family life",
+                                                 "kind":  "interest",
+                                                 "affinity":  0.7,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.868855,
+                                                                   0,
+                                                                   0.182971,
+                                                                   -0.197281,
+                                                                   -0.209547,
+                                                                   0.191148,
+                                                                   -0.005111,
+                                                                   -0.142083,
+                                                                   0.242257,
+                                                                   0.115507
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "meaningful conversation",
+                                                 "kind":  "interaction",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.946755,
+                                                                   0,
+                                                                   -0.043439,
+                                                                   -0.206058,
+                                                                   0.012252,
+                                                                   -0.076854,
+                                                                   -0.018935,
+                                                                   0.05235,
+                                                                   0.005569,
+                                                                   0.22388
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "honesty",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973263,
+                                                                   0,
+                                                                   -0.109349,
+                                                                   -0.074998,
+                                                                   -0.091029,
+                                                                   -0.079579,
+                                                                   -0.054388,
+                                                                   -0.102479,
+                                                                   0.036068,
+                                                                   -0.076143
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "loyalty",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.975708,
+                                                                   0,
+                                                                   0.121103,
+                                                                   -0.090109,
+                                                                   0.048785,
+                                                                   0.074039,
+                                                                   0.044194,
+                                                                   0.045342,
+                                                                   -0.086666,
+                                                                   0.076335
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "independence",
+                                                 "kind":  "value",
+                                                 "affinity":  0.8,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.968177,
+                                                                   0,
+                                                                   0.14067,
+                                                                   0.062077,
+                                                                   -0.087136,
+                                                                   -0.006265,
+                                                                   -0.096248,
+                                                                   0.044992,
+                                                                   -0.039297,
+                                                                   -0.136114
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "respect",
+                                                 "kind":  "value",
+                                                 "affinity":  0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.953111,
+                                                                   0,
+                                                                   -0.129511,
+                                                                   -0.073446,
+                                                                   -0.141845,
+                                                                   -0.053262,
+                                                                   -0.132875,
+                                                                   0.113813,
+                                                                   -0.119419,
+                                                                   -0.039806
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "manipulation",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.967402,
+                                                                   0,
+                                                                   0.073409,
+                                                                   0.133729,
+                                                                   0.000569,
+                                                                   0.100724,
+                                                                   -0.090481,
+                                                                   -0.022193,
+                                                                   -0.062028,
+                                                                   -0.134867
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "dishonesty",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.975878,
+                                                                   0,
+                                                                   -0.094718,
+                                                                   -0.063719,
+                                                                   0.039609,
+                                                                   -0.056831,
+                                                                   0.016647,
+                                                                   0.013203,
+                                                                   0.102754,
+                                                                   -0.137197
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "pressure for rapid intimacy",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.973485,
+                                                                   0,
+                                                                   -0.07387,
+                                                                   0.118536,
+                                                                   0.004008,
+                                                                   0.144877,
+                                                                   0.060127,
+                                                                   0.053255,
+                                                                   0.020042,
+                                                                   -0.070434
+                                                               ]
+                                             },
+                                             {
+                                                 "keyword":  "repeatedly one-sided interaction",
+                                                 "kind":  "boundary",
+                                                 "affinity":  -0.9,
+                                                 "embedding":  [
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0,
+                                                                   0.977005,
+                                                                   0,
+                                                                   -0.008621,
+                                                                   0.076436,
+                                                                   0.081034,
+                                                                   -0.035057,
+                                                                   -0.120114,
+                                                                   -0.015517,
+                                                                   0.018965,
+                                                                   -0.129309
+                                                               ]
+                                             }
+                                         ]
+                     }
+                 ],
+    "kind_vectors":  {
+                         "interest":  [
+                                          0.995984,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0.000976,
+                                          0.001758,
+                                          -0.046675,
+                                          0.039254,
+                                          -0.044722,
+                                          -0.018943,
+                                          0.040035,
+                                          -0.018162
+                                      ],
+                         "value":  [
+                                       0.74909,
+                                       0.659199,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0,
+                                       0.030355,
+                                       -0.024088,
+                                       -0.024872,
+                                       -0.01978,
+                                       -0.017821,
+                                       0.017821,
+                                       -0.016646,
+                                       0.029964
+                                   ],
+                         "boundary":  [
+                                          0.548803,
+                                          0.199565,
+                                          0.808237,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0.00763,
+                                          -0.041674,
+                                          -0.029543,
+                                          0.025239,
+                                          0.02563,
+                                          -0.022891,
+                                          0.0315,
+                                          0.016239
+                                      ],
+                         "interaction":  [
+                                             0.79378,
+                                             0.248056,
+                                             0,
+                                             0.545724,
+                                             0,
+                                             0,
+                                             0,
+                                             0,
+                                             -0.041051,
+                                             -0.000973,
+                                             -0.020428,
+                                             -0.046109,
+                                             0.031323,
+                                             -0.041829,
+                                             0.044553,
+                                             -0.040273
+                                         ]
+                     }
 }
