@@ -1,0 +1,200 @@
+{
+  "identity_id": "daniel-mercer-brisbane",
+  "personas": [
+    {
+      "persona": "technology peer",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "cloud architecture"
+        },
+        {
+          "property": "interest",
+          "value": "cyber security"
+        },
+        {
+          "property": "interest",
+          "value": "identity and access management"
+        },
+        {
+          "property": "interest",
+          "value": "artificial intelligence"
+        },
+        {
+          "property": "interest",
+          "value": "software architecture"
+        },
+        {
+          "property": "interest",
+          "value": "automation"
+        }
+      ]
+    },
+    {
+      "persona": "business collaborator",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "technology products"
+        },
+        {
+          "property": "interest",
+          "value": "cyber security"
+        },
+        {
+          "property": "interest",
+          "value": "artificial intelligence"
+        },
+        {
+          "property": "interest",
+          "value": "product design"
+        },
+        {
+          "property": "interest",
+          "value": "government markets"
+        },
+        {
+          "property": "interest",
+          "value": "small-business markets"
+        }
+      ]
+    },
+    {
+      "persona": "founder investor connection",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "technology ventures"
+        },
+        {
+          "property": "interest",
+          "value": "emerging technology"
+        },
+        {
+          "property": "interest",
+          "value": "sustainable businesses"
+        },
+        {
+          "property": "interest",
+          "value": "product-market fit"
+        },
+        {
+          "property": "interest",
+          "value": "technical feasibility"
+        }
+      ]
+    },
+    {
+      "persona": "outdoor activity friend",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "walking"
+        },
+        {
+          "property": "interest",
+          "value": "moderate hiking"
+        },
+        {
+          "property": "interest",
+          "value": "travel"
+        },
+        {
+          "property": "interest",
+          "value": "regional day trips"
+        },
+        {
+          "property": "interest",
+          "value": "wildlife"
+        },
+        {
+          "property": "interest",
+          "value": "scenery"
+        },
+        {
+          "property": "interest",
+          "value": "photography"
+        }
+      ]
+    },
+    {
+      "persona": "christian friend",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "Christianity"
+        },
+        {
+          "property": "interest",
+          "value": "Bible study"
+        },
+        {
+          "property": "interest",
+          "value": "theology"
+        },
+        {
+          "property": "interest",
+          "value": "ethics"
+        },
+        {
+          "property": "interest",
+          "value": "faith in daily life"
+        }
+      ]
+    },
+    {
+      "persona": "community connection",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "technology accessibility"
+        },
+        {
+          "property": "interest",
+          "value": "cyber security"
+        },
+        {
+          "property": "interest",
+          "value": "education"
+        },
+        {
+          "property": "interest",
+          "value": "not-for-profit organisations"
+        },
+        {
+          "property": "interest",
+          "value": "local initiatives"
+        }
+      ]
+    },
+    {
+      "persona": "personal friend",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "technology"
+        },
+        {
+          "property": "interest",
+          "value": "travel"
+        },
+        {
+          "property": "interest",
+          "value": "current ideas"
+        },
+        {
+          "property": "interest",
+          "value": "walking"
+        },
+        {
+          "property": "interest",
+          "value": "family life"
+        },
+        {
+          "property": "interest",
+          "value": "meaningful conversation"
+        }
+      ]
+    }
+  ]
+}

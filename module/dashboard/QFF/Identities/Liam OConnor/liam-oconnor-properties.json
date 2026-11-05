@@ -1,0 +1,125 @@
+{
+  "identity_id": "liam-oconnor-melbourne",
+  "personas": [
+    {
+      "persona": "melbourne sport friend",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "Australian rules football"
+        },
+        {
+          "property": "interest",
+          "value": "cricket"
+        },
+        {
+          "property": "interest",
+          "value": "Australian Open tennis"
+        },
+        {
+          "property": "interest",
+          "value": "casual cycling"
+        },
+        {
+          "property": "interest",
+          "value": "walking"
+        },
+        {
+          "property": "interest",
+          "value": "Melbourne sporting history"
+        }
+      ]
+    },
+    {
+      "persona": "melbourne culture friend",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "live music"
+        },
+        {
+          "property": "interest",
+          "value": "independent cafes and coffee"
+        },
+        {
+          "property": "interest",
+          "value": "food markets"
+        },
+        {
+          "property": "interest",
+          "value": "galleries"
+        },
+        {
+          "property": "interest",
+          "value": "museums"
+        },
+        {
+          "property": "interest",
+          "value": "architecture"
+        },
+        {
+          "property": "interest",
+          "value": "local history"
+        }
+      ]
+    },
+    {
+      "persona": "outdoor activity friend",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "walking"
+        },
+        {
+          "property": "interest",
+          "value": "moderate hiking"
+        },
+        {
+          "property": "interest",
+          "value": "travel and regional day trips"
+        },
+        {
+          "property": "interest",
+          "value": "wildlife and scenery"
+        },
+        {
+          "property": "interest",
+          "value": "photography"
+        },
+        {
+          "property": "interest",
+          "value": "casual cycling"
+        }
+      ]
+    },
+    {
+      "persona": "community neighbourhood connection",
+      "properties": [
+        {
+          "property": "interest",
+          "value": "community sport"
+        },
+        {
+          "property": "interest",
+          "value": "local events"
+        },
+        {
+          "property": "interest",
+          "value": "urban greening"
+        },
+        {
+          "property": "interest",
+          "value": "litter reduction"
+        },
+        {
+          "property": "interest",
+          "value": "skills-based volunteering"
+        },
+        {
+          "property": "interest",
+          "value": "neighbourhood resilience"
+        }
+      ]
+    }
+  ]
+}
