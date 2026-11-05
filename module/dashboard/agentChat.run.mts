@@ -33,9 +33,10 @@ import {
   writeKind,
 } from "./agentChat.config.mjs";
 import { assertLlmReady, llm } from "./agentChat.llm.mjs";
+import { judge } from "./agentChat.judge.mjs";
 import { startLiveChat } from "./agentChat.live.mjs";
 import { factMemory, promptMemory } from "./agentChat.memory.mjs";
-import { judge, report } from "./agentChat.report.mjs";
+import { report } from "./agentChat.report.mjs";
 import { AGENTS_DIR, HUMAN_NAME, loadAgent, LOCK_PATH, pickParticipants, RUNS_DIR, takeLock, writeMemory } from "./agentChat.setup.mjs";
 import { newCorrelationId, type ActivityEvent } from "./activity/activity-event.mjs";
 import { createActivityStore } from "./activity/activity-store.mjs";

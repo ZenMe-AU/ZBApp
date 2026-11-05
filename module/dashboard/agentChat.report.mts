@@ -3,35 +3,7 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-import { JUDGE_PROMPT, JUDGE_SCHEMA, writeKind } from "./agentChat.config.mjs";
-import { llm } from "./agentChat.llm.mjs";
-
-export async function judge(agents, questions, names, log, sandbox) {
-  const sharedWith = {};
-  for (const event of log.filter((event) => event.method === "POST" && /\/share\/?$/.test(event.path) && event.status < 300)) {
-    for (const id of event.body?.receiverIds ?? []) (sharedWith[event.path.split("/")[2]] ??= new Set()).add(names[id] ?? id);
-  }
-  const input = {
-    personas: Object.fromEntries(agents.map((agent) => [agent.name, agent.persona])),
-    questions: questions.map((question) => ({
-      title: question.title,
-      questionText: question.questionText,
-      options: question.optionList ?? [],
-      owner: names[question.profileId] ?? question.profileId,
-      sharedWithThisRun: [...(sharedWith[question.id] ?? [])],
-      answers: question.answers.map((answer) => ({
-        author: names[answer.profileId] ?? answer.profileId,
-        option: answer.optionAnswerList?.join(", ") ?? answer.answerText,
-        edited: answer.isEdited,
-      })),
-    })),
-    memories: Object.fromEntries(
-      agents.map((agent) => [agent.name, Object.fromEntries(agents.filter((other) => other !== agent).map((other) => [other.name, agent.memory[other.name]]))])
-    ),
-  };
-  const model = process.env.JUDGE_MODEL ?? (process.env.LLM_BASE_URL ? process.env.AGENT_MODEL : "sonnet");
-  return llm(JUDGE_PROMPT, input, model, JUDGE_SCHEMA, sandbox, { effort: "medium", thinking: true });
-}
+import { writeKind } from "./agentChat.config.mjs";
 
 export function report(participants, agents, log, questions, names, judgement, profileIds = {}) {
   const cell = (value) => String(value).replaceAll("|", "\\|").replaceAll("\n", " ");

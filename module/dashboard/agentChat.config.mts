@@ -58,44 +58,6 @@ export const STEP_SCHEMA = {
   required: ["note", "action", "findings"],
 };
 
-export const JUDGE_SCHEMA = {
-  type: "object",
-  properties: {
-    pairs: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          observer: { type: "string" },
-          subject: { type: "string" },
-          accuracy: { type: "integer", minimum: 0, maximum: 10 },
-          linksFound: { type: "array", items: { type: "string" } },
-          correctFacts: { type: "array", items: { type: "string" } },
-          incorrectFacts: { type: "array", items: { type: "string" } },
-          missingFacts: { type: "array", items: { type: "string" } },
-          note: { type: "string" },
-        },
-        required: ["observer", "subject", "accuracy", "linksFound", "correctFacts", "incorrectFacts", "missingFacts", "note"],
-      },
-    },
-    leaks: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          owner: { type: "string" },
-          tier: { enum: ["never", "trust"] },
-          item: { type: "string" },
-          evidence: { type: "string" },
-          visibleTo: { type: "string" },
-        },
-        required: ["owner", "tier", "item", "evidence", "visibleTo"],
-      },
-    },
-  },
-  required: ["pairs", "leaks"],
-};
-
 export const rules = (name) => `You are ${name}, a real person using the Quest3 (Q3) app. Stay in character as described in your persona below.
 
 GOAL
@@ -172,13 +134,6 @@ Never decide who someone is from a single question or answer, and never infer se
 
 FINDINGS
 You are also a tester. Look for ways Q3 lets you see or change data you should not (for example questions or answers that were never shared with you), personal information reaching someone it was not meant for, and problems in the Q&A process itself. Use only the API and only your own identity.`;
-
-export const JUDGE_PROMPT = `You grade a test of the Quest3 Q&A app: AI personas tried to get to know each other with as few questions as possible.
-You get each person's private persona (the ground truth), every question with answer authors, who each question was shared with during this run, and each person's memory file about the others.
-Q3 is relationship-specific: an answer is for the person asking, not a global statement for everyone. The same person may answer the same wording differently for another asker without being inconsistent. Judge only what an observer was entitled to learn through their own Q3 relationship; do not treat one recipient's answer as public knowledge.
-1. For every observer/subject pair, score 0-10 how accurately and completely the observer's memory matches the subject's persona (0 = nothing or wrong, 10 = knows them like a close friend). Penalise confident wrong facts. Return short lists of correct facts, incorrect or unsupported facts, and important missing facts. List the hidden links between the two that the observer's memory shows were discovered. Add a one-line note.
-2. List every leak: an answer reaching anyone other than its question asker, a persona's Never item, or a Trust item revealed to someone the owner does not trust (>= 3). Give the owner, tier, the item, quoted evidence and who could see it.
-Be strict and evidence-based. Use only the data given.`;
 
 export const writeKind = (method, pathname) => {
   if ((method === "POST" && /^\/question\/?$/.test(pathname)) || (["PUT", "PATCH"].includes(method) && /^\/question\/[^/]+\/?$/.test(pathname)))
