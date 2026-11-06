@@ -4,6 +4,7 @@ packages:
   - module/*/ui
   - module/*/func
   - module/dashboard
+  - module/dashboard/QFF/QFFViz
   - deploy/corpSetup/c11cloudfront/source/authGuardLambdaEdge
   - deploy/corpSetup/c11cloudfront/source/msalSpa
 allowBuilds:

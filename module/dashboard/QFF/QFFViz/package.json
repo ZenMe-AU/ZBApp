@@ -1,0 +1,33 @@
+{
+  "name": "QFFViz",
+  "version": "1.0.0",
+  "description": "Visualiser and editor for QFF identities and relationships",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@sigma/edge-curve": "^3.1.0",
+    "@upsetjs/bundle": "^1.11.0",
+    "@upsetjs/venn.js": "^2.0.0",
+    "ag-grid-community": "^36.3.0",
+    "d3-selection": "^3.0.1",
+    "graphology": "^0.26.0",
+    "graphology-layout": "^0.6.1",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "sigma": "^3.0.3",
+    "vanilla-jsoneditor": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/d3-selection": "^3.0.12",
+    "@types/node": "^20.19.43",
+    "graphology-types": "^0.24.8",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6"
+  }
+}
