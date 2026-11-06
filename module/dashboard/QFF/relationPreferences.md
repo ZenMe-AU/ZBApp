@@ -1,10 +1,12 @@
-# Relationship-scoped preferences
+# Contact-scoped preferences
 
 ## Status and purpose
 
-This document proposes a separate `relation_preferences` set for representing how suitable a topic feels in a relationship context. It is exploratory and is not part of the current QFF identity or persona schema. The existing preference model and matcher remain unchanged unless this proposal is adopted separately.
+This document proposes a separate `relation_preferences` set for representing how suitable a topic feels in a one-to-one relationship with a particular contact. It is exploratory and is not part of the current QFF identity or persona schema. The existing preference model and matcher remain unchanged unless this proposal is adopted separately.
 
-The goal is to support soft, context-dependent topic ranking. For example, a person may be comfortable discussing religion with a church friend but not usually with a work colleague. This does not necessarily mean they dislike religion, disagree with the colleague, or want the topic permanently blocked.
+The goal is to support soft, context-dependent topic ranking for an individual contact. For example, a person may be comfortable discussing religion with one contact who is a church friend, but not with another contact who is a work colleague. The same contact may also be a colleague, church friend, or hiking companion in different situations. A low conversation fit does not necessarily mean the person dislikes the topic, disagrees with the contact, or wants the topic permanently blocked.
+
+These are pairwise preferences, not aggregate descriptions of a social group or persona. Aggregating observed disclosures across contacts to discover personas or social contexts is a separate problem described in [socialContextPersonaDiscovery.md](socialContextPersonaDiscovery.md).
 
 ## Relationship to the current preference schema
 
@@ -24,6 +26,7 @@ For example, someone could have positive affinity toward religion while assignin
 {
   "relation_preferences": [
     {
+      "contact_ref": "opaque-contact-b",
       "relationship": {
         "keyword": "work colleague",
         "embedding": null
@@ -44,7 +47,8 @@ For example, someone could have positive affinity toward religion while assignin
 
 Field meanings:
 
-- `relationship`: relationship context, not necessarily a specific person. Its `keyword` and optional embedding use the same semantic representation principles as preference concepts.
+- `contact_ref`: an opaque reference to the individual contact for this one-to-one preference. Do not use a name or other directly identifying contact detail in this preference record.
+- `relationship`: the owner's description of their relationship with this contact, such as `work colleague` or `church friend`. One contact may have multiple relationship descriptions, and these labels may be unknown or change over time. Its `keyword` and optional embedding use the same semantic representation principles as preference concepts.
 - `topic_preference`: a normal preference concept from the current schema. `affinity` may be omitted when unknown in this proposed set; when present, it retains its current meaning and does not determine conversation fit.
 - `conversation_fit`: a soft value from `0.0` to `1.0`. Lower values mean less natural or comfortable to raise the topic in this context; higher values mean more natural. It is not a probability or a hard permission.
 - `confidence`: confidence in the relation preference, especially when it was inferred. Missing or uncertain information is unknown, not a zero fit.
@@ -54,7 +58,7 @@ The sample values are illustrative, not calibrated. A production design may choo
 
 ## Fuzzy relationship and topic matching
 
-Relationship labels and topic keywords may differ while referring to similar contexts. A matcher may use compatible embeddings to estimate relationship-context similarity and topic similarity. For instance, `work colleague` may be related to `professional peer`, while `religion` may be related to `faith` or `church attendance`.
+Relationship labels and topic keywords may differ while referring to similar contexts. A matcher may use compatible embeddings to estimate relationship-context similarity and topic similarity for this contact. For instance, `work colleague` may be related to `professional peer`, while `religion` may be related to `faith` or `church attendance`.
 
 These similarities can help rank topic suggestions using the owner's relation preferences. They do not establish that two relationships or topics are identical. Keep the underlying labels available for explanation, and avoid surfacing a topic when the inferred context or fit is too uncertain. Vectors from incompatible models, versions, dimensions, or generation methods must not be compared.
 
@@ -62,14 +66,14 @@ These similarities can help rank topic suggestions using the owner's relation pr
 
 ## Scope, privacy, and control
 
-- Prefer broad relationship contexts, such as `work colleague` or `church friend`, over storing third-party names or detailed descriptions.
+- Use an opaque contact reference and prefer broad relationship labels, such as `work colleague` or `church friend`, over storing third-party names or detailed descriptions.
 - Relation preferences belong to the profile owner's context. Do not assume the other person has the same topic norms.
-- Use these preferences to rank or omit suggested topics for the owner's interaction context. Do not expose the context, preference, or inference to the other person.
+- Use these preferences to rank or omit suggested topics for the owner's interaction with this contact. Do not expose the context, preference, or inference to the other person.
 - A low fit is a soft signal, not a prohibition. If a person wants a topic never to be suggested in a context, represent that as a separate explicit control rather than overloading `conversation_fit`.
 - The person can inspect, correct, or remove inferred relation preferences. Do not infer sensitive beliefs about either party from topic suitability alone.
 
 ## Stored and derived data
 
-The proposed stored data is the relationship context, topic preference, conversation fit, confidence, source, and compatible embedding metadata/vectors. Similarity between relationship labels and topics, contextual topic rankings, and suggestion results are derived or cacheable data.
+The proposed stored data is the contact reference, relationship label, topic preference, conversation fit, confidence, source, and compatible embedding metadata/vectors. Similarity between relationship labels and topics, contextual topic rankings, and suggestion results are derived or cacheable data. Do not aggregate these one-to-one records into personas or social groups in this model.
 
-This proposal extends the current preference concept representation without changing the existing persona preference schema. It adds relationship context and conversational suitability as orthogonal data, not as new affinity semantics.
+This proposal extends the current preference concept representation without changing the existing persona preference schema. It adds a contact-specific relationship and conversational suitability as orthogonal data, not as new affinity semantics.
