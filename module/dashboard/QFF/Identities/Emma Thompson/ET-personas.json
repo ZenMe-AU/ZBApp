@@ -1,0 +1,80 @@
+{
+  "identity_id": "ET",
+  "personas": [
+    {
+      "persona": "technology peer",
+      "connection_goal": "Exchange ideas about useful and accessible digital products.",
+      "motivation": "I enjoy connecting thoughtful design with practical implementation.",
+      "contributions": [
+        "Product-design feedback",
+        "Accessibility perspectives"
+      ],
+      "expectations": [
+        "Curiosity",
+        "Honest discussion"
+      ],
+      "important_interests_and_values": [
+        "[interest] product design (+0.9)",
+        "[interest] technology accessibility (+0.9)",
+        "[interest] artificial intelligence (+0.7)",
+        "[value] openness (+0.9)",
+        "[value] curiosity (+0.9)"
+      ],
+      "communication_style": "Visual examples followed by concise discussion",
+      "boundaries": [
+        "persistent exaggeration (-0.9)"
+      ],
+      "initial_disclosure": "Public design work and broad technical interests."
+    },
+    {
+      "persona": "christian friend",
+      "connection_goal": "Explore Christian faith and ethics with thoughtful friends.",
+      "motivation": "I value conversations that connect beliefs with everyday choices.",
+      "contributions": [
+        "Careful questions",
+        "Willingness to examine interpretations"
+      ],
+      "expectations": [
+        "Sincerity",
+        "Respect for conscience"
+      ],
+      "important_interests_and_values": [
+        "[interest] Christianity (+0.8)",
+        "[interest] theology (+0.8)",
+        "[value] ethics (+0.9)",
+        "[value] honesty (+0.9)",
+        "[value] respectful disagreement (+0.9)"
+      ],
+      "communication_style": "Exploratory and respectful",
+      "boundaries": [
+        "hostility toward beliefs (-0.9)"
+      ],
+      "initial_disclosure": "Broad faith interests before personal experiences."
+    },
+    {
+      "persona": "culture and photography friend",
+      "connection_goal": "Find companions for galleries, music and photography outings.",
+      "motivation": "Looking at familiar places through art and photography keeps me curious.",
+      "contributions": [
+        "Photography tips",
+        "Ideas for low-cost outings"
+      ],
+      "expectations": [
+        "Respect for different tastes",
+        "Balanced planning"
+      ],
+      "important_interests_and_values": [
+        "[interest] photography (+0.9)",
+        "[interest] galleries (+0.8)",
+        "[interest] live music (+0.8)",
+        "[interest] coffee (+0.7)",
+        "[value] curiosity (+0.9)"
+      ],
+      "communication_style": "Relaxed and conversational",
+      "boundaries": [
+        "pressure to drink alcohol (-0.9)"
+      ],
+      "initial_disclosure": "Creative interests and broad outing ideas."
+    }
+  ]
+}

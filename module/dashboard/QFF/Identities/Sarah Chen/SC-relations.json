@@ -1,0 +1,55 @@
+{
+  "identity_id": "SC",
+  "relations": [
+    {
+      "contact_ref": "DM",
+      "topics_shared": [
+        "Christianity",
+        "Bible study",
+        "faith in daily life"
+      ],
+      "topics_private": [
+        "family disagreements"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "LO",
+      "topics_shared": [
+        "live music",
+        "galleries",
+        "walking"
+      ],
+      "topics_private": [
+        "faith in daily life",
+        "family disagreements"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "MR",
+      "topics_shared": [
+        "education",
+        "local initiatives",
+        "walking"
+      ],
+      "topics_private": [
+        "student information",
+        "family disagreements"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "ET",
+      "topics_shared": [
+        "Christianity",
+        "ethics",
+        "live music"
+      ],
+      "topics_private": [
+        "student information"
+      ],
+      "source": "simulation"
+    }
+  ]
+}

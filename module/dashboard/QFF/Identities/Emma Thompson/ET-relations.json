@@ -1,0 +1,54 @@
+{
+  "identity_id": "ET",
+  "relations": [
+    {
+      "contact_ref": "DM",
+      "topics_shared": [
+        "Christianity",
+        "theology",
+        "artificial intelligence"
+      ],
+      "topics_private": [
+        "client project details"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "LO",
+      "topics_shared": [
+        "galleries",
+        "live music",
+        "coffee"
+      ],
+      "topics_private": [
+        "Christianity",
+        "client project details"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "AP",
+      "topics_shared": [
+        "product design",
+        "technology accessibility",
+        "photography"
+      ],
+      "topics_private": [
+        "personal finances"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "SC",
+      "topics_shared": [
+        "Christianity",
+        "ethics",
+        "live music"
+      ],
+      "topics_private": [
+        "client project details"
+      ],
+      "source": "simulation"
+    }
+  ]
+}

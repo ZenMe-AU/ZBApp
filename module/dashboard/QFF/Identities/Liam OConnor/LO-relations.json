@@ -1,0 +1,56 @@
+{
+  "identity_id": "LO",
+  "relations": [
+    {
+      "contact_ref": "DM",
+      "topics_shared": [
+        "walking",
+        "moderate hiking",
+        "regional day trips"
+      ],
+      "topics_private": [
+        "personal finances",
+        "family disagreements"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "SC",
+      "topics_shared": [
+        "live music",
+        "coffee",
+        "walking"
+      ],
+      "topics_private": [
+        "religious beliefs",
+        "personal finances"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "MR",
+      "topics_shared": [
+        "Australian rules football",
+        "cricket",
+        "casual cycling"
+      ],
+      "topics_private": [
+        "family disagreements"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "ET",
+      "topics_shared": [
+        "galleries",
+        "live music",
+        "photography"
+      ],
+      "topics_private": [
+        "religious beliefs",
+        "personal finances"
+      ],
+      "source": "simulation"
+    }
+  ]
+}

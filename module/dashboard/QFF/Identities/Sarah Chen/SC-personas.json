@@ -1,0 +1,80 @@
+{
+  "identity_id": "SC",
+  "personas": [
+    {
+      "persona": "christian friend",
+      "connection_goal": "Build friendships around faith and thoughtful discussion.",
+      "motivation": "I value space to explore how faith relates to ordinary responsibilities.",
+      "contributions": [
+        "Bible-study preparation",
+        "Respectful listening"
+      ],
+      "expectations": [
+        "Humility",
+        "Room for disagreement"
+      ],
+      "important_interests_and_values": [
+        "[interest] Christianity (+0.9)",
+        "[interest] Bible study (+0.8)",
+        "[value] faith in daily life (+0.8)",
+        "[value] humility (+0.9)",
+        "[value] respectful disagreement (+0.9)"
+      ],
+      "communication_style": "Thoughtful and conversational",
+      "boundaries": [
+        "manipulative religious behaviour (-0.9)"
+      ],
+      "initial_disclosure": "Broad beliefs before private experiences."
+    },
+    {
+      "persona": "melbourne culture friend",
+      "connection_goal": "Find company for small music venues and neighbourhood outings.",
+      "motivation": "Shared cultural experiences make it easy to build friendships beyond work.",
+      "contributions": [
+        "Local music suggestions",
+        "Occasional outing planning"
+      ],
+      "expectations": [
+        "Different tastes welcomed",
+        "Shared planning"
+      ],
+      "important_interests_and_values": [
+        "[interest] live music (+0.9)",
+        "[interest] galleries (+0.7)",
+        "[interest] coffee (+0.7)",
+        "[interest] local history (+0.7)",
+        "[value] inclusion (+0.9)"
+      ],
+      "communication_style": "Warm, with short practical messages",
+      "boundaries": [
+        "one-sided planning (-0.8)"
+      ],
+      "initial_disclosure": "Music interests and broad neighbourhood preferences."
+    },
+    {
+      "persona": "outdoor activity friend",
+      "connection_goal": "Find company for easy walks and regional day trips.",
+      "motivation": "Gentle outdoor activity gives me time for unhurried conversation.",
+      "contributions": [
+        "Day-trip ideas",
+        "Considerate company"
+      ],
+      "expectations": [
+        "Flexible pace",
+        "Safety-conscious planning"
+      ],
+      "important_interests_and_values": [
+        "[interest] walking (+0.9)",
+        "[interest] regional day trips (+0.8)",
+        "[interest] wildlife (+0.7)",
+        "[interest] high-intensity guided hiking (-0.7)",
+        "[value] consideration (+0.9)"
+      ],
+      "communication_style": "Relaxed and low-maintenance",
+      "boundaries": [
+        "pressure to exceed agreed difficulty (-0.9)"
+      ],
+      "initial_disclosure": "Preferred activity difficulty and broad availability."
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "identity_id": "DM",
+  "relations": [
+    {
+      "contact_ref": "LO",
+      "topics_shared": [
+        "walking",
+        "moderate hiking",
+        "photography"
+      ],
+      "topics_private": [
+        "Christianity",
+        "client project details"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "AP",
+      "topics_shared": [
+        "cloud architecture",
+        "artificial intelligence",
+        "moderate hiking"
+      ],
+      "topics_private": [
+        "personal finances"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "SC",
+      "topics_shared": [
+        "Christianity",
+        "Bible study",
+        "walking"
+      ],
+      "topics_private": [
+        "client project details"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "ET",
+      "topics_shared": [
+        "Christianity",
+        "theology",
+        "artificial intelligence"
+      ],
+      "topics_private": [
+        "personal finances"
+      ],
+      "source": "simulation"
+    }
+  ]
+}

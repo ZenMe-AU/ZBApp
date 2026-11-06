@@ -151,11 +151,35 @@ The matcher NEVER return any information from one person to another. It only eve
 
 Person A and B are matched on career topic of "teacher" and recreation interest of "hiking". When presenting the match to person A, the matcher returns person A's own interests that matched, not those of person B.
 
+## Simulation fixtures
+
+The [Identities](Identities) directory contains six fictional identities with three personas each:
+
+| ID | Identity | Personas |
+| --- | --- | --- |
+| DM | Daniel Mercer | Technology peer; Christian friend; outdoor activity friend |
+| LO | Liam O'Connor | Melbourne sport friend; Melbourne culture friend; outdoor activity friend |
+| AP | Aisha Patel | Technology peer; outdoor activity friend; community volunteer |
+| SC | Sarah Chen | Christian friend; Melbourne culture friend; outdoor activity friend |
+| MR | Marcus Reed | Melbourne sport friend; community volunteer; outdoor activity friend |
+| ET | Emma Thompson | Technology peer; Christian friend; culture and photography friend |
+
+Each identity's directory contains four JSON files, prefixed with its `identity_id`:
+
+- `XX-identity.json`: biographical details.
+- `XX-personas.json`: persona narratives under entries in `personas`, covering goals, contributions, expectations, interests, communication, boundaries, and initial disclosure.
+- `XX-properties.json`: the corresponding three personas' signed preferences, synthetic concept embeddings, model metadata, and kind vectors.
+- `XX-relations.json`: known contacts referenced by their identity IDs, with `topics_shared` and `topics_private` lists and `source: "simulation"`.
+
+Initials are readable fixture identifiers used consistently across files and references. Production identifiers remain opaque. The existing synthetic vectors are reused for matching concepts across all six identities; see [persona_preference_embedding_model.md](persona_preference_embedding_model.md).
+
+Known-contact links are reciprocal, while topic choices belong to each owner and can differ by direction. `topics_shared` represents simulated disclosures; `topics_private` represents explicit preferences to keep a topic private from that contact. Unlisted topics are unknown. These lists provide inputs for [social-context and persona discovery](socialContextPersonaDiscovery.md), separate from the soft conversation-fit scores proposed in [relationPreferences.md](relationPreferences.md).
+
 ## Interaction loop
 
 The simulation proceeds through the following stages:
 
-1. **Define personas:** Write own persona descriptions as text files
+1. **Define personas:** Write own persona descriptions in the identity's `XX-personas.json` file
 2. **Build profile:** Create profile property lists based on the text descriptions. Then create potential questions and answers from those. Capture those questions and answers into Quest
 3. **Discover:** Call Matcher API that returns the latest set of matches based on current information in Quest. Each match lists the personas and properties that enabled the match
 4. **Send clarification question:** If interested, write or re-use a question and send it to a match or set of matches

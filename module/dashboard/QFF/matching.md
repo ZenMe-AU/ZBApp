@@ -4,14 +4,14 @@
 
 A match run compares two identities, A and B, and produces exactly two match files: one owned by A and one owned by B. Each file contains its owner's identity ID, an opaque `their_id` reference, and only its owner's persona names and preference properties. It must not contain the other identity's persona names, keywords, affinities, or other profile data. Similarity scores and other generic computed results may appear in both files.
 
-In A's file, `my_id` is A and `their_id` references B; in B's file, `my_id` is B and `their_id` references A. The two files share the same opaque `match_id` and `matched_at`, which identify the common pairwise run. A later comparison creates a new pairwise `match_id` and timestamp. Production identity IDs are opaque; human-readable IDs in examples and test fixtures are not representative of production IDs.
+In A's file, `my_id` is A and `their_id` references B; in B's file, `my_id` is B and `their_id` references A. The two files share the same opaque `match_id` and `matched_at`, which identify the common pairwise run. A later comparison creates a new pairwise `match_id` and timestamp. Production identity IDs are opaque; initials in examples and test fixtures simplify identification during simulation.
 
 ## Per-party output schema
 
 ```json
 {
-  "my_id": "liam-oconnor-melbourne",
-  "their_id": "daniel-mercer-brisbane",
+  "my_id": "LO",
+  "their_id": "DM",
   "match_id": "qff-match-20261105T114032Z",
   "matched_at": "2026-11-05T11:40:32Z",
   "matches": [
@@ -45,12 +45,12 @@ In A's file, `my_id` is A and `their_id` references B; in B's file, `my_id` is B
 
 The example's alignments and score are illustrative values for the output shape, not recalculated results, calibrated probabilities, or evidence of real-world compatibility. Each displayed alignment may summarize multiple hidden counterpart preferences; the abbreviated example is not enough to reconstruct the score.
 
-The paired file for Daniel uses the same `match_id` and `matched_at`, sets `my_id` to `daniel-mercer-brisbane`, and sets `their_id` to `liam-oconnor-melbourne`. It includes only Daniel's matching persona names and properties; it does not include Liam's persona names, keywords, affinities, or other profile information.
+The paired file for Daniel uses the same `match_id` and `matched_at`, sets `my_id` to `DM`, and sets `their_id` to `LO`. It includes only Daniel's matching persona names and properties; it does not include Liam's persona names, keywords, affinities, or other profile information.
 
 ## Field meanings
 
 - `my_id`: the owner of this file and the identity whose persona results it contains. The paired file has the other person's ID as `my_id`.
-- `their_id`: an opaque reference to the other identity in the pair. It is an identifier only, not a copy of that identity's persona or profile data. Production IDs are opaque even though test IDs may be readable.
+- `their_id`: an opaque reference to the other identity in the pair, or initials in simulation fixtures. It is an identifier only, not a copy of that identity's persona or profile data.
 - `match_id`: an opaque ID shared by the two per-party files generated for the same pairwise run. It identifies the run, not either person, and should not encode either identity ID.
 - `matched_at`: UTC time shared by the two files for this pairwise run.
 - `matches`: a flat list of persona-level results for this file's `my_id`. Each entry describes one of that person's personas that matched the other identity. If several of their personas match, emit one entry per persona.

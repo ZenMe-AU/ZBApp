@@ -1,0 +1,80 @@
+{
+  "identity_id": "MR",
+  "personas": [
+    {
+      "persona": "melbourne sport friend",
+      "connection_goal": "Meet companions for football matches and casual sport.",
+      "motivation": "Good-natured sport is my favourite way to spend time with friends.",
+      "contributions": [
+        "Match planning",
+        "Friendly sporting discussion"
+      ],
+      "expectations": [
+        "Sportsmanship",
+        "Reliability"
+      ],
+      "important_interests_and_values": [
+        "[interest] Australian rules football (+0.9)",
+        "[interest] cricket (+0.8)",
+        "[interest] casual cycling (+0.7)",
+        "[value] sportsmanship (+0.9)",
+        "[value] loyalty (+0.8)"
+      ],
+      "communication_style": "Informal and practical",
+      "boundaries": [
+        "gambling pressure (-0.9)"
+      ],
+      "initial_disclosure": "Favourite sports and general availability."
+    },
+    {
+      "persona": "community volunteer",
+      "connection_goal": "Connect with neighbours on useful local projects.",
+      "motivation": "Small shared projects make a neighbourhood feel more welcoming.",
+      "contributions": [
+        "Project coordination",
+        "Practical planning"
+      ],
+      "expectations": [
+        "Realistic commitments",
+        "Shared responsibility"
+      ],
+      "important_interests_and_values": [
+        "[interest] local initiatives (+0.9)",
+        "[interest] education (+0.7)",
+        "[interest] not-for-profit organisations (+0.8)",
+        "[value] service (+0.8)",
+        "[value] responsibility (+0.9)"
+      ],
+      "communication_style": "Direct and cooperative",
+      "boundaries": [
+        "unrealistic unpaid-work expectations (-0.9)"
+      ],
+      "initial_disclosure": "Volunteer interests and relevant experience."
+    },
+    {
+      "persona": "outdoor activity friend",
+      "connection_goal": "Find dependable companions for cycling and hiking.",
+      "motivation": "I enjoy exploring regional trails with people who prepare well.",
+      "contributions": [
+        "Route planning",
+        "Basic equipment checks"
+      ],
+      "expectations": [
+        "Honest fitness expectations",
+        "Agreed plans"
+      ],
+      "important_interests_and_values": [
+        "[interest] moderate hiking (+0.8)",
+        "[interest] casual cycling (+0.8)",
+        "[interest] regional day trips (+0.8)",
+        "[value] safety (+0.9)",
+        "[value] reliability (+0.9)"
+      ],
+      "communication_style": "Friendly and organised",
+      "boundaries": [
+        "disregard for agreed plans (-0.9)"
+      ],
+      "initial_disclosure": "Activity experience and approximate fitness."
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "identity_id": "AP",
+  "relations": [
+    {
+      "contact_ref": "DM",
+      "topics_shared": [
+        "software architecture",
+        "artificial intelligence",
+        "moderate hiking"
+      ],
+      "topics_private": [
+        "family disagreements"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "MR",
+      "topics_shared": [
+        "local initiatives",
+        "education",
+        "moderate hiking"
+      ],
+      "topics_private": [
+        "client project details"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "ET",
+      "topics_shared": [
+        "technology accessibility",
+        "product design",
+        "photography"
+      ],
+      "topics_private": [
+        "personal finances"
+      ],
+      "source": "simulation"
+    }
+  ]
+}

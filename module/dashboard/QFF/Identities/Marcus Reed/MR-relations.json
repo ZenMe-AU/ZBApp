@@ -1,0 +1,41 @@
+{
+  "identity_id": "MR",
+  "relations": [
+    {
+      "contact_ref": "LO",
+      "topics_shared": [
+        "Australian rules football",
+        "cricket",
+        "casual cycling"
+      ],
+      "topics_private": [
+        "personal finances"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "AP",
+      "topics_shared": [
+        "local initiatives",
+        "education",
+        "moderate hiking"
+      ],
+      "topics_private": [
+        "family disagreements"
+      ],
+      "source": "simulation"
+    },
+    {
+      "contact_ref": "SC",
+      "topics_shared": [
+        "education",
+        "local initiatives",
+        "regional day trips"
+      ],
+      "topics_private": [
+        "personal finances"
+      ],
+      "source": "simulation"
+    }
+  ]
+}

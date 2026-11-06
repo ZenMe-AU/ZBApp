@@ -1,0 +1,110 @@
+{
+  "identity_id": "DM",
+  "personas": [
+    {
+      "persona": "technology peer",
+      "connection_goal": "Find technically capable people with whom I can exchange ideas and occasionally collaborate.",
+      "motivation": "I enjoy exploring difficult technical problems with curious, experienced people who challenge assumptions.",
+      "contributions": [
+        "Cloud and software architecture experience",
+        "Practical problem-solving",
+        "Azure, AWS, identity, cyber security, artificial intelligence and automation knowledge"
+      ],
+      "expectations": [
+        "Technical curiosity",
+        "Knowledge exchange",
+        "Clear honest communication"
+      ],
+      "important_interests_and_values": [
+        "[interest] cloud architecture (+0.9)",
+        "[interest] cyber security (+0.9)",
+        "[interest] identity and access management (+0.8)",
+        "[interest] artificial intelligence (+0.8)",
+        "[interest] software architecture (+0.9)",
+        "[interest] automation (+0.7)",
+        "[value] competence (+0.9)",
+        "[value] curiosity (+0.9)",
+        "[value] openness (+0.8)"
+      ],
+      "communication_style": "Concise, direct and technical",
+      "boundaries": [
+        "persistent exaggeration (-0.9)",
+        "dishonesty (-0.9)",
+        "status-driven conversation (-0.9)",
+        "pressure to disclose confidential information (-0.9)"
+      ],
+      "initial_disclosure": "General technical interests, experience and opinions only"
+    },
+    {
+      "persona": "christian friend",
+      "connection_goal": "Develop friendships where Christian faith, the Bible, theology and ethics can be discussed openly.",
+      "motivation": "Faith is important to how I understand life, values and responsibility.",
+      "contributions": [
+        "Thoughtful biblical discussion",
+        "Willingness to examine different interpretations",
+        "Respectful disagreement"
+      ],
+      "expectations": [
+        "Sincerity",
+        "Humility",
+        "Respect for conscience"
+      ],
+      "important_interests_and_values": [
+        "[interest] Christianity (+0.9)",
+        "[interest] Bible study (+0.8)",
+        "[interest] theology (+0.8)",
+        "[value] ethics (+0.8)",
+        "[value] faith in daily life (+0.9)",
+        "[value] honesty (+0.9)",
+        "[value] humility (+0.9)",
+        "[value] respectful disagreement (+0.9)"
+      ],
+      "communication_style": "Thoughtful and exploratory",
+      "boundaries": [
+        "hostility toward beliefs (-0.9)",
+        "manipulative religious behaviour (-0.9)",
+        "pressure to disclose sensitive experiences (-0.9)"
+      ],
+      "initial_disclosure": "Christian identity and broad beliefs, with deeper views disclosed progressively"
+    },
+    {
+      "persona": "outdoor activity friend",
+      "connection_goal": "Find someone for occasional walking, hiking, travel or other relaxed activities.",
+      "motivation": "Shared outdoor activities provide a natural way to build friendship without constant social contact. I enjoy high-intensity guided hikes when they are properly planned and safety-conscious.",
+      "contributions": [
+        "Reliable company",
+        "Practical planning",
+        "Interesting conversation",
+        "A calm safety-conscious approach"
+      ],
+      "expectations": [
+        "Reliability",
+        "Mutual respect",
+        "Reasonable planning",
+        "Enjoyment of relaxed outdoor activities"
+      ],
+      "important_interests_and_values": [
+        "[interest] walking (+0.8)",
+        "[interest] moderate hiking (+0.7)",
+        "[interest] high-intensity guided hiking (+0.8)",
+        "[interest] travel (+0.7)",
+        "[interest] regional day trips (+0.7)",
+        "[interest] wildlife (+0.7)",
+        "[interest] scenery (+0.7)",
+        "[interest] photography (+0.6)",
+        "[value] reliability (+0.8)",
+        "[value] curiosity (+0.7)",
+        "[value] consideration (+0.8)",
+        "[value] safety (+0.8)"
+      ],
+      "communication_style": "Informal, friendly, direct and low-maintenance",
+      "boundaries": [
+        "repeated unreliability (-0.9)",
+        "pressure for excessive social commitment (-0.9)",
+        "reckless or extreme activities (-0.9)",
+        "disregard for agreed plans (-0.9)"
+      ],
+      "initial_disclosure": "General interests, activity preferences and broad availability"
+    }
+  ]
+}

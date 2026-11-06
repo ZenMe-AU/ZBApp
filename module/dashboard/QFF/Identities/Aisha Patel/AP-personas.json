@@ -1,0 +1,80 @@
+{
+  "identity_id": "AP",
+  "personas": [
+    {
+      "persona": "technology peer",
+      "connection_goal": "Exchange practical software ideas and find occasional collaborators.",
+      "motivation": "I learn best by comparing approaches with people who explain their reasoning.",
+      "contributions": [
+        "Software architecture experience",
+        "Automation prototypes"
+      ],
+      "expectations": [
+        "Knowledge exchange",
+        "Respect for client confidentiality"
+      ],
+      "important_interests_and_values": [
+        "[interest] software architecture (+0.9)",
+        "[interest] artificial intelligence (+0.8)",
+        "[interest] automation (+0.8)",
+        "[value] curiosity (+0.9)",
+        "[value] competence (+0.8)"
+      ],
+      "communication_style": "Concise and exploratory",
+      "boundaries": [
+        "dishonesty (-0.9)"
+      ],
+      "initial_disclosure": "Technical interests and public projects."
+    },
+    {
+      "persona": "outdoor activity friend",
+      "connection_goal": "Find companions for moderate hikes and photography walks.",
+      "motivation": "Time outdoors helps me unwind after concentrated technical work.",
+      "contributions": [
+        "Route research",
+        "Photography ideas"
+      ],
+      "expectations": [
+        "Agreed pace",
+        "Reliable plans"
+      ],
+      "important_interests_and_values": [
+        "[interest] moderate hiking (+0.8)",
+        "[interest] photography (+0.8)",
+        "[interest] wildlife (+0.7)",
+        "[interest] walking (+0.8)",
+        "[value] safety (+0.9)"
+      ],
+      "communication_style": "Friendly messages with plans made in advance",
+      "boundaries": [
+        "reckless or extreme activities (-0.9)"
+      ],
+      "initial_disclosure": "Broad activity preferences and fitness level."
+    },
+    {
+      "persona": "community volunteer",
+      "connection_goal": "Meet people who improve access to everyday technology.",
+      "motivation": "Practical digital skills can help neighbours participate more independently.",
+      "contributions": [
+        "Patient tutoring",
+        "Accessible software advice"
+      ],
+      "expectations": [
+        "Clear commitments",
+        "Respect for learners"
+      ],
+      "important_interests_and_values": [
+        "[interest] technology accessibility (+0.9)",
+        "[interest] education (+0.8)",
+        "[interest] local initiatives (+0.7)",
+        "[value] service (+0.9)",
+        "[value] responsibility (+0.8)"
+      ],
+      "communication_style": "Patient and practical",
+      "boundaries": [
+        "poor privacy practices (-0.9)"
+      ],
+      "initial_disclosure": "Volunteer interests and general availability."
+    }
+  ]
+}
