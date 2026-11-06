@@ -53,6 +53,8 @@ export function render(root: HTMLElement): () => void {
         combinations,
         width: Math.max(640, chartEl.clientWidth - 20),
         height: 460,
+        // Pixel width for set labels so full names fit (default ratio clips them).
+        widthRatios: [0.18, Math.max(...sets.map((s) => s.name.length), 4) * 10 + 24],
         selection,
         onClick: (s) => {
           selection = s;
