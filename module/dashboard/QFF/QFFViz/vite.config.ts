@@ -1,27 +1,9 @@
 import { defineConfig, type Plugin } from 'vite';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import type { IncomingMessage } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { listFiles, resolveDataPath, writeJson } from './src/server/files.ts';
+import { runEmbeddings } from './src/server/embeddings.ts';
 
-const identitiesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../Identities');
 const maxBodyBytes = 5 * 1024 * 1024;
-
-// Keeps numeric arrays (embeddings) on one line, matching the source files.
-function formatJson(value: unknown): string {
-  return JSON.stringify(value, null, 2).replace(
-    /\[\s*(-?[\d.eE+-]+(?:,\s*-?[\d.eE+-]+)*)\s*\]/g,
-    (_m, inner: string) => `[${inner.split(/,\s*/).join(', ')}]`,
-  ) + '\n';
-}
-
-function resolveDataPath(rel: string | null): string | null {
-  if (!rel) return null;
-  const full = path.resolve(identitiesDir, rel);
-  if (!full.startsWith(identitiesDir + path.sep) || path.extname(full) !== '.json') return null;
-  return existsSync(full) ? full : null;
-}
 
 async function readBody(req: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
@@ -34,18 +16,19 @@ async function readBody(req: IncomingMessage): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-async function listFiles() {
-  const files: { path: string; content: unknown }[] = [];
-  for (const dir of await readdir(identitiesDir, { withFileTypes: true })) {
-    if (!dir.isDirectory()) continue;
-    for (const name of await readdir(path.join(identitiesDir, dir.name))) {
-      if (!name.endsWith('.json')) continue;
-      const text = await readFile(path.join(identitiesDir, dir.name, name), 'utf8');
-      files.push({ path: `${dir.name}/${name}`, content: JSON.parse(text) });
-    }
-  }
-  return files;
+function sendJson(res: ServerResponse, status: number, body: unknown): void {
+  res.statusCode = status;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(body));
 }
+
+const job = {
+  status: 'idle' as 'idle' | 'running' | 'succeeded' | 'failed',
+  startedAt: '',
+  finishedAt: '',
+  options: {} as Record<string, unknown>,
+  log: [] as string[],
+};
 
 function identitiesApi(): Plugin {
   return {
@@ -53,22 +36,11 @@ function identitiesApi(): Plugin {
     configureServer(server) {
       server.middlewares.use('/api/files', async (req, res) => {
         try {
-          if (req.method === 'GET') {
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(await listFiles()));
-            return;
-          }
+          if (req.method === 'GET') return sendJson(res, 200, await listFiles());
           if (req.method === 'PUT') {
             const target = resolveDataPath(new URL(req.url ?? '', 'http://local').searchParams.get('path'));
-            if (!target) {
-              res.statusCode = 400;
-              res.end('Invalid path');
-              return;
-            }
-            const content = JSON.parse(await readBody(req));
-            const existing = await readFile(target, 'utf8');
-            const text = formatJson(content);
-            await writeFile(target, existing.includes('\r\n') ? text.replace(/\n/g, '\r\n') : text, 'utf8');
+            if (!target) return sendJson(res, 400, { error: 'Invalid path' });
+            await writeJson(target, JSON.parse(await readBody(req)));
             res.statusCode = 204;
             res.end();
             return;
@@ -78,6 +50,36 @@ function identitiesApi(): Plugin {
         } catch (err) {
           res.statusCode = 500;
           res.end(err instanceof Error ? err.message : String(err));
+        }
+      });
+
+      server.middlewares.use('/api/embeddings', async (req, res) => {
+        try {
+          if (req.method === 'GET') return sendJson(res, 200, job);
+          if (req.method !== 'POST') {
+            res.statusCode = 405;
+            res.end();
+            return;
+          }
+          if (job.status === 'running') return sendJson(res, 409, { error: 'A run is already in progress' });
+          const body = JSON.parse((await readBody(req)) || '{}') as Record<string, unknown>;
+          const dimensions = Number(body.dimensions ?? 256);
+          if (!Number.isInteger(dimensions) || dimensions < 16 || dimensions > 1536) {
+            return sendJson(res, 400, { error: 'dimensions must be an integer between 16 and 1536' });
+          }
+          const options = { dimensions, force: body.force === true, dryRun: body.dryRun === true };
+          Object.assign(job, { status: 'running', startedAt: new Date().toISOString(), finishedAt: '', options, log: [] });
+          const log = (line: string) => job.log.push(`${new Date().toLocaleTimeString('en-GB')}  ${line}`);
+          runEmbeddings(options, log)
+            .then(() => (job.status = 'succeeded'))
+            .catch((err: unknown) => {
+              log(`ERROR: ${err instanceof Error ? err.message : String(err)}`);
+              job.status = 'failed';
+            })
+            .finally(() => (job.finishedAt = new Date().toISOString()));
+          sendJson(res, 202, job);
+        } catch (err) {
+          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
         }
       });
     },

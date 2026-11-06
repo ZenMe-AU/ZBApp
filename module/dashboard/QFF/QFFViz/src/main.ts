@@ -19,6 +19,10 @@ import * as vennEuler from './pages/vennEuler';
 import * as vennClassic from './pages/vennClassic';
 import * as upset from './pages/upset';
 import * as pairVenn from './pages/pairVenn';
+import * as embeddingUpdate from './pages/embeddingUpdate';
+import * as embeddingDistribution from './pages/embeddingDistribution';
+import * as embeddingMap from './pages/embeddingMap';
+import * as matchPreview from './pages/matchPreview';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -35,7 +39,6 @@ const pages: Page[] = [
   { id: 'preferences', group: 'Grids', title: 'Preferences', render: preferencesGrid.render },
   { id: 'relations', group: 'Grids', title: 'Relations', render: relationsGrid.render },
   { id: 'matrix', group: 'Grids', title: 'Affinity matrix', render: affinityMatrix.render },
-  { id: 'embeddings', group: 'Grids', title: 'Embeddings heatmap', render: embeddingsGrid.render },
   { id: 'profile', group: 'Forms', title: 'Profile editor', render: profileEditor.render },
   { id: 'raw', group: 'Forms', title: 'Raw JSON files', render: rawJson.render },
   { id: 'relation-network', group: 'Networks', title: 'Relationships', render: relationNetwork.render },
@@ -46,6 +49,11 @@ const pages: Page[] = [
   { id: 'venn-classic', group: 'Sets', title: 'Venn (classic)', render: vennClassic.render },
   { id: 'upset', group: 'Sets', title: 'UpSet (all identities)', render: upset.render },
   { id: 'pair-venn', group: 'Sets', title: 'Relationship pair', render: pairVenn.render },
+  { id: 'embedding-update', group: 'Embeddings', title: 'Update', render: embeddingUpdate.render },
+  { id: 'embeddings', group: 'Embeddings', title: 'Heatmap', render: embeddingsGrid.render },
+  { id: 'embedding-distribution', group: 'Embeddings', title: 'Similarity distribution', render: embeddingDistribution.render },
+  { id: 'embedding-map', group: 'Embeddings', title: 'Keyword map', render: embeddingMap.render },
+  { id: 'match-preview', group: 'Embeddings', title: 'Match preview', render: matchPreview.render },
 ];
 
 const menu = q(document, '#menu');
