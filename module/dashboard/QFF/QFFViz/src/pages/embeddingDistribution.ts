@@ -18,7 +18,7 @@ const bins = 50;
 export function render(root: HTMLElement): () => void {
   root.innerHTML = `
     <div class="toolbar">
-      <h2 title="Cosine similarity of every unique keyword pair. Green bars are pairs sharing a kind, grey bars mix kinds. Use it to see where related concepts separate from unrelated ones before choosing a concept cut-off.">Similarity distribution ⓘ</h2>
+      <h2>Similarity distribution</h2>
       <span class="hint model"></span>
       <label>Concept cut-off <input class="cut" type="range" min="0" max="1" step="0.01" value="0.55" /> <b class="cut-val"></b></label>
       <label>Table window ± <input class="win" type="number" min="0" max="1" step="0.01" value="0.05" style="width:60px" /></label>

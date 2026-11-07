@@ -55,7 +55,7 @@ function matchPersonas(pa: Person, a: PropertiesPersona, pb: Person, b: Properti
 export function render(root: HTMLElement): () => void {
   root.innerHTML = `
     <div class="toolbar">
-      <h2 title="Runs the matching.md demonstration scoring between two identities with adjustable cut-offs. Developer view only: it shows both sides' evidence, which real per-party match files must never reveal.">Match preview ⓘ</h2>
+      <h2>Match preview</h2>
       <select class="a">${personOptions(store.people[0]?.id)}</select> ↔ <select class="b">${personOptions(store.people[1]?.id)}</select>
       <label>Concept ≥ <input class="cc" type="range" min="0" max="1" step="0.01" value="0.55" /> <b class="cc-val"></b></label>
       <label>Kind ≥ <input class="kc" type="range" min="0" max="1" step="0.01" value="0.55" /> <b class="kc-val"></b></label>

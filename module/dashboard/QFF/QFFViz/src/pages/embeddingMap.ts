@@ -5,12 +5,12 @@ import { store } from '../data/store';
 import type { PreferenceKind } from '../data/types';
 import { heat, kindColor } from '../shared/colors';
 import { esc, q } from '../shared/dom';
-import { cosine, keywordVectors, modelSummary, pca2 } from '../shared/vectors';
+import { cosine, keywordVectors, modelSummary, pca } from '../shared/vectors';
 
 export function render(root: HTMLElement): () => void {
   root.innerHTML = `
     <div class="toolbar">
-      <h2 title="Keywords placed by the first two principal components of their embeddings (a linear 2D projection). Nearby points are usually similar, but distances are only approximate. Lines join pairs above the cut-off; click a keyword to list its nearest neighbours.">Keyword map ⓘ</h2>
+      <h2>Keyword map</h2>
       <span class="hint model"></span>
       <label>Link pairs ≥ <input class="cut" type="range" min="0" max="1" step="0.01" value="0.55" /> <b class="cut-val"></b></label>
       <span class="legend">${Object.entries(kindColor).map(([k, c]) => `<span><i style="background:${c}"></i>${k}</span>`).join('')}<span><i style="background:#777"></i>mixed</span></span>
@@ -20,7 +20,7 @@ export function render(root: HTMLElement): () => void {
   q(root, '.model').textContent = modelSummary(store.people);
   const panel = q(root, '.panel');
   const vecs = keywordVectors(store.people);
-  const coords = pca2(vecs.map((v) => v.vec));
+  const coords = pca(vecs.map((v) => v.vec), 2).coords;
   const graph = new Graph({ type: 'undirected' });
   vecs.forEach((v, i) =>
     graph.addNode(v.key, {

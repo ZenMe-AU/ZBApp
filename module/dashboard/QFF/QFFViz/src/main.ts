@@ -1,6 +1,6 @@
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import { store } from './data/store';
-import { esc, q } from './shared/dom';
+import { esc, initInfoDialog, openInfo, q } from './shared/dom';
 import './styles.css';
 
 import * as identitiesGrid from './pages/identitiesGrid';
@@ -22,38 +22,63 @@ import * as pairVenn from './pages/pairVenn';
 import * as embeddingUpdate from './pages/embeddingUpdate';
 import * as embeddingDistribution from './pages/embeddingDistribution';
 import * as embeddingMap from './pages/embeddingMap';
+import * as embeddingMap3d from './pages/embeddingMap3d';
 import * as matchPreview from './pages/matchPreview';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+initInfoDialog();
 
 interface Page {
   id: string;
   group: string;
   title: string;
+  info: string;
   render: (root: HTMLElement) => () => void;
 }
 
 const pages: Page[] = [
-  { id: 'identities', group: 'Grids', title: 'Identities', render: identitiesGrid.render },
-  { id: 'personas', group: 'Grids', title: 'Personas', render: personasGrid.render },
-  { id: 'preferences', group: 'Grids', title: 'Preferences', render: preferencesGrid.render },
-  { id: 'relations', group: 'Grids', title: 'Relations', render: relationsGrid.render },
-  { id: 'matrix', group: 'Grids', title: 'Affinity matrix', render: affinityMatrix.render },
-  { id: 'profile', group: 'Forms', title: 'Profile editor', render: profileEditor.render },
-  { id: 'raw', group: 'Forms', title: 'Raw JSON files', render: rawJson.render },
-  { id: 'relation-network', group: 'Networks', title: 'Relationships', render: relationNetwork.render },
-  { id: 'topic-network', group: 'Networks', title: 'Identity ↔ topic', render: topicNetwork.render },
-  { id: 'persona-network', group: 'Networks', title: 'Persona ↔ preference', render: personaNetwork.render },
-  { id: 'similarity-network', group: 'Networks', title: 'Persona similarity', render: similarityNetwork.render },
-  { id: 'venn-euler', group: 'Sets', title: 'Venn (area-proportional)', render: vennEuler.render },
-  { id: 'venn-classic', group: 'Sets', title: 'Venn (classic)', render: vennClassic.render },
-  { id: 'upset', group: 'Sets', title: 'UpSet (all identities)', render: upset.render },
-  { id: 'pair-venn', group: 'Sets', title: 'Relationship pair', render: pairVenn.render },
-  { id: 'embedding-update', group: 'Embeddings', title: 'Update', render: embeddingUpdate.render },
-  { id: 'embeddings', group: 'Embeddings', title: 'Heatmap', render: embeddingsGrid.render },
-  { id: 'embedding-distribution', group: 'Embeddings', title: 'Similarity distribution', render: embeddingDistribution.render },
-  { id: 'embedding-map', group: 'Embeddings', title: 'Keyword map', render: embeddingMap.render },
-  { id: 'match-preview', group: 'Embeddings', title: 'Match preview', render: matchPreview.render },
+  { id: 'identities', group: 'Grids', title: 'Identities', render: identitiesGrid.render,
+    info: 'The core profile of each person (*-identity.json): name, age, location, occupation and a free-text summary. Every other file links back to these IDs.' },
+  { id: 'personas', group: 'Grids', title: 'Personas', render: personasGrid.render,
+    info: 'The connection personas each person offers (*-personas.json): what kind of connection they seek, what they contribute and expect, and their boundaries and disclosure rules. Matching is done per persona.' },
+  { id: 'preferences', group: 'Grids', title: 'Preferences', render: preferencesGrid.render,
+    info: 'The machine-readable preferences behind each persona (*-properties.json): keyword, kind (interest, value, boundary) and signed affinity from -1 (repels) to +1 (attracts). These drive the matcher.' },
+  { id: 'relations', group: 'Grids', title: 'Relations', render: relationsGrid.render,
+    info: 'Who already knows whom (*-relations.json), which topics each person discusses with that contact, and which they keep private. Shows whether a relation is reciprocal.' },
+  { id: 'matrix', group: 'Grids', title: 'Affinity matrix', render: affinityMatrix.render,
+    info: 'Compare preferences across everyone at once: rows are keywords (per kind), columns are identity → persona, cells are affinity. Type a value to add a preference, clear a cell to remove it.' },
+  { id: 'profile', group: 'Forms', title: 'Profile editor', render: profileEditor.render,
+    info: 'Everything about one person on a single page: identity, personas side by side, preferences and relations. Useful for reviewing or authoring a complete profile.' },
+  { id: 'raw', group: 'Forms', title: 'Raw JSON files', render: rawJson.render,
+    info: 'Direct tree/table/text editing of every JSON file under Identities/, including fields no other page exposes (embedding_model, kind_vectors). Invalid JSON is never applied.' },
+  { id: 'relation-network', group: 'Networks', title: 'Relationships', render: relationNetwork.render,
+    info: 'The social graph: arrows show declared relations labelled with shared topics; green = reciprocal, orange = one-way. Click to edit, Shift+click to create a relation.' },
+  { id: 'topic-network', group: 'Networks', title: 'Identity ↔ topic', render: topicNetwork.render,
+    info: 'Which people connect through which topics or preferences. Topics shared by many identities sit in the middle. Click a topic to rename or remove it everywhere.' },
+  { id: 'persona-network', group: 'Networks', title: 'Persona ↔ preference', render: personaNetwork.render,
+    info: 'How each person’s personas are built from preferences, and which keywords several people share. Edge colour = kind, width = affinity strength.' },
+  { id: 'similarity-network', group: 'Networks', title: 'Persona similarity', render: similarityNetwork.render,
+    info: 'Rough persona-to-persona closeness across identities using the affinity-weighted average of preference embeddings. An exploration aid, not the matcher.' },
+  { id: 'venn-euler', group: 'Sets', title: 'Venn (area-proportional)', render: vennEuler.render,
+    info: 'Overlap of 2–4 people’s preferences or topics where circle and overlap areas reflect set sizes. Good for seeing how much common ground exists.' },
+  { id: 'venn-classic', group: 'Sets', title: 'Venn (classic)', render: vennClassic.render,
+    info: 'Fixed-shape Venn for up to 5 people: every overlap region is shown even when small or empty, so you can read exact shared items.' },
+  { id: 'upset', group: 'Sets', title: 'UpSet (all identities)', render: upset.render,
+    info: 'Shared items across all identities at once. Each bar counts items held by exactly the dotted combination of people; scales beyond what a Venn can show.' },
+  { id: 'pair-venn', group: 'Sets', title: 'Relationship pair', render: pairVenn.render,
+    info: 'Checks whether the topics two people declared as shared in their relation are actually backed by both people’s preferences, and lets you edit the relation.' },
+  { id: 'embedding-update', group: 'Embeddings', title: 'Update', render: embeddingUpdate.render,
+    info: 'Regenerates all preference and kind embeddings with the Azure AI Foundry deployment, with a dry-run cost estimate and a live run log. Run after editing keywords or kind descriptions.' },
+  { id: 'embeddings', group: 'Embeddings', title: 'Heatmap', render: embeddingsGrid.render,
+    info: 'The raw embedding numbers for every preference and kind vector. Useful for spotting missing or odd vectors; values are editable but normally regenerated, not hand-edited.' },
+  { id: 'embedding-distribution', group: 'Embeddings', title: 'Similarity distribution', render: embeddingDistribution.render,
+    info: 'Histogram of similarity between every keyword pair (green = same kind, grey = mixed). Use it to choose a concept cut-off: review the pairs listed just above and below the line.' },
+  { id: 'embedding-map', group: 'Embeddings', title: 'Keyword map', render: embeddingMap.render,
+    info: 'Keywords placed in 2D by the main directions of their embeddings, coloured by kind, with lines joining pairs above the cut-off. Click a keyword to list its nearest neighbours.' },
+  { id: 'embedding-map-3d', group: 'Embeddings', title: 'Keyword map 3D', render: embeddingMap3d.render,
+    info: 'Interactive 3D view of the keyword embeddings with PCA/UMAP projections and several colour schemes.' },
+  { id: 'match-preview', group: 'Embeddings', title: 'Match preview', render: matchPreview.render,
+    info: 'Runs the matching.md scoring between two identities with adjustable concept and kind cut-offs, showing persona-pair scores and the evidence behind them. Developer view only: it reveals both sides’ preferences, which real match files must never do.' },
 ];
 
 const menu = q(document, '#menu');
@@ -75,6 +100,16 @@ function showPage(): void {
   cleanup?.();
   pageRoot.innerHTML = '';
   cleanup = page.render(pageRoot);
+  // Pages with their own detailed help already render an .info-btn in the heading.
+  const heading = pageRoot.querySelector('h2');
+  if (heading && !heading.querySelector('.info-btn')) {
+    const btn = document.createElement('button');
+    btn.className = 'info-btn';
+    btn.textContent = 'ⓘ';
+    btn.title = btn.ariaLabel = 'What is this page for?';
+    btn.addEventListener('click', () => openInfo(page.title, `<p>${esc(page.info)}</p>`));
+    heading.append(' ', btn);
+  }
 }
 
 store.addEventListener('dirty', () => {

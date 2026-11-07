@@ -16,7 +16,7 @@ const trim = (text: string) => (text.length > 20 ? `${text.slice(0, 20)}…` : t
 export function render(root: HTMLElement): () => void {
   root.innerHTML = `
     <div class="toolbar">
-      <h2 title="Rows are keywords (per kind), columns are identity → persona. Type an affinity to add the preference, clear a cell to remove it.">Affinity matrix ⓘ</h2>
+      <h2>Affinity matrix</h2>
       <input class="search" placeholder="Quick filter…" />
       <input class="keyword" placeholder="New keyword row" />
       <select class="kind">${preferenceKinds.map((k) => `<option>${k}</option>`).join('')}</select>

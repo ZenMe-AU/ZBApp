@@ -20,13 +20,16 @@
     "graphology": "^0.26.0",
     "graphology-layout": "^0.6.1",
     "graphology-layout-forceatlas2": "^0.10.1",
+    "plotly.js-dist-min": "^4.2.0",
     "sigma": "^3.0.3",
+    "umap-js": "^1.4.0",
     "vanilla-jsoneditor": "^3.13.0"
   },
   "devDependencies": {
     "@azure/identity": "^4.14.1",
     "@types/d3-selection": "^3.0.12",
     "@types/node": "^20.19.43",
+    "@types/plotly.js-dist-min": "^2.3.4",
     "graphology-types": "^0.24.8",
     "typescript": "^7.0.2",
     "vite": "^8.3.6"
