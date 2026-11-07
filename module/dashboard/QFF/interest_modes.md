@@ -16,7 +16,7 @@ The schema is unchanged: the mode is expressed in the keyword wording and inferr
 
 ## Modes and reference phrases
 
-Each mode has a display description and an array of weighted submodes in [interest-modes.json](interest-modes.json). The embedding job embeds each submode as `<mode>: <text>` with the same model and dimensions as the preferences. A separate offline script calculates parent mode vectors as weighted averages. Descriptions, weights, submode vectors, embedding provenance, and mode vectors all reside in this single file; see [the submode guide](MODES_SUBMODES_GUIDE.md).
+Each mode has a display description and an array of weighted submodes in [interest-modes.json](interest-modes.json). The embedding job embeds each submode as `<mode>: <text>` with the same model and dimensions as the preferences. A separate offline script calculates parent mode vectors as weighted averages. Descriptions, weights, submode vectors, embedding provenance, and mode vectors all reside in this single file; see [the submode guide](QFFViz/Docs/MODES_SUBMODES_GUIDE.md).
 
 | Mode | Reference phrase |
 | --- | --- |

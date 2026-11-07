@@ -1,6 +1,6 @@
 # Quick start: interest modes
 
-All mode data lives in [interest-modes.json](interest-modes.json).
+All mode data lives in [interest-modes.json](../../interest-modes.json).
 
 1. Edit each mode's `submodes` array: change `text`, adjust `weight`, or remove an entry.
 2. If text changed, clear its `vector` and `embeddedText`, and the parent's `vector`, to `null`. Run **Embeddings -> Update** in QFFViz to refresh embeddings.

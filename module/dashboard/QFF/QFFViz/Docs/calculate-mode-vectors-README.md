@@ -1,6 +1,6 @@
 # Offline mode averaging
 
-[calculate-mode-vectors.ts](calculate-mode-vectors.ts) reads and updates [interest-modes.json](interest-modes.json).
+[calculate-mode-vectors.ts](../../calculate-mode-vectors.ts) reads and updates [interest-modes.json](../../interest-modes.json).
 
 From QFFViz, run `npm run calculate-mode-vectors`. Alternatively, from QFF, run `node calculate-mode-vectors.ts` with Node 24.
 

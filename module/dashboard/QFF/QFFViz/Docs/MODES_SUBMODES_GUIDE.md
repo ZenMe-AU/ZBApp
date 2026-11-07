@@ -1,6 +1,6 @@
 # Interest modes and weighted submodes
 
-[interest-modes.json](interest-modes.json) is the single source of truth for mode descriptions, submode texts and weights, submode embeddings, and calculated mode vectors.
+[interest-modes.json](../../interest-modes.json) is the single source of truth for mode descriptions, submode texts and weights, submode embeddings, and calculated mode vectors.
 
 ## Structure
 
