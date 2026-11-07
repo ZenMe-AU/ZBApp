@@ -7,6 +7,7 @@ export const personColor = (index: number): string => palette[index % palette.le
 
 export const kindColor: Record<PreferenceKind, string> = {
   interest: '#4e79a7',
+  want: '#f28e2b',
   value: '#9467bd',
   boundary: '#d62728',
 };

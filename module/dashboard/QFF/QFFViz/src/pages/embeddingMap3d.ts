@@ -63,13 +63,13 @@ function hoverText(p: Point): string {
 }
 
 const helpHtml = `
-  <p>Every unique keyword from all <code>*-properties.json</code> files is a point. Its 256-dimension embedding is squeezed into 3D so you can look around it.</p>
+  <p>Every unique keyword from all <code>*-properties.json</code> files is a point. Its full embedding is squeezed into 3D so you can look around it.</p>
   <h4>Projection</h4>
   <ul>
     <li><b>PCA</b> keeps true linear geometry, but the three axes only capture part of the variance (shown in the toolbar). Two points can look close without being similar.</li>
     <li><b>UMAP</b> (cosine, fixed seed) keeps neighbourhoods: clusters are meaningful, distances <i>between</i> clusters are not.</li>
   </ul>
-  <p>Links, the neighbour list and similarity colours always use the full 256-dimension cosine, never the 3D position, so they are safe for cut-off tuning.</p>
+  <p>Links, the neighbour list and similarity colours always use the full-dimension cosine, never the 3D position, so they are safe for cut-off tuning.</p>
   <h4>Marks</h4>
   <ul>
     <li><b>Point size</b> = number of identities using the keyword.</li>

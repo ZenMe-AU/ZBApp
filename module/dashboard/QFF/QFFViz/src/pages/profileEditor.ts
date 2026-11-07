@@ -67,7 +67,11 @@ function preferencesGrid(el: HTMLElement, owner: Person): GridApi {
       { field: 'pref.kind', headerName: 'Kind', editable: true, cellEditor: 'agSelectCellEditor', cellEditorParams: { values: preferenceKinds } },
       { field: 'pref.affinity', headerName: 'Affinity', editable: true, cellDataType: 'number', cellStyle: (p) => heat(p.value) },
     ],
-    onCellValueChanged: () => store.touch(owner.properties),
+    onCellValueChanged: (e) => {
+      // The stored vector belongs to the old wording.
+      if (e.colDef.field === 'pref.keyword') e.data.pref.embedding = null;
+      store.touch(owner.properties);
+    },
   });
 }
 

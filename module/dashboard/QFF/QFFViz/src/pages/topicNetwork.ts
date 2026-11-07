@@ -26,8 +26,10 @@ function occurrences(topic: string): Occurrence[] {
           where: `${g.persona} (${pref.kind} ${pref.affinity})`,
           text: pref.keyword,
           apply: (next) => {
-            if (next) pref.keyword = next;
-            else g.preferences.splice(g.preferences.indexOf(pref), 1);
+            if (next) {
+              pref.keyword = next;
+              pref.embedding = null;
+            } else g.preferences.splice(g.preferences.indexOf(pref), 1);
             store.touch(p.properties);
           },
         });

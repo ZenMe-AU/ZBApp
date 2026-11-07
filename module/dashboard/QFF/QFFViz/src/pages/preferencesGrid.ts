@@ -10,9 +10,14 @@ interface Row {
   pref: Preference;
 }
 
-function sparkline(values: number[]): HTMLElement {
+function sparkline(values: number[] | null): HTMLElement {
   const el = document.createElement('div');
   el.className = 'spark';
+  if (!values?.length) {
+    el.textContent = '⚠ not embedded';
+    el.style.color = '#b8860b';
+    return el;
+  }
   for (const v of values) {
     const bar = document.createElement('span');
     bar.style.height = `${Math.max(2, Math.abs(v) * 100)}%`;
@@ -78,7 +83,14 @@ export function render(root: HTMLElement): () => void {
       },
       { headerName: 'Embedding', cellRenderer: (p: { data: Row }) => sparkline(p.data.pref.embedding), filter: false, minWidth: 120 },
     ],
-    onCellValueChanged: (e) => store.touch(e.data.owner.properties),
+    onCellValueChanged: (e) => {
+      // The stored vector belongs to the old wording.
+      if (e.colDef.field === 'pref.keyword') {
+        e.data.pref.embedding = null;
+        api.refreshCells({ rowNodes: [e.node], force: true });
+      }
+      store.touch(e.data.owner.properties);
+    },
   });
 
   q<HTMLInputElement>(root, '.search').addEventListener('input', (e) =>

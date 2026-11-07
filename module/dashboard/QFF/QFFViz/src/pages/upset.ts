@@ -10,7 +10,9 @@ const descriptions: Record<SetSource, string> = {
   interests:
     'Activities and subjects (kind = interest, liked or disliked). Overlaps show hobbies people could build a connection around.',
   values:
-    'Principles people care about in a relationship (kind = value). Overlaps hint at compatible expectations rather than conversation topics.',
+    'Internal ways of being a person chooses to act from (kind = value), never how others should be. Overlaps show people guided by similar principles.',
+  wants:
+    'Things, conditions or qualities in others that matter to a person (kind = want). Overlaps show what people hope to find or have in common.',
   boundaries:
     'Behaviours a person wants to avoid (kind = boundary). Overlaps show shared limits — useful for safety and as shared-aversion topics, ranked below attraction.',
   negative:

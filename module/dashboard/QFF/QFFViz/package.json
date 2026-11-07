@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "calculate-mode-vectors": "node ../calculate-mode-vectors.ts"
   },
   "keywords": [],
   "author": "",

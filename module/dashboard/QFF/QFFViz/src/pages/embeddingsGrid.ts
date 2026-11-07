@@ -21,7 +21,7 @@ export function render(root: HTMLElement): () => void {
 
   const rows: Row[] = store.people.flatMap((owner) => [
     ...owner.properties.personas.flatMap((g) =>
-      g.preferences.map((p) => ({ owner, persona: g.persona, label: p.keyword, kind: p.kind, vec: p.embedding })),
+      g.preferences.map((p) => ({ owner, persona: g.persona, label: p.keyword, kind: p.kind, vec: p.embedding ?? [] })),
     ),
     ...Object.entries(owner.properties.kind_vectors ?? {}).map(([kind, vec]) => ({
       owner,

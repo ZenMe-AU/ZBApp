@@ -1,7 +1,11 @@
 import type { Person, PreferenceKind } from '../data/types';
 import { normalize } from './sets';
 
-export function cosine(a: number[], b: number[]): number {
+export const hasVector = (v: number[] | null | undefined): v is number[] => !!v?.length;
+
+/** Cosine similarity; 0 when either vector is missing (stale or not yet embedded). */
+export function cosine(a: number[] | null | undefined, b: number[] | null | undefined): number {
+  if (!hasVector(a) || !hasVector(b)) return 0;
   let dot = 0, na = 0, nb = 0;
   for (let i = 0; i < Math.min(a.length, b.length); i++) {
     dot += a[i] * b[i];
@@ -24,7 +28,7 @@ export function keywordVectors(people: Person[]): KeywordVec[] {
   const map = new Map<string, KeywordVec>();
   for (const p of people) {
     for (const pref of p.properties.personas.flatMap((g) => g.preferences)) {
-      if (!pref.embedding?.length) continue;
+      if (!hasVector(pref.embedding)) continue;
       const key = normalize(pref.keyword);
       const entry = map.get(key) ?? { key, text: pref.keyword, vec: pref.embedding, kinds: new Set(), owners: new Set() };
       entry.kinds.add(pref.kind);

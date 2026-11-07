@@ -4,6 +4,7 @@ import { esc } from './dom';
 export const setSources = {
   positive: 'Positive preferences (affinity > 0)',
   interests: 'Interests',
+  wants: 'Wants',
   values: 'Values',
   boundaries: 'Boundaries',
   negative: 'Negative preferences (affinity < 0)',
@@ -22,6 +23,7 @@ export function itemsFor(person: Person, source: SetSource): string[] {
     case 'positive': items = prefs.filter((p) => p.affinity > 0).map((p) => p.keyword); break;
     case 'negative': items = prefs.filter((p) => p.affinity < 0).map((p) => p.keyword); break;
     case 'interests': items = prefs.filter((p) => p.kind === 'interest').map((p) => p.keyword); break;
+    case 'wants': items = prefs.filter((p) => p.kind === 'want').map((p) => p.keyword); break;
     case 'values': items = prefs.filter((p) => p.kind === 'value').map((p) => p.keyword); break;
     case 'boundaries': items = prefs.filter((p) => p.kind === 'boundary').map((p) => p.keyword); break;
     case 'relationShared': items = person.relations.relations.flatMap((r) => r.topics_shared); break;

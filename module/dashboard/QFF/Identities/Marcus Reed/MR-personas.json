@@ -14,8 +14,9 @@
         "Reliability"
       ],
       "important_interests_and_values": [
-        "[interest] Australian rules football (+0.9)",
-        "[interest] cricket (+0.8)",
+        "[interest] watching Australian rules football (+0.9)",
+        "[interest] watching cricket (+0.8)",
+        "[interest] playing social cricket (+0.6)",
         "[interest] casual cycling (+0.7)",
         "[value] sportsmanship (+0.9)",
         "[value] loyalty (+0.8)"
@@ -67,7 +68,7 @@
         "[interest] moderate hiking (+0.8)",
         "[interest] casual cycling (+0.8)",
         "[interest] regional day trips (+0.8)",
-        "[value] safety (+0.9)",
+        "[want] safety (+0.9)",
         "[value] reliability (+0.9)"
       ],
       "communication_style": "Friendly and organised",

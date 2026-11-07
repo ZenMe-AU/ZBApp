@@ -24,6 +24,9 @@ import * as embeddingDistribution from './pages/embeddingDistribution';
 import * as embeddingMap from './pages/embeddingMap';
 import * as embeddingMap3d from './pages/embeddingMap3d';
 import * as matchPreview from './pages/matchPreview';
+import * as modeHeatmap from './pages/modeHeatmap';
+import * as contrastAxes from './pages/contrastAxes';
+import * as modeComparison from './pages/modeComparison';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 initInfoDialog();
@@ -79,12 +82,37 @@ const pages: Page[] = [
     info: 'Interactive 3D view of the keyword embeddings with PCA/UMAP projections and several colour schemes.' },
   { id: 'match-preview', group: 'Embeddings', title: 'Match preview', render: matchPreview.render,
     info: 'Runs the matching.md scoring between two identities with adjustable concept and kind cut-offs, showing persona-pair scores and the evidence behind them. Developer view only: it reveals both sides’ preferences, which real match files must never do.' },
+  { id: 'mode-heatmap', group: 'Preferences', title: 'Keyword × mode', render: modeHeatmap.render,
+    info: 'How strongly each interest keyword points at each interest mode (participate, spectate, visit, …), with raw, relative and standardised scores.' },
+  { id: 'contrast-axes', group: 'Preferences', title: 'Contrast axes', render: contrastAxes.render,
+    info: 'Scatter of keywords on two mode-difference axes such as spectate − participate, which cancel shared topic and isolate how someone engages.' },
+  { id: 'mode-comparison', group: 'Preferences', title: 'Method comparison', render: modeComparison.render,
+    info: 'Checks each mode-scoring method against keywords whose leading verb states the mode, and whether contrast axes separate same-topic, different-mode pairs.' },
 ];
 
 const menu = q(document, '#menu');
 const pageRoot = q(document, '#page');
 const status = q(document, '#status');
+const staleLink = q<HTMLAnchorElement>(document, '#stale');
 let cleanup: (() => void) | undefined;
+
+/** Warns when the working set has preferences or used kinds without a vector (editing a keyword clears its vector). */
+function refreshStale(): void {
+  let count = 0;
+  for (const p of store.people) {
+    const used = new Set<string>();
+    for (const pref of p.properties.personas.flatMap((g) => g.preferences)) {
+      used.add(pref.kind);
+      if (!pref.embedding?.length) count++;
+    }
+    used.forEach((k) => {
+      if (!p.properties.kind_vectors?.[k]?.length) count++;
+    });
+  }
+  staleLink.hidden = count === 0;
+  staleLink.textContent = `⚠ ${count} stale embedding${count === 1 ? '' : 's'}`;
+  staleLink.title = 'Some preferences or kinds have no current vector, so views ignore them. Click to open Embeddings → Update.';
+}
 
 menu.innerHTML = [...new Set(pages.map((p) => p.group))]
   .map(
@@ -115,6 +143,7 @@ function showPage(): void {
 store.addEventListener('dirty', () => {
   status.textContent = store.dirtyCount ? `${store.dirtyCount} unsaved file(s)` : 'All changes saved';
   status.classList.toggle('dirty', store.dirtyCount > 0);
+  refreshStale();
 });
 store.addEventListener('loaded', showPage);
 window.addEventListener('hashchange', showPage);

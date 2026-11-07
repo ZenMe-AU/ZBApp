@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { listFiles, resolveDataPath, writeJson } from './src/server/files.ts';
-import { runEmbeddings } from './src/server/embeddings.ts';
+import { clearStale, embeddingStatus, interestModesForUi, runEmbeddings } from './src/server/embeddings.ts';
 
 const maxBodyBytes = 5 * 1024 * 1024;
 
@@ -53,6 +53,37 @@ function identitiesApi(): Plugin {
         }
       });
 
+      // Registered before '/api/embeddings' because connect matches by path prefix.
+      server.middlewares.use('/api/interest-modes', async (_req, res) => {
+        try {
+          sendJson(res, 200, await interestModesForUi());
+        } catch (err) {
+          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
+        }
+      });
+
+      server.middlewares.use('/api/embeddings/status', async (_req, res) => {
+        try {
+          sendJson(res, 200, await embeddingStatus());
+        } catch (err) {
+          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
+        }
+      });
+
+      server.middlewares.use('/api/embeddings/clear-stale', async (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end();
+          return;
+        }
+        if (job.status === 'running') return sendJson(res, 409, { error: 'An embedding run is in progress' });
+        try {
+          sendJson(res, 200, { cleared: await clearStale() });
+        } catch (err) {
+          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
+        }
+      });
+
       server.middlewares.use('/api/embeddings', async (req, res) => {
         try {
           if (req.method === 'GET') return sendJson(res, 200, job);
@@ -63,7 +94,7 @@ function identitiesApi(): Plugin {
           }
           if (job.status === 'running') return sendJson(res, 409, { error: 'A run is already in progress' });
           const body = JSON.parse((await readBody(req)) || '{}') as Record<string, unknown>;
-          const dimensions = Number(body.dimensions ?? 256);
+          const dimensions = Number(body.dimensions ?? 1536);
           if (!Number.isInteger(dimensions) || dimensions < 16 || dimensions > 1536) {
             return sendJson(res, 400, { error: 'dimensions must be an integer between 16 and 1536' });
           }

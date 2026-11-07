@@ -3,7 +3,7 @@ import { store } from '../data/store';
 import type { Person, Preference, PropertiesPersona } from '../data/types';
 import { heat } from '../shared/colors';
 import { esc, personOptions, q } from '../shared/dom';
-import { cosine, modelSummary } from '../shared/vectors';
+import { cosine, hasVector, modelSummary } from '../shared/vectors';
 
 interface PairSignal {
   a: Preference;
@@ -34,6 +34,7 @@ function matchPersonas(pa: Person, a: PropertiesPersona, pb: Person, b: Properti
   let discarded = 0;
   for (const x of a.preferences) {
     for (const y of b.preferences) {
+      if (!hasVector(x.embedding) || !hasVector(y.embedding)) continue;
       const concept = cosine(x.embedding, y.embedding);
       const kind = kindSim(x.kind, y.kind);
       if (concept < conceptCut || kind < kindCut) continue;

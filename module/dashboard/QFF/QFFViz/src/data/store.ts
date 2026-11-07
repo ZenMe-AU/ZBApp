@@ -91,8 +91,8 @@ class Store extends EventTarget {
     return this.person(id)?.identity.name ?? id;
   }
 
-  newPreference(person: Person, keyword: string, kind: PreferenceKind, affinity: number): Preference {
-    return { keyword, kind, affinity, embedding: new Array<number>(person.properties.embedding_model.dimensions).fill(0) };
+  newPreference(_person: Person, keyword: string, kind: PreferenceKind, affinity: number): Preference {
+    return { keyword, kind, affinity, embedding: null };
   }
 }
 

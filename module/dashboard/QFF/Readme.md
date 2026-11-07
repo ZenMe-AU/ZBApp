@@ -81,7 +81,7 @@ Different relationship types use different compatibility patterns:
 
 ### Reciprocity and progressive disclosure
 
-People are cautious because shared information may be misunderstood, exposed or used against them. Trust therefore develops in stages:
+People are cautious because shared information may be misunderstood, exposed or used against them. Trust therefore develops in stages (the layered or onion model described in [psychology.md](psychology.md)):
 
 1. Public information, such as interests or professional topics
 2. Low-risk preferences and personal experiences
@@ -168,10 +168,10 @@ Each identity's directory contains four JSON files, prefixed with its `identity_
 
 - `XX-identity.json`: biographical details.
 - `XX-personas.json`: persona narratives under entries in `personas`, covering goals, contributions, expectations, interests, communication, boundaries, and initial disclosure.
-- `XX-properties.json`: the corresponding three personas' signed preferences, synthetic concept embeddings, model metadata, and kind vectors.
+- `XX-properties.json`: the corresponding three personas' signed preferences (kinds `interest`, `want`, `value`, `boundary`), concept embeddings, model metadata, and kind vectors.
 - `XX-relations.json`: known contacts referenced by their identity IDs, with `topics_shared` and `topics_private` lists and `source: "simulation"`.
 
-Initials are readable fixture identifiers used consistently across files and references. Production identifiers remain opaque. The existing synthetic vectors are reused for matching concepts across all six identities; see [persona_preference_embedding_model.md](persona_preference_embedding_model.md).
+Initials are readable fixture identifiers used consistently across files and references. Production identifiers remain opaque. Concept and kind embeddings are generated with Azure AI Foundry `text-embedding-3-small`; see [persona_preference_embedding_model.md](persona_preference_embedding_model.md).
 
 Known-contact links are reciprocal, while topic choices belong to each owner and can differ by direction. `topics_shared` represents simulated disclosures; `topics_private` represents explicit preferences to keep a topic private from that contact. Unlisted topics are unknown. These lists provide inputs for [social-context and persona discovery](socialContextPersonaDiscovery.md), separate from the soft conversation-fit scores proposed in [relationPreferences.md](relationPreferences.md).
 
@@ -232,6 +232,20 @@ Secondary measures may include:
 - balanced participation in the exchange
 - respect for privacy and consent
 - whether the connection remains mutually valuable after more information is shared
+
+## Design decisions
+
+### Embedding text changes invalidate vectors
+
+The standard practice for every text-derived embedding is to clear its vector whenever its source text changes. A vector must not continue to represent text that has been edited.
+
+Whenever embeddings are refreshed, all current embedding input texts are compared against the cache to verify that they still match their vectors, including changes made outside the normal editing workflow. All stale embeddings are then refreshed, reusing a matching cached vector where available or generating a new embedding otherwise.
+
+Changing submode weights does not invalidate the submode embeddings because their text is unchanged; it requires recalculating the parent mode's weighted average.
+
+### Single interest-mode document
+
+[interest-modes.json](interest-modes.json) holds mode display descriptions, calculated mode vectors, and arrays of submodes with editable text and weights, embedded vectors, and their exact embedding input text. Embedding refresh updates submode vectors; the separate offline `calculate-mode-vectors.ts` script updates mode averages. Existing scoring views continue to consume mode descriptions and vectors through the same API.
 
 ## Core design question
 

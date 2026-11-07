@@ -1,6 +1,6 @@
 export type FileKind = 'identity' | 'personas' | 'properties' | 'relations' | 'other';
-export type PreferenceKind = 'interest' | 'value' | 'boundary';
-export const preferenceKinds: PreferenceKind[] = ['interest', 'value', 'boundary'];
+export type PreferenceKind = 'interest' | 'want' | 'value' | 'boundary';
+export const preferenceKinds: PreferenceKind[] = ['interest', 'want', 'value', 'boundary'];
 
 export interface IdentityFile {
   identity_id: string;
@@ -34,7 +34,8 @@ export interface Preference {
   keyword: string;
   kind: PreferenceKind;
   affinity: number;
-  embedding: number[];
+  /** null (or absent) when the keyword changed and the vector has not been regenerated yet. */
+  embedding: number[] | null;
 }
 
 export interface PropertiesPersona {

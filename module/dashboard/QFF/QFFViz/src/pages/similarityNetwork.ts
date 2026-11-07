@@ -8,6 +8,7 @@ import type { Person, PropertiesPersona } from '../data/types';
 import { heat, personColor } from '../shared/colors';
 import { esc, q } from '../shared/dom';
 import { kvGrid } from '../shared/grid';
+import { cosine } from '../shared/vectors';
 
 interface Node {
   key: string;
@@ -16,20 +17,10 @@ interface Node {
   vec: number[];
 }
 
-function cosine(a: number[], b: number[]): number {
-  let dot = 0, na = 0, nb = 0;
-  for (let i = 0; i < Math.min(a.length, b.length); i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
-  }
-  return na && nb ? dot / Math.sqrt(na * nb) : 0;
-}
-
 /** Affinity-weighted centroid of the persona's preference embeddings. */
 function centroid(group: PropertiesPersona): number[] {
   const out: number[] = [];
-  for (const p of group.preferences) p.embedding.forEach((v, i) => (out[i] = (out[i] ?? 0) + v * p.affinity));
+  for (const p of group.preferences) p.embedding?.forEach((v, i) => (out[i] = (out[i] ?? 0) + v * p.affinity));
   return out;
 }
 

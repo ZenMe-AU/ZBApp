@@ -1,5 +1,7 @@
 # QFF Matching
 
+> **Pending review: matching rules vs the updated psychology model.** The preference model now distinguishes `want` from `value` (ACT) and treats depth separately from privacy (see [psychology.md](psychology.md)). The scoring rules below still predate that change: they compare pairs only through a kind-similarity cut-off, so they likely miss value ↔ want complementarity and may overweight shared values. Do not change the matching rules yet. First analyse and visualise the restructured data in QFFViz (for example kind-pair similarity, want ↔ value overlaps and cut-off sensitivity), then update the rules based on that analysis.
+
 ## Match run
 
 A match run compares two identities, A and B, and produces exactly two match files: one owned by A and one owned by B. Each file contains its owner's identity ID, an opaque `their_id` reference, and only its owner's persona names and preference properties. It must not contain the other identity's persona names, keywords, affinities, or other profile data. Similarity scores and other generic computed results may appear in both files.
@@ -75,6 +77,7 @@ Interpret a retained positive alignment together with the owner's affinity:
 - Positive affinity and positive alignment indicate shared attraction to a concept. These are the default highest-priority topic suggestions.
 - Negative affinity and positive alignment indicate likely shared aversion in that semantic area. This is still positive common ground and may be suggested below shared-attraction topics when it is relevant to the situation. For example, a shared aversion to bad smells may be a natural lower-priority topic when passengers are seated near an aircraft toilet.
 - A `boundary` kind is not automatically suppressed as a topic. Shared boundaries can be useful common ground or context for a suggestion, but whether to raise one depends on the situation and any sensitivity or disclosure controls.
+- A shared `want` (for example both people want safety on outings) is common ground about what each hopes to find; a shared `value` is common ground about how each chooses to act. Kind similarity decides whether a `want` and a `value` with related keywords are compared at all.
 
 Because an alignment can aggregate multiple hidden counterpart preferences, it indicates a semantic-area signal, not an exact one-to-one match or proof that every counterpart preference has the same polarity. The UX may use the owner's affinity sign and kind to distinguish shared aversion from shared attraction without revealing the other person's properties.
 

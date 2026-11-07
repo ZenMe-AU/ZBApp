@@ -10,6 +10,8 @@ body {
 .topbar { grid-area: top; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: #1f2933; color: #fff; }
 .topbar strong { margin-right: auto; }
 #status.dirty { color: #ffd166; }
+#stale { color: #ffd166; text-decoration: none; font-weight: 600; }
+#stale:hover { text-decoration: underline; }
 
 #menu { grid-area: menu; overflow-y: auto; background: #f4f6f8; border-right: 1px solid #d9dee3; padding: 8px 0; }
 #menu h4 { margin: 14px 16px 4px; font-size: 11px; text-transform: uppercase; color: #6b7785; }
@@ -65,3 +67,6 @@ dialog.help form { text-align: right; margin-top: 12px; }
 .matrix .ag-header-cell, .matrix .ag-header-group-cell { padding: 1px; }
 .matrix .ag-header-cell-label { padding: 0; }
 .venn-wrap .selected path { stroke: #1f2933; stroke-width: 3; }
+table.mini { border-collapse: collapse; font-size: 13px; }
+table.mini th, table.mini td { border-bottom: 1px solid #e6eaee; padding: 3px 8px; text-align: left; vertical-align: top; }
+table.mini th { color: #4a5560; }
