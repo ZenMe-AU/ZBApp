@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { listFiles, resolveDataPath, writeJson } from './src/server/files.ts';
-import { clearStale, embeddingStatus, interestModesForUi, runEmbeddings } from './src/server/embeddings.ts';
+import { clearStale, embeddingStatus, interestModesForUi, modesEditorData, runEmbeddings, saveModesEditor } from './src/server/embeddings.ts';
 
 const maxBodyBytes = 5 * 1024 * 1024;
 
@@ -29,11 +29,34 @@ const job = {
   options: {} as Record<string, unknown>,
   log: [] as string[],
 };
+let modesMutationRunning = false;
+const modeUpdateInProgress = () => job.status === 'running' || modesMutationRunning;
 
 function identitiesApi(): Plugin {
   return {
     name: 'qff-identities-api',
     configureServer(server) {
+      server.middlewares.use('/api/modes', async (req, res) => {
+        try {
+          if (req.method === 'GET') return sendJson(res, 200, await modesEditorData());
+          if (req.method !== 'PUT' && req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed' });
+          if (modeUpdateInProgress()) return sendJson(res, 409, { error: 'Wait for the current embedding or mode update to finish.' });
+          const body = JSON.parse(await readBody(req)) as { data?: unknown; revision?: unknown };
+          if (typeof body.revision !== 'string') return sendJson(res, 400, { error: 'A modes revision is required.' });
+          if (modeUpdateInProgress()) return sendJson(res, 409, { error: 'Wait for the current embedding or mode update to finish.' });
+          modesMutationRunning = true;
+          try {
+            const current = await modesEditorData();
+            if (body.revision !== current.revision) return sendJson(res, 409, { error: 'Modes changed on disk. Reload before saving.' });
+            sendJson(res, 200, await saveModesEditor(body.data, body.revision, req.method === 'POST'));
+          } finally {
+            modesMutationRunning = false;
+          }
+        } catch (err) {
+          sendJson(res, 400, { error: err instanceof Error ? err.message : String(err) });
+        }
+      });
+
       server.middlewares.use('/api/files', async (req, res) => {
         try {
           if (req.method === 'GET') return sendJson(res, 200, await listFiles());
@@ -76,7 +99,7 @@ function identitiesApi(): Plugin {
           res.end();
           return;
         }
-        if (job.status === 'running') return sendJson(res, 409, { error: 'An embedding run is in progress' });
+        if (job.status === 'running' || modesMutationRunning) return sendJson(res, 409, { error: 'An embedding or mode update is in progress' });
         try {
           sendJson(res, 200, { cleared: await clearStale() });
         } catch (err) {
@@ -94,6 +117,7 @@ function identitiesApi(): Plugin {
           }
           if (job.status === 'running') return sendJson(res, 409, { error: 'A run is already in progress' });
           const body = JSON.parse((await readBody(req)) || '{}') as Record<string, unknown>;
+          if (modeUpdateInProgress()) return sendJson(res, 409, { error: 'An embedding or mode update is in progress' });
           const dimensions = Number(body.dimensions ?? 1536);
           if (!Number.isInteger(dimensions) || dimensions < 16 || dimensions > 1536) {
             return sendJson(res, 400, { error: 'dimensions must be an integer between 16 and 1536' });

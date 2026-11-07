@@ -55,6 +55,10 @@ export function render(root: HTMLElement): () => void {
 
   let timer: number | undefined;
   let lastStatus = '';
+  const reloadRefreshed = async () => {
+    try { await store.runExclusive(() => store.refreshAfterEmbeddings()); }
+    catch (err) { alert(err instanceof Error ? err.message : String(err)); }
+  };
 
   const staleGrid = createGrid<{ item: string; where: string; reason: string }>(q(root, '.sg'), {
     rowData: [],
@@ -89,7 +93,7 @@ export function render(root: HTMLElement): () => void {
     const res = await fetch('/api/embeddings/clear-stale', { method: 'POST' });
     const body = (await res.json()) as { cleared?: number; error?: string };
     if (!res.ok) return alert(body.error);
-    await store.load();
+    await reloadRefreshed();
   });
 
   const show = (job: Job) => {
@@ -106,7 +110,7 @@ export function render(root: HTMLElement): () => void {
     const finished = lastStatus === 'running' && job.status !== 'running';
     lastStatus = job.status;
     if (job.status === 'running') timer = window.setTimeout(poll, 1000);
-    else if (finished && job.status === 'succeeded' && !job.options.dryRun) await store.load();
+    else if (finished && job.status === 'succeeded' && !job.options.dryRun) await reloadRefreshed();
   };
 
   runBtn.addEventListener('click', async () => {

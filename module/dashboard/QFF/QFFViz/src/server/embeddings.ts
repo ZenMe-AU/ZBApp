@@ -1,9 +1,10 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { DefaultAzureCredential } from '@azure/identity';
 import { identitiesDir, listFiles, qffDir, vizDir, writeJson } from './files.ts';
-import { clearChangedSubmodes, modeIssue, parseInterestModes, submodeInput, submodeIssue, type InterestModesFile } from '../../../interest-modes.ts';
+import { applyModeEdits, averageMode, clearChangedSubmodes, modeIssue, parseInterestModes, submodeInput, submodeIssue, type InterestModesFile } from '../../../interest-modes.ts';
 
 export interface EmbedOptions {
   dimensions: number;
@@ -47,6 +48,23 @@ async function readJson<T>(file: string, fallback?: T): Promise<T> {
 
 async function readModes(): Promise<InterestModesFile> {
   return parseInterestModes(await readJson<unknown>(modesFile));
+}
+
+export async function modesEditorData() {
+  const text = await readFile(modesFile, 'utf8');
+  return { revision: createHash('sha256').update(text).digest('hex'), data: parseInterestModes(JSON.parse(text)) };
+}
+
+export async function saveModesEditor(draft: unknown, revision: string, calculate: boolean) {
+  const current = await modesEditorData();
+  if (revision !== current.revision) throw new Error('Modes changed on disk. Reload before saving to avoid overwriting changes.');
+  const data = applyModeEdits(current.data, parseInterestModes(draft));
+  if (calculate) {
+    const averages = Object.entries(data.modes).map(([name, mode]) => [name, averageMode(name, mode, data.embedding_model.dimensions)] as const);
+    for (const [name, vector] of averages) data.modes[name].vector = vector;
+  }
+  await writeJson(modesFile, data);
+  return modesEditorData();
 }
 
 export async function interestModesForUi() {

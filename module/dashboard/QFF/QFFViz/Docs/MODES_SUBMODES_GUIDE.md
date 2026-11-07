@@ -43,6 +43,20 @@
 
 ## Embedding refresh (internet required for uncached texts)
 
+### Modes -> Edit
+
+Open **Modes -> Edit** to expand a mode and edit its display description, submode texts, and weights. Contribution percentages show each weight's share of the total. Uncheck Enabled to set a weight to zero; re-enable to restore its previous weight within the current editing session. Add or delete submodes as needed.
+
+The info button contains editing and scoring guidance. The complete content area scrolls together; text fields grow to fit their contents in the compact table.
+
+Select a **Test keyword** to compare raw cosine scores against individual submodes, the saved mode vector, and a preview average using current weights. Preview scores do not save changes. Numeric vectors remain hidden.
+
+Use the top bar's **Save** to save all pending mode and identity-file edits, including edits from other pages. Mode drafts survive menu navigation. **Reload** discards all pending edits after confirmation, and closing the browser warns about unsaved changes. Concurrent mode-file changes require reloading instead of silently overwriting them.
+
+**View unsaved** opens a panel grouped by file, listing changed fields with before/after values compared with the last load or successful save. Added and removed values are marked `(absent)`; large embedding arrays are summarised rather than displaying thousands of numbers. This is a browser-draft comparison, not a Git diff. If a save partially fails, successfully saved files disappear from the panel and remaining edits stay pending.
+
+After saving weight changes or deletions, choose **Recalculate averages (offline)**. Text changes require **Refresh embeddings**, followed by recalculation. Refresh uses the existing embedding job, which also verifies preference and kind embeddings; save or reload all pending edits first to avoid stale identity drafts overwriting refreshed vectors. Uncached texts require internet and Azure credentials. Recalculation and refresh remain separate from Save.
+
 Open **Embeddings -> Update** in QFFViz and run the job. It verifies all embedding inputs against the cache, refreshes stale submode embeddings, and writes them into the same file. It does not calculate mode averages.
 
 When editing a submode's text, clear its `vector` and `embeddedText` to `null`, and clear the parent `vector`. Both scripts also detect edits made outside this workflow using `embeddedText`; stale vectors are never used for averaging.

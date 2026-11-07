@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { averageMode, clearChangedSubmodes, modeIssue, parseInterestModes, submodeInput, type InterestModesFile } from '../../../interest-modes.ts';
+import { applyModeEdits, averageMode, clearChangedSubmodes, modeIssue, parseInterestModes, submodeInput, type InterestModesFile } from '../../../interest-modes.ts';
 
 function fixture(): InterestModesFile {
   return parseInterestModes({
@@ -90,6 +90,29 @@ test('invalid weights, empty submodes and nonfinite vectors are rejected', () =>
   const invalid = fixture();
   invalid.modes.discuss.submodes[0].vector = [NaN, 1];
   assert.throws(() => parseInterestModes(invalid), /Invalid submode/);
+});
+
+test('mode editor saves use trusted vectors, invalidate text and weight edits, and preserve descriptions', () => {
+  const current = fixture();
+  const draft = fixture();
+  draft.embedding_model.name = 'forged';
+  draft.modes.discuss.description = 'News and debate';
+  draft.modes.discuss.vector = [9, 9];
+  draft.modes.discuss.submodes[0].vector = [9, 9];
+  let saved = applyModeEdits(current, draft);
+  assert.equal(saved.embedding_model.name, 'test');
+  assert.equal(saved.modes.discuss.description, 'News and debate');
+  assert.deepEqual(saved.modes.discuss.vector, current.modes.discuss.vector);
+  assert.deepEqual(saved.modes.discuss.submodes[0].vector, [1, 0]);
+  draft.modes.discuss.submodes[0].weight = 2;
+  saved = applyModeEdits(current, draft);
+  assert.equal(saved.modes.discuss.vector, null);
+  assert.deepEqual(saved.modes.discuss.submodes[0].vector, [1, 0]);
+  draft.modes.discuss.submodes[0].text = 'debating';
+  saved = applyModeEdits(current, draft);
+  assert.equal(saved.modes.discuss.submodes[0].vector, null);
+  assert.equal(saved.modes.discuss.submodes[0].embeddedText, null);
+  assert.deepEqual(saved.modes.discuss.submodes[1].vector, [0, 1]);
 });
 
 test('offline CLI preserves editable data and persists invalidation on text edits', async (t) => {

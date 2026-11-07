@@ -10,12 +10,14 @@
       <strong>QFF Identity Visualiser</strong>
       <a id="stale" href="#embedding-update" hidden></a>
       <span id="status"></span>
+      <button id="view-unsaved" disabled>View unsaved</button>
       <button id="reload">Reload</button>
       <button id="save" class="primary">Save</button>
     </header>
     <nav id="menu"></nav>
     <main id="page"></main>
     <dialog id="info-dialog" class="help"><h3></h3><div class="body"></div><form method="dialog"><button class="primary">Close</button></form></dialog>
+    <dialog id="changes-dialog" class="help changes" aria-labelledby="changes-title" aria-describedby="changes-help"><h3 id="changes-title">Unsaved changes</h3><p id="changes-help" class="hint">Changes since the last load or successful save. Large numeric vectors are summarised.</p><div class="body"></div><form method="dialog"><button class="primary">Close</button></form></dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

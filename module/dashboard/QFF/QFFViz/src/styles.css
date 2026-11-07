@@ -1,4 +1,27 @@
 * { box-sizing: border-box; }
+.changes table { width: 100%; table-layout: fixed; }
+.changes pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; max-height: 200px; overflow: auto; }
+.changes details { margin: 12px 0; }
+#page.modes-page { overflow: auto; padding: 8px 10px; gap: 6px; }
+.modes-page > * { flex-shrink: 0; }
+.modes-page .toolbar { gap: 6px; }
+.modes-page .message { margin: 0; }
+.mode-editor details { border: 1px solid #d9dee3; border-radius: 4px; padding: 6px 8px; margin-bottom: 6px; }
+.mode-editor summary { cursor: pointer; }
+.mode-editor textarea { font: inherit; width: 100%; min-height: 26px; padding: 3px 4px; resize: vertical; overflow: hidden; }
+.mode-description { display: flex; align-items: baseline; gap: 6px; margin: 6px 0; }
+.mode-description textarea { flex: 1; min-width: 0; }
+.mode-submodes { width: 100%; table-layout: fixed; margin: 6px 0; }
+.mode-submodes .enabled-col { width: 60px; }
+.mode-submodes .weight-col { width: 76px; }
+.mode-submodes .contribution-col { width: 96px; }
+.mode-submodes .embedding-col { width: 110px; }
+.mode-submodes .score-col { width: 72px; }
+.mode-submodes .delete-col { width: 65px; }
+.mode-submodes input[type="number"] { width: 100%; }
+.mode-editor table.mini th, .mode-editor table.mini td { padding: 3px 4px; overflow-wrap: anywhere; }
+.mode-editor button, .mode-editor input { padding: 3px 5px; }
+.mode-error { color: #b42318; }
 html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; font-size: 14px; color: #1f2933; }
 body {
   display: grid;

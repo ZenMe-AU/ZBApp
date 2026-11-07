@@ -27,6 +27,8 @@ import * as matchPreview from './pages/matchPreview';
 import * as modeHeatmap from './pages/modeHeatmap';
 import * as contrastAxes from './pages/contrastAxes';
 import * as modeComparison from './pages/modeComparison';
+import * as modesEdit from './pages/modesEdit';
+import { changeValue } from './shared/changes';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 initInfoDialog();
@@ -70,6 +72,8 @@ const pages: Page[] = [
     info: 'Shared items across all identities at once. Each bar counts items held by exactly the dotted combination of people; scales beyond what a Venn can show.' },
   { id: 'pair-venn', group: 'Sets', title: 'Relationship pair', render: pairVenn.render,
     info: 'Checks whether the topics two people declared as shared in their relation are actually backed by both people’s preferences, and lets you edit the relation.' },
+  { id: 'modes-edit', group: 'Modes', title: 'Edit', render: modesEdit.render,
+    info: 'Edit modes and weighted submodes, compare their scores for a keyword, refresh embeddings online, and recalculate mode averages offline.' },
   { id: 'embedding-update', group: 'Embeddings', title: 'Update', render: embeddingUpdate.render,
     info: 'Regenerates all preference and kind embeddings with the Azure AI Foundry deployment, with a dry-run cost estimate and a live run log. Run after editing keywords or kind descriptions.' },
   { id: 'embeddings', group: 'Embeddings', title: 'Heatmap', render: embeddingsGrid.render,
@@ -141,19 +145,37 @@ function showPage(): void {
 }
 
 store.addEventListener('dirty', () => {
-  status.textContent = store.dirtyCount ? `${store.dirtyCount} unsaved file(s)` : 'All changes saved';
+  status.textContent = store.busy ? 'Working...' : store.dirtyCount ? `${store.dirtyCount} unsaved file(s)` : 'All changes saved';
   status.classList.toggle('dirty', store.dirtyCount > 0);
   refreshStale();
+  q<HTMLButtonElement>(document, '#save').disabled = store.busy || store.dirtyCount === 0;
+  q<HTMLButtonElement>(document, '#reload').disabled = store.busy;
+  pageRoot.inert = store.busy;
+  q<HTMLButtonElement>(document, '#view-unsaved').disabled = store.dirtyCount === 0;
+  if (changesDialog.open) drawChanges();
 });
 store.addEventListener('loaded', showPage);
 window.addEventListener('hashchange', showPage);
 window.addEventListener('beforeunload', (e) => {
-  if (store.dirtyCount) e.preventDefault();
+  if (store.dirtyCount || store.busy) e.preventDefault();
 });
 
 q(document, '#save').addEventListener('click', () => store.save().catch((err) => alert(err)));
 q(document, '#reload').addEventListener('click', () => {
   if (!store.dirtyCount || confirm('Discard unsaved changes and reload from disk?')) store.load().catch((err) => alert(err));
+});
+
+const changesDialog = q<HTMLDialogElement>(document, '#changes-dialog');
+function drawChanges(): void {
+  q(changesDialog, '.body').innerHTML = store.unsavedChanges.length ? store.unsavedChanges.map((file) => `
+    <details open><summary><b>${esc(file.path)}</b> · ${file.changes.length} changed field(s)</summary>
+      <table class="mini"><thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead>
+      <tbody>${file.changes.map((change) => `<tr><td>${esc(change.path)}</td><td><pre>${esc(changeValue(change.before))}</pre></td><td><pre>${esc(changeValue(change.after))}</pre></td></tr>`).join('')}</tbody></table>
+    </details>`).join('') : '<p>No unsaved changes.</p>';
+}
+q(document, '#view-unsaved').addEventListener('click', () => {
+  drawChanges();
+  changesDialog.showModal();
 });
 
 store.load().catch((err) => {

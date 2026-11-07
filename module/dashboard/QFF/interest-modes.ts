@@ -114,3 +114,21 @@ export function clearChangedSubmodes(file: InterestModesFile): number {
   }
   return cleared;
 }
+
+export function applyModeEdits(current: InterestModesFile, draft: InterestModesFile): InterestModesFile {
+  const result = parseInterestModes(draft);
+  result.embedding_model = { ...current.embedding_model };
+  for (const [name, mode] of Object.entries(result.modes)) {
+    const previous = current.modes[name];
+    for (const submode of mode.submodes) {
+      const existing = previous?.submodes.find((s) => s.text === submode.text);
+      submode.vector = existing?.vector ?? null;
+      submode.embeddedText = existing?.embeddedText ?? null;
+    }
+    const unchanged = previous && JSON.stringify(previous.submodes.map((s) => [s.text, s.weight])) ===
+      JSON.stringify(mode.submodes.map((s) => [s.text, s.weight]));
+    mode.vector = unchanged ? previous.vector : null;
+  }
+  clearChangedSubmodes(result);
+  return result;
+}
