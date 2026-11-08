@@ -60,6 +60,10 @@
       "name": "Dashboard UI",
       "path": "./module/dashboard",
     },
+    {
+      "name": "QFF",
+      "path": "./module/QFF",
+    },
   ],
   "launch": {
     "version": "0.2.0",
