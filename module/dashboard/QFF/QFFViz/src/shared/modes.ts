@@ -36,7 +36,7 @@ const verbModes: [RegExp, string][] = [
   [/^(taking|making|creating|writing|building)\b/, 'create'],
   [/^(learning|studying|reading)\b/, 'learn'],
   [/^(discussing|debating|talking)\b/, 'discuss'],
-  [/^(helping|volunteering|organising|teaching)\b/, 'help'],
+  [/^(assisting|helping|volunteering|organising|teaching)\b/, 'assist'],
 ];
 
 export const labelOf = (text: string): string => verbModes.find(([re]) => re.test(normalize(text)))?.[1] ?? '';
@@ -102,7 +102,7 @@ export const modePalette: Record<string, string> = {
   create: '#b07aa1',
   learn: '#76b7b2',
   discuss: '#edc948',
-  help: '#e15759',
+  assist: '#e15759',
 };
 
 export const modeColor = (mode: string): string => modePalette[mode] ?? '#9c755f';

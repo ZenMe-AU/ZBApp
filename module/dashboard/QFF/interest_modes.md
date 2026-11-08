@@ -26,7 +26,7 @@ Each mode has a display description and an array of weighted submodes in [intere
 | `create` | making or creating something myself, such as photographs, art, music, writing or software |
 | `learn` | learning about, reading about or studying a subject |
 | `discuss` | talking about, debating or sharing ideas on a topic with other people |
-| `help` | helping, teaching, organising or volunteering for other people or a community |
+| `assist` | assisting, helping, teaching, organising or volunteering for other people or a community |
 
 The list and texts are provisional. Text edits require clearing and refreshing the affected embeddings; weight changes and submode deletions need only offline recalculation. Stale averages are excluded from scoring until recalculated.
 
