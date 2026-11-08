@@ -60,8 +60,7 @@ export function parseInterestModes(value: unknown): InterestModesFile {
   };
 }
 
-// Preserve the embedding inputs used before consolidation.
-export const submodeInput = (name: string, submode: InterestSubmode): string => `${name}: ${submode.text}`;
+export const submodeInput = (_name: string, submode: InterestSubmode): string => submode.text;
 
 export function submodeIssue(name: string, submode: InterestSubmode, dimensions: number): string | null {
   if (submode.embeddedText !== submodeInput(name, submode)) return 'submode text changed; refresh embeddings';

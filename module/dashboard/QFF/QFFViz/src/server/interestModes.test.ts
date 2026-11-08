@@ -15,8 +15,8 @@ function fixture(): InterestModesFile {
         description: 'Discussion',
         vector: [0.25, 0.75],
         submodes: [
-          { text: 'discuss', weight: 1, vector: [1, 0], embeddedText: 'discuss: discuss' },
-          { text: 'sharing news', weight: 3, vector: [0, 1], embeddedText: 'discuss: sharing news' },
+          { text: 'discuss', weight: 1, vector: [1, 0], embeddedText: 'discuss' },
+          { text: 'sharing news', weight: 3, vector: [0, 1], embeddedText: 'sharing news' },
         ],
       },
     },
@@ -49,10 +49,23 @@ test('changed text clears its embedding and parent average, without affecting si
   assert.throws(() => averageMode('discuss', mode, 2), /text changed/);
 });
 
-test('parent name changes invalidate prefixed inputs', () => {
+test('embedding inputs use exact submode text independent of parent name', () => {
   const mode = fixture().modes.discuss;
-  assert.equal(submodeInput('discuss', mode.submodes[0]), 'discuss: discuss');
-  assert.match(modeIssue('debate', mode, 2) ?? '', /text changed/);
+  assert.equal(submodeInput('discuss', mode.submodes[0]), 'discuss');
+  assert.equal(modeIssue('debate', mode, 2), null);
+  mode.submodes[0].text = '  Mixed Case description  ';
+  assert.equal(submodeInput('discuss', mode.submodes[0]), '  Mixed Case description  ');
+});
+
+test('legacy prefixed embeddings are invalidated before averaging', () => {
+  const file = fixture();
+  for (const submode of file.modes.discuss.submodes) {
+    submode.embeddedText = `discuss: ${submode.text}`;
+  }
+  assert.match(modeIssue('discuss', file.modes.discuss, 2)!, /text changed/);
+  clearChangedSubmodes(file);
+  assert.equal(file.modes.discuss.vector, null);
+  assert.ok(file.modes.discuss.submodes.every((s) => s.vector === null && s.embeddedText === null));
 });
 
 test('missing or wrong-sized active vectors never produce partial averages', () => {

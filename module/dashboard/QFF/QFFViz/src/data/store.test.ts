@@ -11,7 +11,7 @@ function fixture() {
       modes: { discuss: {
         description: 'Discuss',
         vector: [1, 0],
-        submodes: [{ text: 'discuss', weight: 1, vector: [1, 0], embeddedText: 'discuss: discuss' }],
+        submodes: [{ text: 'discuss', weight: 1, vector: [1, 0], embeddedText: 'discuss' }],
       } },
     },
   };

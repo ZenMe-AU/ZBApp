@@ -28,6 +28,7 @@ import * as modeHeatmap from './pages/modeHeatmap';
 import * as contrastAxes from './pages/contrastAxes';
 import * as modeComparison from './pages/modeComparison';
 import * as modesEdit from './pages/modesEdit';
+import * as modeVectors from './pages/modeVectors';
 import { changeValue } from './shared/changes';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -74,6 +75,10 @@ const pages: Page[] = [
     info: 'Checks whether the topics two people declared as shared in their relation are actually backed by both people’s preferences, and lets you edit the relation.' },
   { id: 'modes-edit', group: 'Modes', title: 'Edit', render: modesEdit.render,
     info: 'Edit modes and weighted submodes, compare their scores for a keyword, refresh embeddings online, and recalculate mode averages offline.' },
+  { id: 'mode-3d', group: 'Modes', title: '3D', render: modeVectors.render3d,
+    info: 'Inspect modes and submodes in 3D with UMAP/PCA and control mode/submode visibility.' },
+  { id: 'modes-heatmap', group: 'Modes', title: 'Heatmap', render: modeVectors.renderHeatmap,
+    info: 'Compare submodes with mode averages using full-dimensional cosine and leave-one-out sibling alignment.' },
   { id: 'embedding-update', group: 'Embeddings', title: 'Update', render: embeddingUpdate.render,
     info: 'Regenerates all preference and kind embeddings with the Azure AI Foundry deployment, with a dry-run cost estimate and a live run log. Run after editing keywords or kind descriptions.' },
   { id: 'embeddings', group: 'Embeddings', title: 'Heatmap', render: embeddingsGrid.render,
@@ -127,6 +132,7 @@ menu.innerHTML = [...new Set(pages.map((p) => p.group))]
   .join('');
 
 function showPage(): void {
+  if (location.hash === '#mode-vectors') history.replaceState(null, '', '#mode-3d');
   const page = pages.find((p) => p.id === location.hash.slice(1)) ?? pages[0];
   menu.querySelectorAll('a').forEach((a) => a.classList.toggle('active', a.dataset.id === page.id));
   cleanup?.();

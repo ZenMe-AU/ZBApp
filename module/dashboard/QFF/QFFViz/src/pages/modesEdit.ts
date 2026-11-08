@@ -30,7 +30,7 @@ export function render(root: HTMLElement): () => void {
     <div class="toolbar">
       <h2>Modes: Edit <button class="info-btn" title="How to edit modes" aria-label="How to edit modes">ⓘ</button></h2>
       <button class="calculate" disabled>Recalculate averages (offline)</button>
-      <button class="refresh" disabled title="Uses the existing embedding job; uncached texts require Azure/internet">Refresh embeddings</button>
+      <button class="refresh" disabled title="Refresh embeddings and calculate mode averages; uncached texts require Azure/internet">Refresh embeddings</button>
     </div>
     <div class="toolbar">
       <label>Test keyword <select class="keyword"><option value="">None</option>${keywords.map((k, i) => `<option value="${i}">${esc(k.text)}</option>`).join('')}</select></label>
@@ -40,7 +40,7 @@ export function render(root: HTMLElement): () => void {
     <div class="mode-editor"></div>`;
   q(root, '.info-btn').addEventListener('click', () => openInfo('Editing modes', `
     <p>Edit modes and their weighted submodes. Global Save and Reload include mode edits and identity files. Draft edits survive menu navigation; View unsaved shows pending changes.</p>
-    <p>Text changes clear embeddings. Save and refresh embeddings, then recalculate averages. Weight changes and deletions need only saving and offline recalculation.</p>
+    <p>Text changes clear embeddings. Save and refresh embeddings; mode averages are calculated automatically afterwards. Weight changes and deletions need only saving and offline recalculation.</p>
     <p>Select a test keyword to compare saved scores with a preview using current weights without saving. Scores are raw cosine, not probabilities.</p>`));
   const message = q(root, '.message');
   const list = q(root, '.mode-editor');
@@ -54,7 +54,7 @@ export function render(root: HTMLElement): () => void {
     button('.calculate').disabled = !state || busy || store.busy || store.areModesDirty;
     button('.refresh').disabled = !state || busy || store.busy || store.dirtyCount > 0;
     button('.calculate').title = store.areModesDirty ? 'Save pending mode edits with global Save first.' : '';
-    button('.refresh').title = store.dirtyCount ? 'Save or reload all pending edits first.' : 'Uncached texts require Azure/internet.';
+    button('.refresh').title = store.dirtyCount ? 'Save or reload all pending edits first.' : 'Refresh embeddings and calculate mode averages; uncached texts require Azure/internet.';
     list.querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement>('input, button, textarea')
       .forEach((el) => {
         const onlySubmode = el instanceof HTMLButtonElement && el.dataset.action === 'delete' &&
@@ -208,7 +208,7 @@ export function render(root: HTMLElement): () => void {
   q(root, '.keyword').addEventListener('change', draw);
   button('.calculate').addEventListener('click', () => void action(persist));
   button('.refresh').addEventListener('click', () => {
-    if (!state || !confirm('Run embedding refresh? Uncached texts require internet/Azure. Existing preference and kind embeddings are also verified.')) return;
+    if (!state || !confirm('Refresh embeddings and calculate mode averages? Uncached texts require internet/Azure. Existing preference and kind embeddings are also verified.')) return;
     const dimensions = state.data.embedding_model.dimensions;
     void action(async () => {
       await request('/api/embeddings', {
@@ -221,7 +221,7 @@ export function render(root: HTMLElement): () => void {
         if (job.status === 'failed') throw new Error(job.log.at(-1) ?? 'Embedding refresh failed.');
         if (job.status === 'succeeded') {
           await store.refreshAfterEmbeddings();
-          if (!disposed) report('Embeddings refreshed. Recalculate averages offline next.');
+          if (!disposed) report('Embeddings refreshed and mode averages recalculated offline.');
           return;
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));

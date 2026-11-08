@@ -245,7 +245,7 @@ Changing submode weights does not invalidate the submode embeddings because thei
 
 ### Single interest-mode document
 
-[interest-modes.json](interest-modes.json) holds mode display descriptions, calculated mode vectors, and arrays of submodes with editable text and weights, embedded vectors, and their exact embedding input text. Embedding refresh updates submode vectors; the separate offline `calculate-mode-vectors.ts` script updates mode averages. Existing scoring views continue to consume mode descriptions and vectors through the same API.
+[interest-modes.json](interest-modes.json) holds mode display descriptions, calculated mode vectors, and arrays of submodes with editable text and weights, embedded vectors, and their exact embedding input text. Submodes are embedded from their exact text only, without a parent-mode prefix. Refresh invalidates legacy prefixed inputs, updates submode vectors, then automatically calculates and persists all parent averages offline. The separate offline `calculate-mode-vectors.ts` script remains available for weight-only changes. Existing scoring views continue to consume mode descriptions and vectors through the same API.
 
 ## Core design question
 

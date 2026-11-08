@@ -1,12 +1,12 @@
 import Plotly, { type Data, type PlotlyHTMLElement } from 'plotly.js-dist-min';
-import { UMAP } from 'umap-js';
 import { createGrid, type GridApi } from 'ag-grid-community';
 import { store } from '../data/store';
 import type { PreferenceKind } from '../data/types';
 import { heat, kindColor } from '../shared/colors';
 import { esc, openInfo, q } from '../shared/dom';
 import { normalize } from '../shared/sets';
-import { cosine, kmeans, modelSummary, pca, seededRandom } from '../shared/vectors';
+import { cosine, kmeans, modelSummary } from '../shared/vectors';
+import { project3d } from '../shared/projection3d';
 
 interface Use {
   person: string;
@@ -131,20 +131,7 @@ export function render(root: HTMLElement): () => void {
 
   const project = (method: string) => {
     if (!projections.has(method)) {
-      if (method === 'pca') {
-        const { coords, explained } = pca(allVecs, 3);
-        const share = explained.map((e) => `${(e * 100).toFixed(1)}%`).join(' + ');
-        projections.set(method, { coords, info: `PCA axes explain ${share} = ${(explained.reduce((s, e) => s + e, 0) * 100).toFixed(1)}% of variance` });
-      } else {
-        const umap = new UMAP({
-          nComponents: 3,
-          nNeighbors: Math.min(15, allVecs.length - 1),
-          minDist: 0.1,
-          distanceFn: (a, b) => 1 - cosine(a, b),
-          random: seededRandom(42),
-        });
-        projections.set(method, { coords: umap.fit(allVecs), info: 'UMAP (cosine, 15 neighbours, seed 42): clusters are meaningful, distances between them are not' });
-      }
+      projections.set(method, project3d(allVecs, method === 'pca' ? 'pca' : 'umap'));
     }
     return projections.get(method)!;
   };

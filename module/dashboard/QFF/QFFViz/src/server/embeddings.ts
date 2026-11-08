@@ -105,7 +105,7 @@ async function embed(
   }
 }
 
-/** Regenerates concept and kind vectors in every *-properties.json file. */
+/** Refreshes preference, kind and submode embeddings, then calculates mode averages offline. */
 export async function runEmbeddings(options: EmbedOptions, log: (line: string) => void): Promise<void> {
   const config = await readJson<{ endpoint: string; deployment: string }>(configFile);
   const kinds = await readJson<Record<string, string>>(kindsFile);
@@ -203,9 +203,11 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
       submodeCount++;
     }
   }
+  const averages = Object.entries(modes.modes).map(([name, mode]) =>
+    [name, averageMode(name, mode, options.dimensions)] as const);
+  for (const [name, vector] of averages) modes.modes[name].vector = vector;
   await writeJson(modesFile, modes);
-  log(`Wrote ${path.basename(modesFile)} (${submodeCount} submode vectors)`);
-  log(`Next step: run 'npm run calculate-mode-vectors' to compute mode averages in ${path.basename(modesFile)}.`);
+  log(`Wrote ${path.basename(modesFile)} (${submodeCount} submode vectors, ${averages.length} mode averages calculated offline)`);
   log('Done.');
 }
 

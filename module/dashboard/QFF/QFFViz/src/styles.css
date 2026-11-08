@@ -2,6 +2,23 @@
 .changes table { width: 100%; table-layout: fixed; }
 .changes pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; max-height: 200px; overflow: auto; }
 .changes details { margin: 12px 0; }
+.mode-vectors { grid-template-columns: minmax(0, 1fr) minmax(340px, 38%); }
+.mode-vectors .plot { height: 100%; min-height: 0; }
+.mode-vectors .visibility details { margin: 6px 0; }
+.mode-vectors .submode-toggle { display: flex; align-items: baseline; gap: 4px; margin: 3px 0 3px 16px; overflow-wrap: anywhere; }
+.mode-vectors table { width: 100%; font-size: 12px; }
+.mode-vectors th, .mode-vectors td { padding: 4px; vertical-align: top; }
+.mode-vectors td:first-child { overflow-wrap: anywhere; }
+#page.mode-grid-page { overflow-y: auto; }
+.mode-grid-page > * { flex-shrink: 0; }
+.mode-grid-page .vector-plot-wrap { height: max(460px, calc(100vh - 180px)); }
+.mode-grid-page .plot { width: 100%; height: 100%; }
+.vector-filters { border: 1px solid #d9dee3; border-radius: 4px; padding: 6px 8px; }
+.vector-filters summary { cursor: pointer; }
+.vector-filters .toolbar { margin: 8px 0; }
+.vector-filters select { max-width: min(460px, 70vw); }
+.vector-data[hidden] { display: none; }
+.vector-data { padding-bottom: 12px; }
 #page.modes-page { overflow: auto; padding: 8px 10px; gap: 6px; }
 .modes-page > * { flex-shrink: 0; }
 .modes-page .toolbar { gap: 6px; }
