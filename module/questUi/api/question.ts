@@ -13,7 +13,7 @@ export const getQuestionsByUser = async () => {
   try {
     await loadConfig();
     const apiDomain = getConfig("QUEST5TIEREG_DOMAIN");
-    const response = await jwtFetch(`${apiDomain}/questionQry/getQuestions/${encodeURIComponent(profileId ?? "")}`, {
+    const response = await jwtFetch(`${apiDomain}/questionQry/getQuestions`, {
       method: "GET",
     });
 

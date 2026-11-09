@@ -33,7 +33,7 @@ export const getQuestionsByUser = async () => {
 };
 
 // Create a new questionnaire
-export const createQuestion = async (title: string, questionText: string, option: string[] | null) => {
+export const createQuestion = async (title: string, questionText: string, optionList: string[] | null) => {
   try {
     await loadConfig();
     const apiDomain = getConfig("QUEST3TIER_DOMAIN");
@@ -42,7 +42,7 @@ export const createQuestion = async (title: string, questionText: string, option
       body: JSON.stringify({
         title: title,
         questionText: questionText,
-        option: option,
+        optionList,
       }), // Send the request body as JSON
     });
 
@@ -80,7 +80,7 @@ export const getQuestionById = async (id: string) => {
 };
 
 // Update an existing question
-export const updateQuestion = async (id: string, data: { title: string; questionText: string; option: string[] | null }) => {
+export const updateQuestion = async (id: string, data: { title: string; questionText: string; optionList: string[] | null }) => {
   try {
     await loadConfig();
     const apiDomain = getConfig("QUEST3TIER_DOMAIN");
@@ -89,7 +89,7 @@ export const updateQuestion = async (id: string, data: { title: string; question
       body: JSON.stringify({
         title: data.title,
         questionText: data.questionText,
-        option: data.option,
+        optionList: data.optionList,
       }),
     });
 

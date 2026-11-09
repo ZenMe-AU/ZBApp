@@ -107,6 +107,7 @@ To run it from the VS Code Vitest extension instead, add `"vitest.nodeEnv": { "A
 | `AGENT_MODEL` | from `agent.md` (`haiku`) | Model for all agents |
 | `AGENT_EFFORT` | `low` | Effort for agent steps (thinking is off; Claude CLI only) |
 | `JUDGE_MODEL` | `sonnet`, or `AGENT_MODEL` with `LLM_BASE_URL` | Model for the judge |
+| `REFEREE_MODEL` | `JUDGE_MODEL` | Optional model override for Referee Chat |
 | `REVEAL_AUTHORS` | off | Control arm: shows each answer's author to the agents |
 | `CLAUDE_BIN` | `~/.local/bin/claude`, else `claude` | Path to the CLI |
 | `LLM_BASE_URL` | unset | Use an OpenAI-compatible API instead of the Claude CLI (needs `AGENT_MODEL`) |

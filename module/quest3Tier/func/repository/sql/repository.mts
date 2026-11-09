@@ -97,18 +97,14 @@ function toQuestionRecord(question): QuestionRecord {
   };
 }
 
-function normalizeAnswer(answer, questionOwnerProfileId): AnswerRecord {
+function normalizeAnswer(answer): AnswerRecord {
   const record = answer.dataValues ?? answer;
-  const recipientProfileId = record.recipientProfileId ?? questionOwnerProfileId ?? record.profileId;
   return {
     id: record.id,
     questionId: record.questionId,
     profileId: record.profileId,
-    recipientProfileId,
-    pairwiseId: record.pairwiseId ?? createHash("sha256").update(`${recipientProfileId}:${record.profileId}`).digest("hex"),
     answerText: record.answerText ?? null,
-    optionId: record.optionId ?? null,
-    optionAnswerList: record.optionAnswerList ?? (record.optionId == null ? null : [record.optionId]),
+    optionAnswerList: record.optionAnswerList ?? null,
     when: record.when ?? null,
     duration: record.duration,
     createdAt: record.createdAt,
@@ -135,22 +131,15 @@ async function addAnswerByQuestionId(
 ): Promise<AnswerRecord> {
   try {
     const options = option === null ? null : Array.isArray(option) ? option : [option];
-    const question = await models.Question.findByPk(questionId);
-    if (!question) throw new Error(`Question not found for questionId: ${questionId}`);
-    const recipientProfileId = question.profileId;
-    const pairwiseId = createHash("sha256").update(`${recipientProfileId}:${profileId}`).digest("hex");
     const created = await models.QuestionAnswer.create({
       questionId: questionId,
       profileId: profileId, // Use the actual profileId when available
-      recipientProfileId,
-      pairwiseId,
       answerText: answer,
-      optionId: options?.[0] ?? null,
       optionAnswerList: options,
       when,
       duration: duration,
     });
-    return normalizeAnswer(created, recipientProfileId);
+    return normalizeAnswer(created);
   } catch (err) {
     console.log(err);
     throw new Error(`Failed to add answer for questionId: ${questionId}; ${err.message}`, { cause: err });
@@ -167,8 +156,7 @@ async function getAnswerById(questionId: string, answerId: string): Promise<Answ
   try {
     const answer = await models.QuestionAnswer.findOne({ where: { id: answerId, questionId: questionId } });
     if (!answer) return null;
-    const question = await models.Question.findByPk(questionId);
-    return normalizeAnswer(answer, question?.profileId);
+    return normalizeAnswer(answer);
   } catch (err) {
     console.log(err);
     throw new Error(`Failed to retrieve answer for questionId ${questionId} and answerId ${answerId}: ${err.message}`, { cause: err });
@@ -189,42 +177,35 @@ async function getAnswerListByQuestionId(questionId: string): Promise<AnswerReco
     //     [Sequelize.fn("MAX", Sequelize.col("createdAt")), "latestCreatedAt"],
     //     [Sequelize.fn("COUNT", Sequelize.col("id")), "answerCount"],
     //     [Sequelize.literal(`FIRST_VALUE("answerText") OVER (PARTITION BY "profileId" ORDER BY "createdAt" DESC)`), "answerText"],
-    //     [Sequelize.literal(`FIRST_VALUE("optionId") OVER (PARTITION BY "profileId" ORDER BY "createdAt" DESC)`), "optionId"],
     //    ],
     //   where: { questionId },
     //   group: ["profileId"],
     //   order: [[Sequelize.fn("MAX", Sequelize.col("createdAt")), "DESC"]],
     //   raw: true,
     // });
-    const question = await models.Question.findByPk(questionId);
     const answers = await models.QuestionAnswer.sequelize.query(
       `
-          SELECT DISTINCT ON ("profileId", COALESCE("recipientProfileId", :questionOwnerProfileId))
+          SELECT DISTINCT ON ("profileId")
             "id",
             "profileId",
             "createdAt",
-            COUNT("id") OVER (
-              PARTITION BY "profileId", COALESCE("recipientProfileId", :questionOwnerProfileId)
-            ) AS "answerCount",
+            COUNT("id") OVER (PARTITION BY "profileId") AS "answerCount",
             "questionId",
-            "recipientProfileId",
-            "pairwiseId",
             "answerText",
-            "optionId",
             "optionAnswerList",
             "when",
             "duration"
           FROM "questionAnswer"
           WHERE "questionId" = :questionId
-          ORDER BY "profileId", COALESCE("recipientProfileId", :questionOwnerProfileId), "createdAt" DESC;
+          ORDER BY "profileId", "createdAt" DESC;
         `,
       {
-        replacements: { questionId, questionOwnerProfileId: question?.profileId ?? "" },
+        replacements: { questionId },
         type: models.QuestionAnswer.sequelize.QueryTypes.SELECT,
       }
     );
     return answers.map((answer) => ({
-      ...normalizeAnswer(answer, question?.profileId),
+      ...normalizeAnswer(answer),
       answerCount: Number(answer.answerCount),
     }));
   } catch (err) {
@@ -513,7 +494,7 @@ async function getCombinationListByUser(profileId: string): Promise<QuestionList
         });
         return {
           ...toQuestionRecord(question),
-          latestAnswer: answer ? normalizeAnswer(answer, question.profileId) : null,
+          latestAnswer: answer ? normalizeAnswer(answer) : null,
         };
       })
     );

@@ -105,6 +105,32 @@ The post-run results assistant alone uses a disposable inference subprocess;
 it is not an agent session. Its model is released before another run can start,
 and native inference failures are reported without terminating the HTTP viewer.
 
+### Design decision: Activity master data
+
+Activity is a read-only, point-in-time SIEM log rather than the Quest source of
+truth. It uses BASE handling: a Quest action is not rolled back when Activity
+storage fails; the event is spooled and retried as a compensating write.
+
+The canonical top-level Aggregate roots are deliberately small:
+
+| Aggregate | Events |
+| --- | --- |
+| `question` | Question creation, update, sharing, follow-up and answers |
+| `agent` | Agent thought, finding, memory, dashboard chat and unscoped API activity |
+| `run` | Run lifecycle and system activity |
+
+An Answer belongs to the Question aggregate; `answerId` remains linkage, not a
+separate Aggregate. Agent memory similarly belongs to the Agent aggregate.
+`eventType` says what happened, `source` says where it originated, `actorType`
+says who acted, and `eventData` contains only event-specific payload. `kind` is
+retained only for historical UI compatibility and is not a competing domain
+classification.
+
+Existing LanceDB rows are not rewritten. Repository reads normalise historical
+`answer`, `memory` and missing Aggregate values using their question, actor and
+run linkage. Legacy text logs receive the same presentation mapping in the
+viewer. New records are normalised before persistence.
+
 ## Build and start
 
 From the repository root:

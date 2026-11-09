@@ -100,7 +100,7 @@ function QuestionDetailAdd({ loaderData }: { loaderData: { question: Question } 
   // Update options list
   const handleOptionsEdit = (options: string[]) => {
     if (editedData) {
-      setEditedData((prev) => ({ ...prev, option: options } as Question));
+      setEditedData((prev) => ({ ...prev, optionList: options } as Question));
       setIsEditing(true);
     }
   };
@@ -114,7 +114,7 @@ function QuestionDetailAdd({ loaderData }: { loaderData: { question: Question } 
       if (patches.length > 0) {
         try {
           setIsEditing(false);
-          await createQuestion(editedData.title, editedData.questionText, editedData.option || []);
+          await createQuestion(editedData.title, editedData.questionText, editedData.optionList || []);
           console.log("ADD!!!!");
         } catch (error) {
           setIsEditing(true);
@@ -173,34 +173,34 @@ function QuestionDetailAdd({ loaderData }: { loaderData: { question: Question } 
       mb={3}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
-          handleBlur("option");
+          handleBlur("optionList");
         }
       }}
     >
       <Typography variant="h6" gutterBottom>
         Options
-        {!editingFields.option && (
-          <IconButton onClick={() => toggleFieldEdit("option")} size="small" sx={{ ml: 1 }}>
+        {!editingFields.optionList && (
+          <IconButton onClick={() => toggleFieldEdit("optionList")} size="small" sx={{ ml: 1 }}>
             <EditIcon fontSize="small" />
           </IconButton>
         )}
       </Typography>
       <List>
-        {editingFields.option ? (
-          editedData?.option?.map((option, index) => (
+        {editingFields.optionList ? (
+          editedData?.optionList?.map((option, index) => (
             <ListItem key={index}>
               <TextField
                 fullWidth
                 value={option}
                 onChange={(e) => {
-                  const updatedOptions = [...(editedData.option || [])];
+                  const updatedOptions = [...(editedData.optionList || [])];
                   updatedOptions[index] = e.target.value;
                   handleOptionsEdit(updatedOptions);
                 }}
               />
               <Button
                 onClick={() => {
-                  const updatedOptions = [...(editedData.option || [])];
+                  const updatedOptions = [...(editedData.optionList || [])];
                   updatedOptions.splice(index, 1);
                   handleOptionsEdit(updatedOptions);
                 }}
@@ -210,8 +210,8 @@ function QuestionDetailAdd({ loaderData }: { loaderData: { question: Question } 
             </ListItem>
           ))
         ) : (
-          <Box onClick={() => toggleFieldEdit("option")}>
-            {editedData?.option?.map((option, index) => (
+          <Box onClick={() => toggleFieldEdit("optionList")}>
+            {editedData?.optionList?.map((option, index) => (
               <ListItem key={index}>
                 <ReadOnlyText>{option}</ReadOnlyText>
               </ListItem>
@@ -219,12 +219,12 @@ function QuestionDetailAdd({ loaderData }: { loaderData: { question: Question } 
           </Box>
         )}
       </List>
-      {editingFields.option && (
+      {editingFields.optionList && (
         <Button
           variant="outlined"
           startIcon={<AddIcon />}
           onClick={() => {
-            const updatedOptions = [...(editedData?.option || []), ""];
+            const updatedOptions = [...(editedData?.optionList || []), ""];
             handleOptionsEdit(updatedOptions);
           }}
         >

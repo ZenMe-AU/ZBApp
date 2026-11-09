@@ -13,8 +13,13 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { initRepository } from "quest3Tier/dist/repository/table/repository.mjs";
+import { NAMES } from "../agentChat.config.mjs";
+import { createRefereeContextBuilder } from "../agentChat.referee-context.mjs";
 import { sendLiveChat } from "../agentChat.live.mjs";
+import { createActivityRepository } from "../activity/activity-repository.mjs";
+import * as authDev from "../service/authDev.mjs";
 import { answerResults } from "./results-chat.mjs";
+import { answerRefereeChat } from "./referee-chat.mjs";
 
 const VIEWER_DIR = path.dirname(fileURLToPath(import.meta.url));
 const viewerParent = path.resolve(VIEWER_DIR, "..");
@@ -24,6 +29,7 @@ const RUNS_DIR = path.join(DASHBOARD_DIR, "runs");
 const REPO_DIR = path.resolve(DASHBOARD_DIR, "../..");
 const RUN_SCRIPT = path.join(DASHBOARD_DIR, "dist/agentChat.run.mjs");
 const AZURITE_BIN = path.join(REPO_DIR, "node_modules/azurite/dist/src/azurite.js");
+const AG_GRID_JS = path.resolve(path.dirname(fileURLToPath(import.meta.resolve("ag-grid-community"))), "../ag-grid-community.min.js");
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.AGENT_VIEW_PORT ?? 4178);
 const CHILD_ENV = { ...process.env };
@@ -53,7 +59,9 @@ const tableRepositoryState: { value?: Promise<{ listFriends(profileId: string): 
 const pendingHuman: { profileId?: string; name?: string } = {};
 const registeredHuman: { profileId?: string; name?: string } = {};
 const HUMAN_STATE_PATH = path.join(RUNS_DIR, ".human.json");
+const activityRepository = createActivityRepository(process.env.ACTIVITY_DB_PATH ?? path.join(DASHBOARD_DIR, "activity.lancedb"));
 let resultsChatPending = false;
+let refereeChatPending = false;
 
 async function loadRegisteredHuman() {
   const saved = JSON.parse(await readFile(HUMAN_STATE_PATH, "utf8").catch(() => "{}"));
@@ -83,6 +91,73 @@ async function getAgentOids(): Promise<Record<string, string>> {
   })));
 }
 
+async function getAgentIdentity(name: string) {
+  if (!AGENT_NAMES.has(name)) throw new Error("Unknown agent");
+  const text = await readFile(path.join(DASHBOARD_DIR, name, `${name}.agent.md`), "utf8");
+  const frontmatter = text.replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---(?:\n|$)/)?.[1];
+  const oid = frontmatter?.match(/^oid:\s*(\S+)\s*$/m)?.[1];
+  const email = frontmatter?.match(/^email:\s*(\S+)\s*$/m)?.[1];
+  if (!oid || !email) throw new Error(`Missing identity for ${name}`);
+  return { oid, email };
+}
+
+async function getQuestionsForAgent(name: string, request = fetch) {
+  const { oid, email } = await getAgentIdentity(name);
+  const settings = await localSettings();
+  const questionUrl = settings.QUESTION_URL ?? process.env.QUESTION_URL ?? "http://127.0.0.1:7073";
+  const token = authDev.generateToken({ oid, name, preferred_username: email });
+  const response = await request(new URL("/questionQry/getQuestions", questionUrl), {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const text = await response.text();
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    body = text;
+  }
+  if (!response.ok) throw new Error(`Question API returned ${response.status}`);
+  const list = (body as { return?: { list?: unknown[] } })?.return?.list;
+  if (!Array.isArray(list)) throw new Error("Question API returned an invalid list");
+  return list;
+}
+
+async function getAnswersForAgent(name: string, questionId: string, request = fetch) {
+  if (!AGENT_NAMES.has(name)) throw new Error("Unknown agent");
+  const questions = await getQuestionsForAgent(name, request);
+  if (!questions.some((question) => question && typeof question === "object" && "id" in question && question.id === questionId)) return undefined;
+  const { oid, email } = await getAgentIdentity(name);
+  const settings = await localSettings();
+  const questionUrl = settings.QUESTION_URL ?? process.env.QUESTION_URL ?? "http://127.0.0.1:7073";
+  const token = authDev.generateToken({ oid, name, preferred_username: email });
+  const response = await request(new URL(`/questionQry/getAnswers/${encodeURIComponent(questionId)}`, questionUrl), {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const body = await response.json();
+  if (!response.ok) throw new Error(`Answer API returned ${response.status}`);
+  const list = body?.return?.list;
+  if (!Array.isArray(list)) throw new Error("Answer API returned an invalid list");
+  if (list.some((answer) => !answer || typeof answer !== "object" || answer.questionId !== questionId)) {
+    throw new Error("Answer API returned data for a different question");
+  }
+  const namesByProfileId = Object.fromEntries(Object.entries(await getAgentOids()).map(([agent, profileId]) => [profileId, agent]));
+  if (registeredHuman.profileId) namesByProfileId[registeredHuman.profileId] = registeredHuman.name ?? "Participant";
+  return list.map((answer) => ({
+    ...answer,
+    answeredBy: typeof answer.profileId === "string" ? namesByProfileId[answer.profileId] ?? "Unknown participant" : "Unknown participant",
+    profileId: undefined,
+  }));
+}
+
+async function readRefereeApi(actor: string, apiPath: string) {
+  if (apiPath === "/questions") return getQuestionsForAgent(actor);
+  const answers = apiPath.match(/^\/question\/([A-Za-z0-9-]+)\/answers$/);
+  if (answers) return getAnswersForAgent(actor, answers[1]);
+  throw new Error(`Referee API path is not implemented: ${apiPath}`);
+}
+
+const buildRefereeContext = createRefereeContextBuilder({ dashboardDir: DASHBOARD_DIR, repositoryDir: REPO_DIR, activity: activityRepository, readApi: readRefereeApi });
+
 const spawnPnpm = (args: string[], cwd: string, env = CHILD_ENV) =>
   spawn(process.platform === "win32" ? (process.env.ComSpec ?? "cmd.exe") : "pnpm", process.platform === "win32" ? ["/d", "/s", "/c", "pnpm", ...args] : args, {
     cwd,
@@ -99,7 +174,12 @@ async function listRuns() {
       .filter((entry) => entry.isFile() && isRunName(entry.name))
       .map(async (entry) => ({ name: entry.name, mtime: (await stat(path.join(RUNS_DIR, entry.name))).mtimeMs }))
   );
-  return runs.sort((a, b) => b.mtime - a.mtime);
+  const combined = new Map(runs.map((run) => [run.name, run]));
+  for (const run of await activityRepository.listRuns()) {
+    const current = combined.get(run.name);
+    if (!current || run.mtime > current.mtime) combined.set(run.name, run);
+  }
+  return [...combined.values()].sort((a, b) => b.mtime - a.mtime);
 }
 
 async function getTableRepository() {
@@ -129,7 +209,7 @@ async function getRunNetwork(run: string) {
 function send(response, status, contentType, body) {
   response.writeHead(status, {
     "Cache-Control": "no-store",
-    "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; img-src 'self' data:",
+    "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self' data:; img-src 'self' data:",
     "Content-Type": contentType,
     "Referrer-Policy": "no-referrer",
     "X-Content-Type-Options": "nosniff",
@@ -139,7 +219,7 @@ function send(response, status, contentType, body) {
 
 const sendJson = (response, status, body) => send(response, status, "application/json; charset=utf-8", JSON.stringify(body));
 const isSameOrigin = (request) => request.headers.origin === `http://${HOST}:${PORT}`;
-const isQ3Origin = (request) => ["http://localhost:5183", "http://127.0.0.1:5183"].includes(request.headers.origin ?? "");
+const isQuestUiOrigin = (request) => ["http://localhost:5186", "http://127.0.0.1:5186"].includes(request.headers.origin ?? "");
 const sendJoinJson = (response, status, body, origin) => {
   response.writeHead(status, {
     "Access-Control-Allow-Headers": "Content-Type",
@@ -158,6 +238,21 @@ const CHAT_SCHEMA = {
 };
 const AGENT_NAMES = new Set(["Mike", "Bella", "Ian", "Eric"]);
 
+const chatModel = (env: NodeJS.ProcessEnv, fallback = "") => {
+  const provider = (env.LLM_PROVIDER ?? env.LLM ?? "").toLowerCase();
+  const providerModel =
+    provider === "claude"
+      ? env.CLAUDE_MODEL
+      : provider === "openai"
+        ? env.OPENAI_MODEL
+        : provider === "ollama"
+          ? env.OLLAMA_MODEL
+          : provider === "openvino"
+            ? env.OPENVINO_MODEL_DIR ?? env.LLM_MODEL
+            : env.LLM_MODEL;
+  return env.CHAT_MODEL ?? (fallback || providerModel || "");
+};
+
 async function readJson(request) {
   const chunks: Buffer[] = [];
   for await (const chunk of request) chunks.push(chunk);
@@ -166,16 +261,43 @@ async function readJson(request) {
 
 async function answerAboutRun(run: string, message: string, history: unknown[], agent = "") {
   if (agent) {
-    if (!state.runProcess || state.run.status !== "running")
-      throw new Error("Live agent chat requires an active run. Finished or offline agents cannot receive messages.");
-    try {
-      return await sendLiveChat(path.join(RUNS_DIR, run), agent, message);
-    } catch (error) {
-      if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-        throw new Error("This run has no active agent chat endpoint. It may still be starting or its agents have finished.");
+    if (state.runProcess && state.run.status === "running") {
+      try {
+        return await sendLiveChat(path.join(RUNS_DIR, run), agent, message);
+      } catch (error) {
+        if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
       }
-      throw error;
     }
+    const agentFile = await readFile(path.join(DASHBOARD_DIR, agent, `${agent}.agent.md`), "utf8");
+    const match = agentFile.replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    if (!match) throw new Error(`Invalid agent profile for ${agent}`);
+    const model = match[1].match(/^model:\s*(\S+)\s*$/m)?.[1] ?? "";
+    const memory = await readFile(path.join(DASHBOARD_DIR, agent, "memory.md"), "utf8").catch(() => "");
+    const report = await readFile(path.join(RUNS_DIR, run.replace(/\.chat\.md$/, ".md")), "utf8").catch(() => "");
+    const legacyChat = await readFile(path.join(RUNS_DIR, run), "utf8").catch(() => "");
+    const structuredEvents = legacyChat ? [] : await activityRepository.listByRun(run);
+    const chat = legacyChat || structuredEvents.map((event) =>
+      `[${event.occurredAt}] ${event.actorName ?? "System"} ${event.eventType} ${JSON.stringify(event.eventData)}`
+    ).join("\n");
+    const env = { ...CHILD_ENV, ...(await localSettings()) };
+    return answerResults(
+      {
+        systemPrompt: `You are ${agent}. Stay in character using the supplied persona, saved relationship memory and completed Q3 run. Continue the conversation naturally. Do not call tools, claim to perform Q3 actions, or reveal private persona facts that your disclosure rules prohibit.`,
+        input: {
+          message,
+          history: history.slice(-12),
+          persona: match[2].slice(0, 12000),
+          memory: memory.slice(-12000),
+          report: report.slice(-20000),
+          runChat: chat.slice(-12000),
+        },
+        model: chatModel(env, model),
+        schema: CHAT_SCHEMA,
+        sandbox: RUNS_DIR,
+        options: { effort: "low", thinking: false, maxTokens: 512 },
+      },
+      env
+    );
   }
   if (state.runProcess || ["starting", "waiting-for-human"].includes(state.run.status)) {
     throw new Error("The results assistant is available after the run ends. Select an active agent to chat during the run.");
@@ -191,7 +313,7 @@ async function answerAboutRun(run: string, message: string, history: unknown[], 
         systemPrompt:
           "You are the Q3 Agent Lab results assistant. Answer only from the supplied run report and chat log. Explain evidence and uncertainty plainly. Do not invent events, scores or people. Keep the answer concise.",
         input: { question: message, history: history.slice(-8), report: report.slice(-30000), chat: chat.slice(-20000) },
-        model: env.CHAT_MODEL ?? env.AGENT_MODEL ?? env.LLM_MODEL ?? "",
+        model: chatModel(env),
         schema: CHAT_SCHEMA,
         sandbox: RUNS_DIR,
         options: { effort: "low", thinking: false, maxTokens: 512 },
@@ -277,6 +399,28 @@ async function waitForPendingHuman(timeoutMs = 2000) {
 
 async function handle(request, response) {
   const url = new URL(request.url, `http://${HOST}:${PORT}`);
+  if (request.method === "POST" && url.pathname === "/api/referee-chat") {
+    if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Same-origin request required" });
+    if (refereeChatPending) return sendJson(response, 409, { error: "Referee is already answering a message" });
+    try {
+      const body = await readJson(request);
+      const runs = await listRuns();
+      const run = typeof body.run === "string" ? body.run : "";
+      const message = typeof body.message === "string" ? body.message.trim() : "";
+      if (!isRunName(run) || !runs.some((item) => item.name === run)) return sendJson(response, 404, { error: "Run not found" });
+      if (!message || message.length > 1000) return sendJson(response, 400, { error: "Message must be 1-1000 characters" });
+      refereeChatPending = true;
+      const context = await buildRefereeContext({ runId: run, question: message, apiRequests: NAMES.map((actor) => ({ actor, path: "/questions" })) });
+      const env = { ...CHILD_ENV, ...(await localSettings()) };
+      const result = await answerRefereeChat({ message, history: body.history, context, model: chatModel(env, env.REFEREE_MODEL ?? env.JUDGE_MODEL), env });
+      return sendJson(response, 200, result);
+    } catch (error) {
+      console.error("Referee chat failed:", error);
+      return sendJson(response, 503, { error: error instanceof Error ? error.message : String(error) });
+    } finally {
+      refereeChatPending = false;
+    }
+  }
   if (request.method === "POST" && url.pathname === "/api/chat") {
     if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Same-origin request required" });
     try {
@@ -293,6 +437,26 @@ async function handle(request, response) {
     } catch (error) {
       console.error("Run chat failed:", error);
       return sendJson(response, 503, { error: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  if (request.method === "POST" && url.pathname === "/api/answers") {
+    if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Same-origin request required" });
+    try {
+      const body = await readJson(request);
+      const person = typeof body.person === "string" ? body.person : "";
+      const questionId = typeof body.questionId === "string" ? body.questionId.trim() : "";
+      if (!AGENT_NAMES.has(person)) return sendJson(response, 400, { error: "Select a known agent" });
+      if (!questionId) return sendJson(response, 400, { error: "Question ID is required" });
+      const answers = await getAnswersForAgent(person, questionId);
+      if (!answers) return sendJson(response, 403, { error: "Question is not accessible to this person" });
+      const activity = await activityRepository.listByQuestion(questionId);
+      const runStarts = (await Promise.all([...new Set(activity.map((event) => event.runId))].map((runId) => activityRepository.listByRun(runId))))
+        .flat()
+        .filter((event) => event.eventType === "run.started");
+      return sendJson(response, 200, { answers, activity: [...runStarts, ...activity] });
+    } catch (error) {
+      console.error("Could not load answers:", error);
+      return sendJson(response, 502, { error: error instanceof Error ? error.message : String(error) });
     }
   }
   if (request.method === "POST" && url.pathname === "/api/run") {
@@ -318,11 +482,11 @@ async function handle(request, response) {
     }
   }
   if (url.pathname === "/api/join" && request.method === "OPTIONS") {
-    if (!isQ3Origin(request)) return sendJson(response, 403, { error: "Q3 UI origin required" });
+    if (!isQuestUiOrigin(request)) return sendJson(response, 403, { error: "Q5EG UI origin required" });
     return sendJoinJson(response, 204, {}, request.headers.origin);
   }
   if (url.pathname === "/api/join" && request.method === "POST") {
-    if (!isQ3Origin(request)) return sendJson(response, 403, { error: "Q3 UI origin required" });
+    if (!isQuestUiOrigin(request)) return sendJson(response, 403, { error: "Q5EG UI origin required" });
     if (["idle", "passed", "failed"].includes(state.run.status)) {
       try {
         const body = await readJson(request);
@@ -357,11 +521,11 @@ async function handle(request, response) {
     }
   }
   if (url.pathname === "/api/human-event" && request.method === "OPTIONS") {
-    if (!isQ3Origin(request)) return sendJson(response, 403, { error: "Q3 UI origin required" });
+    if (!isQuestUiOrigin(request)) return sendJson(response, 403, { error: "Q5EG UI origin required" });
     return sendJoinJson(response, 204, {}, request.headers.origin);
   }
   if (url.pathname === "/api/human-event" && request.method === "POST") {
-    if (!isQ3Origin(request)) return sendJson(response, 403, { error: "Q3 UI origin required" });
+    if (!isQuestUiOrigin(request)) return sendJson(response, 403, { error: "Q5EG UI origin required" });
     if (state.run.status !== "running") return sendJoinJson(response, 409, { error: "No active human test" }, request.headers.origin);
     try {
       const body = await readJson(request);
@@ -383,20 +547,51 @@ async function handle(request, response) {
       return sendJoinJson(response, 400, { error: error instanceof Error ? error.message : String(error) }, request.headers.origin);
     }
   }
-  if (url.pathname === "/api/run" && request.method === "GET" && isQ3Origin(request)) {
+  if (url.pathname === "/api/run" && request.method === "GET" && isQuestUiOrigin(request)) {
     return sendJoinJson(response, 200, state.run, request.headers.origin);
   }
   if (request.method !== "GET") return sendJson(response, 405, { error: "Method not allowed" });
 
   if (url.pathname === "/favicon.ico") return send(response, 204, "image/x-icon", "");
+  if (url.pathname === "/vendor/ag-grid.js") return send(response, 200, "text/javascript; charset=utf-8", await readFile(AG_GRID_JS));
   if (url.pathname === "/api/run") return sendJson(response, 200, state.run);
+  if (url.pathname === "/api/questions") {
+    const person = url.searchParams.get("person") ?? "";
+    if (!AGENT_NAMES.has(person)) return sendJson(response, 400, { error: "Select a known agent" });
+    try {
+      return sendJson(response, 200, { questions: await getQuestionsForAgent(person) });
+    } catch (error) {
+      console.error(`Could not load questions for ${person}:`, error);
+      return sendJson(response, 502, { error: error instanceof Error ? error.message : String(error) });
+    }
+  }
   if (url.pathname === "/api/runs") return sendJson(response, 200, { runs: await listRuns() });
   if (url.pathname === "/api/agents") return sendJson(response, 200, { oids: await getAgentOids() });
+  if (url.pathname === "/api/activity") {
+    const runs = await listRuns();
+    const requestedRun = url.searchParams.get("run");
+    if (!requestedRun && url.searchParams.get("scope") === "all") {
+      const activityRuns = await Promise.all(
+        runs.map(async (run) => {
+          const events = await activityRepository.listByRun(run.name);
+          const legacyText = events.length ? "" : await readFile(path.join(RUNS_DIR, run.name), "utf8").catch(() => "");
+          return { runId: run.name, events, legacyText };
+        })
+      );
+      return sendJson(response, 200, { runs: activityRuns, mtime: Math.max(0, ...runs.map((run) => run.mtime)) });
+    }
+    const requested = requestedRun ?? runs[0]?.name;
+    if (!isRunName(requested) || !runs.some((run) => run.name === requested)) return sendJson(response, 404, { error: "Run not found" });
+    const events = await activityRepository.listByRun(requested);
+    if (events.length) return sendJson(response, 200, { run: requested, events, mtime: runs.find((run) => run.name === requested)?.mtime ?? 0 });
+    const legacyText = await readFile(path.join(RUNS_DIR, requested), "utf8").catch(() => "");
+    return sendJson(response, 200, { run: requested, events: [], legacyText, mtime: runs.find((run) => run.name === requested)?.mtime ?? 0 });
+  }
   if (url.pathname === "/api/log") {
     const runs = await listRuns();
     const requested = url.searchParams.get("run") ?? runs[0]?.name;
     if (!isRunName(requested) || !runs.some((run) => run.name === requested)) return sendJson(response, 404, { error: "Run not found" });
-    const text = await readFile(path.join(RUNS_DIR, requested), "utf8");
+    const text = await readFile(path.join(RUNS_DIR, requested), "utf8").catch(() => "");
     return sendJson(response, 200, { run: requested, text, mtime: runs.find((run) => run.name === requested).mtime });
   }
   if (url.pathname === "/api/report") {
@@ -426,14 +621,50 @@ async function selfCheck() {
       else reject(new Error(`pnpm launcher exited with code ${code}`));
     });
   });
-  const { classifyFinding, parseLine, parseLog, parseReport, questionTopic } = await import("./viewer-data.mjs");
+  const { classifyFinding, parseLine, parseLog, parseReport, presentLegacyActivityEvents, questionTopic, redactSecrets } = await import("./viewer-data.mjs");
+  assert.deepEqual(redactSecrets({ title: "Pets", apiKey: "abc", nested: [{ token: "x" }], reason: "Bearer abc.def failed" }), {
+    title: "Pets",
+    apiKey: "[redacted]",
+    nested: [{ token: "[redacted]" }],
+    reason: "[redacted] failed",
+  });
   const { profileKind } = await import("./viewer-profiles.mjs");
   const { groupQuestions } = await import("./viewer-questions.mjs");
   assert.equal(isRunName("../secret.chat.md"), false);
   assert.equal(isSameOrigin({ headers: { origin: `http://${HOST}:${PORT}` } }), true);
   assert.equal(isSameOrigin({ headers: { origin: "https://example.com" } }), false);
-  assert.equal(isQ3Origin({ headers: { origin: "http://localhost:5183" } }), true);
-  assert.equal(isQ3Origin({ headers: { origin: "https://example.com" } }), false);
+  assert.equal(isQuestUiOrigin({ headers: { origin: "http://localhost:5186" } }), true);
+  assert.equal(isQuestUiOrigin({ headers: { origin: "https://example.com" } }), false);
+  const agentOids = await getAgentOids();
+  const requestedUrls: string[] = [];
+  const allowedRequest = (async (url, options) => {
+    requestedUrls.push(String(url));
+    assert.match(options.headers.authorization, /^Bearer /);
+    if (String(url).includes("/getQuestions")) {
+      return { ok: true, text: async () => JSON.stringify({ return: { list: [{ id: "q-1" }] } }) };
+    }
+    return {
+      ok: true,
+      json: async () => ({ return: { list: [{ id: "a-1", questionId: "q-1", profileId: agentOids.Mike, answerText: "Yes" }] } }),
+    };
+  }) as typeof fetch;
+  const allowedAnswers = await getAnswersForAgent("Mike", "q-1", allowedRequest);
+  assert.deepEqual(requestedUrls.map((url) => new URL(url).pathname), ["/questionQry/getQuestions", "/questionQry/getAnswers/q-1"]);
+  assert.equal(allowedAnswers?.[0].answeredBy, "Mike");
+  assert.equal(allowedAnswers?.[0].profileId, undefined);
+  let answerApiCalled = false;
+  const inaccessibleRequest = (async (url) => {
+    if (!String(url).includes("/getQuestions")) answerApiCalled = true;
+    return { ok: true, text: async () => JSON.stringify({ return: { list: [] } }) };
+  }) as typeof fetch;
+  assert.equal(await getAnswersForAgent("Mike", "not-visible", inaccessibleRequest), undefined);
+  assert.equal(answerApiCalled, false);
+  const mismatchedRequest = (async (url) => String(url).includes("/getQuestions")
+    ? { ok: true, text: async () => JSON.stringify({ return: { list: [{ id: "q-1" }] } }) }
+    : { ok: true, json: async () => ({ return: { list: [{ id: "a-2", questionId: "q-2" }] } }) }) as typeof fetch;
+  await assert.rejects(() => getAnswersForAgent("Mike", "q-1", mismatchedRequest), /different question/);
+  assert.equal(chatModel({ LLM_PROVIDER: "claude", CLAUDE_MODEL: "claude-haiku", LLM_MODEL: "local-path" }), "claude-haiku");
+  assert.equal(chatModel({ LLM_PROVIDER: "openai", OPENAI_MODEL: "gpt-test" }), "gpt-test");
   assert.deepEqual(parseLine('[03:44:11] Mike answered "A useful question": A useful answer'), {
     time: "03:44:11",
     agent: "Mike",
@@ -453,6 +684,13 @@ async function selfCheck() {
   );
   assert.equal(parseLine('[03:44:13] Ian edited "A useful question"').kind, "edit");
   assert.equal(parseLog('[03:44:10] Run starts. Online: Mike, Josh.\n\n[03:44:13] Josh answered "A useful question": Yes')[1].agent, "Josh");
+  assert.deepEqual(
+    presentLegacyActivityEvents('[03:44:13] Mike answered [q:q-1] "A useful question": Yes', "run-1", { Mike: "agent-1" })[0],
+    {
+      time: "03:44:13", agent: "Mike", kind: "answer", text: 'answered "A useful question": Yes', questionId: "q-1",
+      id: "run-1:legacy:0", runId: "run-1", aggregateType: "question", aggregateId: "q-1", legacy: true,
+    }
+  );
   assert.equal(profileKind("Josh"), "Human");
   assert.equal(classifyFinding("permission allowed unauthorized access"), "Security");
   assert.equal(classifyFinding("answer profile was misattributed"), "Data");

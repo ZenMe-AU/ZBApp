@@ -258,25 +258,14 @@ function testRepositoryContract(
       id: answer.id,
       questionId: question.id,
       profileId: responder.id,
-      recipientProfileId: owner.id,
-      pairwiseId: expect.stringMatching(/^[0-9a-f]{64}$/),
       answerText: "yes",
-      optionId: "yes",
       optionAnswerList: ["yes"],
       when: "during-work",
       duration: 15,
     });
     await expect(repository.getAnswerListByQuestionId(question.id)).resolves.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          profileId: responder.id,
-          recipientProfileId: owner.id,
-          pairwiseId: expect.stringMatching(/^[0-9a-f]{64}$/),
-          answerCount: 1,
-          optionId: "yes",
-          optionAnswerList: ["yes"],
-          when: "during-work",
-        }),
+        expect.objectContaining({ profileId: responder.id, answerCount: 1, optionAnswerList: ["yes"], when: "during-work" }),
       ])
     );
 
@@ -285,19 +274,13 @@ function testRepositoryContract(
       expect.arrayContaining([
         expect.objectContaining({
           id: question.id,
-          latestAnswer: expect.objectContaining({
-            profileId: responder.id,
-            recipientProfileId: owner.id,
-            pairwiseId: expect.stringMatching(/^[0-9a-f]{64}$/),
-            optionId: "no",
-          }),
+          latestAnswer: expect.objectContaining({ profileId: responder.id, optionAnswerList: ["no"] }),
         }),
       ])
     );
 
     const multiAnswer = await repository.addAnswerByQuestionId(question.id, responder.id, 10, null, ["yes", "custom option"]);
     await expect(repository.getAnswerById(question.id, multiAnswer.id)).resolves.toMatchObject({
-      optionId: "yes",
       optionAnswerList: ["yes", "custom option"],
     });
     await expect(repository.getAnswerListByQuestionId(question.id)).resolves.toEqual(

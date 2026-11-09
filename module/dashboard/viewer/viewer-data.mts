@@ -27,6 +27,7 @@ export const VIEWS = {
   followups: { title: "Follow-ups", kinds: ["followup"] },
   findings: { title: "Findings", kinds: ["finding", "error"] },
   activity: { title: "Activity", kinds: null, reverse: true },
+  "referee-chat": { title: "Referee Chat", kinds: [] },
 };
 
 export function questionTopic(question) {
@@ -81,6 +82,57 @@ export const parseLog = (text) => {
     .map((event) => parseLine(event.trimEnd(), people))
     .filter(Boolean);
 };
+
+export const presentLegacyActivityEvents = (text, runId, agentOids = {}) =>
+  parseLog(text).map((event, index) => {
+    const aggregateType = event.questionId ? "question" : event.agent ? "agent" : "run";
+    const aggregateId = event.questionId ?? (event.agent ? agentOids[event.agent] ?? event.agent : runId);
+    return { ...event, id: `${runId}:legacy:${index}`, runId, aggregateType, aggregateId, legacy: true };
+  });
+
+const SECRET_KEY = /password|secret|token|authori[sz]ation|api[-_]?key|cookie|credential/i;
+const SECRET_VALUE = /\b(?:Bearer\s+\S+|eyJ[\w-]+\.[\w-]+\.[\w-]+|sk-[\w-]{12,})/g;
+
+// ponytail: masks eventData in the viewer only; move into /api/activity if the viewer is ever served beyond localhost.
+export const redactSecrets = (value, key = "") =>
+  SECRET_KEY.test(key)
+    ? "[redacted]"
+    : typeof value === "string"
+      ? value.replace(SECRET_VALUE, "[redacted]")
+      : Array.isArray(value)
+        ? value.map((item) => redactSecrets(item))
+        : value && typeof value === "object"
+          ? Object.fromEntries(Object.entries(value).map(([name, item]) => [name, redactSecrets(item, name)]))
+          : value;
+
+export function presentActivityEvents(events) {
+  const textFor = (event) => {
+    const data = event.eventData ?? {};
+    if (event.eventType === "run.started") return `Run starts. Online: ${(data.participants ?? []).join(", ")}.`;
+    if (event.eventType === "question.created") return `asked \"${data.title ?? "Untitled"}\": ${data.questionText ?? ""}`;
+    if (event.eventType === "question.shared") return `shared \"${data.title ?? "Question"}\" with ${(data.recipients ?? []).join(", ")}`;
+    if (event.eventType === "answer.sent") return `answered \"${data.questionTitle ?? "Question"}\": ${data.answer ?? ""}`;
+    if (event.eventType === "question.updated") return `edited \"${data.title ?? "Question"}\"`;
+    if (event.eventType === "agent.thought" || event.eventType === "agent.finding") return String(data.text ?? "");
+    if (event.eventType === "agent.memory_updated") return `updated memory with verified facts: ${(data.subjects ?? []).join(", ")}`;
+    if (event.eventType === "api.failed") return `${event.httpMethod ?? "API"} ${event.apiPath ?? "request"} failed (${event.httpStatus ?? data.reason ?? "unknown"})`;
+    if (event.eventType === "run.completed") return `Report saved: ${data.report ?? "complete"}`;
+    return String(data.text ?? event.eventType);
+  };
+  return events.map((raw) => ({ ...raw, eventData: redactSecrets(raw.eventData ?? {}) })).map((event) => ({
+    ...event,
+    id: event.id,
+    eventType: event.eventType,
+    time: new Date(event.occurredAt).toLocaleTimeString("en-AU", { hour12: false }),
+    agent: event.actorName,
+    kind: event.kind,
+    text: textFor(event),
+    questionId: event.questionId ?? undefined,
+    correlationId: event.correlationId,
+    eventDataText: JSON.stringify(event.eventData ?? {}),
+    participants: event.eventType === "run.started" ? event.eventData?.participants ?? [] : undefined,
+  }));
+}
 
 export function classifyFinding(text) {
   if (/security|privacy|permission|unauthori[sz]ed|access|expos|leak|boundary/i.test(text)) return "Security";

@@ -68,7 +68,7 @@ export default function AnswerQuestion2({ loaderData }: { loaderData: any }) {
   const navigate = useNavigate();
   const navigation = useNavigation();
   const { question, answers, profileId } = loaderData;
-  const isOption = question.option?.length > 0;
+  const isOption = question.optionList?.length > 0;
 
   const handleBackClick = () => {
     const correlationId = setOperationId();
@@ -79,9 +79,7 @@ export default function AnswerQuestion2({ loaderData }: { loaderData: any }) {
   const pieChartData = isOption
     ? (() => {
         const optionCount = answers.reduce((acc: Record<string, number>, item: any) => {
-          if (item.optionId) {
-            acc[item.optionId] = (acc[item.optionId] || 0) + 1;
-          }
+          for (const option of item.optionAnswerList ?? []) acc[option] = (acc[option] || 0) + 1;
           return acc;
         }, {});
 
@@ -128,7 +126,7 @@ export default function AnswerQuestion2({ loaderData }: { loaderData: any }) {
           <FormControl component="fieldset" sx={{ mb: 2 }}>
             <FormLabel component="legend">Choose your answer</FormLabel>
             <RadioGroup name="option">
-              {question.option.map((option: string, index: number) => (
+              {question.optionList.map((option: string, index: number) => (
                 <FormControlLabel key={index} value={option} control={<Radio />} label={option} />
               ))}
             </RadioGroup>
@@ -172,7 +170,7 @@ export default function AnswerQuestion2({ loaderData }: { loaderData: any }) {
         <List>
           {answers.map((answer: any) => (
             <ListItem key={answer.id} disablePadding>
-              <ListItemText primary={answer.answerText || answer.optionId} />
+              <ListItemText primary={answer.answerText || answer.optionAnswerList?.join(", ")} />
             </ListItem>
           ))}
         </List>

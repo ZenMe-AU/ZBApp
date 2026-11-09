@@ -16,19 +16,22 @@ interface Migration {
 it("creates one complete table per migration in foreign-key order and drops them in reverse order", async () => {
   const migrationDir = new URL("../deploy/db/migration/", import.meta.url);
   const names = (await readdir(migrationDir)).filter((name) => name.endsWith(".mts")).sort();
+  const createNames = names.filter((name) => name.includes("-create-"));
+  const optionRemovalName = "20261026000000-remove-question-answer-option-id.mts";
   const expectedTables = [
     "profile", "question", "questionAnswer", "questionShare", "logQuestion", "questionAction",
     "followUpCmd", "followUpEvent", "followUpFilter", "questionShareCmd", "questionShareEvent", "profileFriend",
   ];
-  expect(names).toHaveLength(expectedTables.length);
-  expect(names.map((name) => name.match(/-create-(.+)-table\.mts$/)?.[1])).toEqual(expectedTables);
+  expect(names).toHaveLength(expectedTables.length + 1);
+  expect(createNames.map((name) => name.match(/-create-(.+)-table\.mts$/)?.[1])).toEqual(expectedTables);
+  expect(names).toContain(optionRemovalName);
 
   const sequelize = new Sequelize({ dialect: PostgresDialect, logging: false });
   const query = vi.spyOn(sequelize, "queryRaw").mockResolvedValue([[], {}]);
   const migrations: Migration[] = [];
   const createSql = new Map<string, string>();
   try {
-    for (const [index, name] of names.entries()) {
+    for (const [index, name] of createNames.entries()) {
       const migration: Migration = await import(new URL(name, migrationDir).href);
       migrations.push(migration);
       query.mockClear();
@@ -61,6 +64,14 @@ it("creates one complete table per migration in foreign-key order and drops them
     for (const table of expectedTables.filter((table) => table !== "profile" && table !== "profileFriend")) {
       expect(createSql.get(table)).toContain('REFERENCES "profile" ("internal_id") ON DELETE RESTRICT ON UPDATE CASCADE');
     }
+
+    const optionRemoval: Migration = await import(new URL(optionRemovalName, migrationDir).href);
+    query.mockClear();
+    await optionRemoval.up(sequelize.queryInterface);
+    expect(query.mock.calls[0]?.[0]).toContain('ALTER TABLE "questionAnswer" DROP COLUMN "optionId"');
+    query.mockClear();
+    await optionRemoval.down(sequelize.queryInterface);
+    expect(query.mock.calls[0]?.[0]).toMatch(/ALTER TABLE "questionAnswer" ADD COLUMN\s+"optionId" VARCHAR\(255\)/);
 
     for (const [index, migration] of migrations.reverse().entries()) {
       query.mockClear();

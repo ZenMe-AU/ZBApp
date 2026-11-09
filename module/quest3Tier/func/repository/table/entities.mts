@@ -27,10 +27,7 @@ export interface AnswerEntity {
   id: string;
   questionId: string;
   profileId: string;
-  recipientProfileId: string;
-  pairwiseId: string;
   answerText: string | null;
-  optionId: string | null;
   optionAnswerList?: string | null; // Q5-compatible JSON-encoded string[] | null
   when?: string | null;
   duration: number;
@@ -73,11 +70,8 @@ export interface QuestionListItem extends QuestionDetail {
 export interface AnswerListItem {
   id: string;
   profileId: string;
-  recipientProfileId: string;
-  pairwiseId: string;
   questionId: string;
   answerText: string | null;
-  optionId: string | null;
   optionAnswerList: string[] | null;
   when: string | null;
   duration: number;

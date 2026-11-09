@@ -19,6 +19,7 @@ import * as QuestionDetailAddModule from "./routes/QuestionDetailAdd";
 import * as ShareQuestionModule from "./routes/ShareQuestion";
 import ManageFriends from "./routes/ManageFriends";
 import Login from "./routes/Login";
+import { AgentLabJoin } from "./components/AgentLabJoin";
 
 type FrameworkRouteModule = {
   default: (props: { loaderData?: unknown }) => JSX.Element;
@@ -140,6 +141,7 @@ export default function Quest5TierEgAppRoutes() {
 
   return (
     <>
+      {isAuthenticated ? <AgentLabJoin /> : null}
       {isAuthenticated ? (
         <Button onClick={logout} sx={{ position: "fixed", top: 8, right: 16, zIndex: 1300 }}>
           Sign out

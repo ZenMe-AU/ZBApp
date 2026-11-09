@@ -38,12 +38,9 @@ export interface AnswerRecord {
   id: string;
   questionId: string;
   profileId: string;
-  recipientProfileId: string;
-  pairwiseId: string;
   answerText: string | null;
-  optionId: string | null;
   optionAnswerList: string[] | null;
-  when: string | null;
+  when?: string | null;
   duration: number;
   createdAt: Date | string;
   answerCount?: number;

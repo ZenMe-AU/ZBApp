@@ -4,6 +4,15 @@
  */
 
 const oneLine = (value) => String(value).replace(/\s+/g, " ").trim();
+const IDENTIFIER =
+  /\byour (?:full |real |first |last |sur)?name\b|\be-?mail\b|\b(?:home|street|postal) address\b|\b(?:phone|mobile|contact) (?:number|details)\b|\bpostcode\b|\bzip code\b|where exactly do you live|[^\s@]+@[^\s@]+\.\w+|\+?\d[\d\s-]{7,}\d/i;
+
+// Names, contact details and addresses stay in the memory file but are left out of the LLM prompt.
+export const promptMemory = (memory) =>
+  String(memory)
+    .split("\n")
+    .filter((line) => !(line.startsWith("- ") && IDENTIFIER.test(line.replace(/ \(question: [^)]*\)$/, ""))))
+    .join("\n");
 
 export function factMemory(owner, subjects, questions) {
   const facts = Object.fromEntries(subjects.map((name) => [name, new Set()]));
@@ -11,7 +20,7 @@ export function factMemory(owner, subjects, questions) {
   for (const question of questions) {
     for (const answer of question.answers ?? []) {
       const author = answer.memoryAuthor ?? answer.author ?? (answer.profileId ? owner : null);
-      const value = answer.optionId ?? answer.answerText;
+      const value = answer.optionAnswerList?.join(", ") ?? answer.answerText;
       if (!facts[author] || !question.id || !answer.id || !value) continue;
       facts[author].add(
         `- ${oneLine(question.questionText)} — ${oneLine(value)} (question: ${question.id}; answer: ${answer.id})`

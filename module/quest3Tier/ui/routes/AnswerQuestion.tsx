@@ -43,8 +43,7 @@ function AnswerQuestion() {
   const [startTime, setStartTime] = useState<number>(0);
 
   const [prevAns, setPrevAns] = useState<{
-    optionId: string | null;
-    optionAnswerList?: string[] | null;
+    optionAnswerList: string[] | null;
     answerText: string | null;
     when?: string | null;
   } | null>(null);
@@ -64,7 +63,7 @@ function AnswerQuestion() {
         setLoading(true);
         const fetchedQuestion = await getQuestionById(id);
         console.log(fetchedQuestion);
-        if (fetchedQuestion.option === null) {
+        if (fetchedQuestion.optionList === null) {
           setIsOption(false);
         }
         setQuestion(fetchedQuestion);
@@ -99,7 +98,7 @@ function AnswerQuestion() {
         setAnswerList(answerList.others);
         if (answerList.self.length > 0) {
           setPrevAns(answerList.self[0]);
-          setSelectedOptions(answerList.self[0].optionAnswerList ?? (answerList.self[0].optionId ? [answerList.self[0].optionId] : []));
+          setSelectedOptions(answerList.self[0].optionAnswerList ?? []);
           setTextAnswer(answerList.self[0].answerText ?? "");
           setWhen(answerList.self[0].when ?? "");
         }
@@ -135,7 +134,7 @@ function AnswerQuestion() {
       setWordCloudData(wordCount);
     } else {
       const optionCount = answerList.reduce((acc: Record<string, number>, item: Answer) => {
-        for (const option of item.optionAnswerList ?? (item.optionId ? [item.optionId] : [])) {
+        for (const option of item.optionAnswerList ?? []) {
           acc[option] = (acc[option] || 0) + 1;
         }
         return acc;
@@ -193,8 +192,8 @@ function AnswerQuestion() {
     const answerDuration = Math.round(endTime - startTime);
 
     const answerPayload = {
-      option: question?.option && question.option.length > 0 ? selectedOptions : null,
-      answerText: question?.option && question.option.length > 0 ? null : textAnswer,
+      option: question?.optionList && question.optionList.length > 0 ? selectedOptions : null,
+      answerText: question?.optionList && question.optionList.length > 0 ? null : textAnswer,
       answerDuration,
       when: when.trim() || null,
     };
@@ -205,7 +204,7 @@ function AnswerQuestion() {
       return;
     }
 
-    const previousOptions = prevAns?.optionAnswerList ?? (prevAns?.optionId ? [prevAns.optionId] : []);
+    const previousOptions = prevAns?.optionAnswerList ?? [];
     const sameOptions = (answerPayload.option ?? []).length === previousOptions.length && (answerPayload.option ?? []).every((option) => previousOptions.includes(option));
     if (sameOptions && answerPayload.answerText === prevAns?.answerText && answerPayload.when === (prevAns?.when ?? null)) {
       console.log("nothing changed!");
@@ -219,14 +218,12 @@ function AnswerQuestion() {
       setPrevAns((prev) => {
         if (!prev)
           return {
-            optionId: answerPayload.option?.[0] ?? null,
             optionAnswerList: answerPayload.option,
             answerText: answerPayload.answerText,
             when: answerPayload.when,
           };
         return {
           ...prev,
-          optionId: answerPayload.option?.[0] ?? null,
           optionAnswerList: answerPayload.option,
           answerText: answerPayload.answerText,
           when: answerPayload.when,
@@ -279,11 +276,11 @@ function AnswerQuestion() {
       </Typography>
 
       <form onSubmit={handleSubmit}>
-        {question.option && question.option.length > 0 ? (
+        {question.optionList && question.optionList.length > 0 ? (
           <FormControl component="fieldset" sx={{ mb: 2 }}>
             <FormLabel component="legend">Choose all answers that apply</FormLabel>
             <FormGroup>
-              {[...question.option, ...selectedOptions.filter((option) => !question.option?.includes(option))].map((option) => (
+              {[...question.optionList, ...selectedOptions.filter((option) => !question.optionList?.includes(option))].map((option) => (
                 <FormControlLabel key={option} control={<Checkbox checked={selectedOptions.includes(option)} onChange={(e) => setSelectedOptions((previous) => e.target.checked ? [...previous, option] : previous.filter((item) => item !== option))} />} label={option} />
               ))}
             </FormGroup>
@@ -372,7 +369,7 @@ function AnswerQuestion() {
           answerList.length > 0 &&
           answerList.map((answer) => (
             <ListItem key={answer.id} disablePadding>
-              <ListItemText primary={answer.answerText || answer.optionId} />
+              <ListItemText primary={answer.answerText || answer.optionAnswerList?.join(", ")} />
             </ListItem>
           ))}
       </List>

@@ -81,7 +81,7 @@ function QuestionDetail() {
 
   // Update options list
   const handleOptionsEdit = (options: string[]) => {
-    handleFieldEdit("option", options);
+    handleFieldEdit("optionList", options);
   };
 
   // Update the question data using a patch API
@@ -149,34 +149,34 @@ function QuestionDetail() {
       mb={3}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
-          handleBlur("option");
+          handleBlur("optionList");
         }
       }}
     >
       <Typography variant="h6" gutterBottom>
         Options
-        {!editingFields.option && (
-          <IconButton onClick={() => toggleFieldEdit("option")} size="small" sx={{ ml: 1 }}>
+        {!editingFields.optionList && (
+          <IconButton onClick={() => toggleFieldEdit("optionList")} size="small" sx={{ ml: 1 }}>
             <EditIcon fontSize="small" />
           </IconButton>
         )}
       </Typography>
       <List>
-        {editingFields.option ? (
-          editedData?.option?.map((option, index) => (
+        {editingFields.optionList ? (
+          editedData?.optionList?.map((option, index) => (
             <ListItem key={index}>
               <TextField
                 fullWidth
                 value={option}
                 onChange={(e) => {
-                  const updatedOptions = [...(editedData.option || [])];
+                  const updatedOptions = [...(editedData.optionList || [])];
                   updatedOptions[index] = e.target.value;
                   handleOptionsEdit(updatedOptions);
                 }}
               />
               <Button
                 onClick={() => {
-                  const updatedOptions = [...(editedData.option || [])];
+                  const updatedOptions = [...(editedData.optionList || [])];
                   updatedOptions.splice(index, 1);
                   handleOptionsEdit(updatedOptions);
                 }}
@@ -186,8 +186,8 @@ function QuestionDetail() {
             </ListItem>
           ))
         ) : (
-          <Box onClick={() => toggleFieldEdit("option")}>
-            {editedData?.option?.map((option, index) => (
+          <Box onClick={() => toggleFieldEdit("optionList")}>
+            {editedData?.optionList?.map((option, index) => (
               <ListItem key={index}>
                 <ReadOnlyText>{option}</ReadOnlyText>
               </ListItem>
@@ -195,12 +195,12 @@ function QuestionDetail() {
           </Box>
         )}
       </List>
-      {editingFields.option && (
+      {editingFields.optionList && (
         <Button
           variant="outlined"
           startIcon={<AddIcon />}
           onClick={() => {
-            const updatedOptions = [...(editedData?.option || []), ""];
+            const updatedOptions = [...(editedData?.optionList || []), ""];
             handleOptionsEdit(updatedOptions);
           }}
         >

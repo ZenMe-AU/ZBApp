@@ -10,7 +10,7 @@ const DETAILS: Record<string, string> = { Mike: "Brisbane", Bella: "Brisbane", I
 export const profileKind = (name: string) => (AGENTS.includes(name) ? "Agent" : "Human");
 
 export function renderProfileCards({ activeProfile, container, events, network, onSelect, participants, agentOids, questions: reportQuestions }) {
-  const names = [...new Set([...AGENTS, ...participants])];
+  const names = AGENTS;
   const latestProfile = [...events].reverse().find((event) => event.agent)?.agent;
   const cards = names.map((name) => {
     const profileEvents = events.filter((event) => event.agent === name);

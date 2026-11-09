@@ -98,21 +98,7 @@ async function getQuestionEntity(questionId: string): Promise<(QuestionEntity & 
 }
 
 function toQuestionListItem(entity: QuestionEntity): QuestionListItem {
-  return toQuestionDetail(entity);
-}
-
-export async function getQuestionAskers(questionId: string, answererProfileId: string): Promise<string[]> {
-  const question = await getQuestionEntity(questionId);
-  if (!question) return [];
-  const askers = new Set([question.profileId]);
-  const client = await getTableClient(QUESTION_DATA_TABLE);
-  const shares = client.listEntities<QuestionShareEntity>({
-    queryOptions: {
-      filter: odata`RowKey ge ${SHARE_ROW_KEY_RANGE_START} and RowKey lt ${SHARE_ROW_KEY_RANGE_END} and newQuestionId eq ${questionId} and receiverProfileId eq ${answererProfileId}`,
-    },
-  });
-  for await (const share of shares) askers.add(share.senderProfileId);
-  return [...askers];
+  return { ...toQuestionDetail(entity), createdAt: entity.createdAt };
 }
 
 /**
@@ -141,13 +127,10 @@ export async function getSharedQuestionListByProfileId(profileId: string): Promi
   const shares = client.listEntities<QuestionShareEntity>({
     queryOptions: { filter: odata`RowKey ge ${SHARE_ROW_KEY_RANGE_START} and RowKey lt ${SHARE_ROW_KEY_RANGE_END} and receiverProfileId eq ${profileId}` },
   });
-  const questionIds = new Set<string>();
-  for await (const share of shares) questionIds.add(share.newQuestionId);
-  const questions = await Promise.all([...questionIds].map(getQuestionEntity));
-  return questions
-    .filter((entity): entity is QuestionEntity & { etag: string } => entity !== null)
-    .map(toQuestionListItem)
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const sharedIds = new Set<string>();
+  for await (const share of shares) sharedIds.add(share.newQuestionId);
+  const questions = await Promise.all([...sharedIds].map(getQuestionEntity));
+  return questions.filter((entity): entity is QuestionEntity & { etag: string } => entity !== null).map(toQuestionListItem).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
 export async function shareQuestion(questionId: string, senderProfileId: string, receiverProfileIds: string[]): Promise<QuestionShareEntity[]> {
