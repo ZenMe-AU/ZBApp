@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Start Viewer",
+      "name": "Start",
       "type": "msedge",
       "request": "launch",
       "url": "http://127.0.0.1:4178",

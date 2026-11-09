@@ -94,6 +94,67 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12(@opentelemetry/api@1.10.0)(@types/node@26.6.5)(@vitest/coverage-v8@4.1.12)(vite@7.3.7(@types/node@26.6.5)(jiti@2.6.1)(lightningcss@1.33.0)(yaml@2.9.1))
 
+  module/QFF/QFFViz:
+    dependencies:
+      '@sigma/edge-curve':
+        specifier: ^3.1.0
+        version: 3.1.0(sigma@3.0.3(graphology-types@0.24.8))
+      '@upsetjs/bundle':
+        specifier: ^1.11.0
+        version: 1.11.0
+      '@upsetjs/venn.js':
+        specifier: ^2.0.0
+        version: 2.0.0
+      ag-grid-community:
+        specifier: ^36.3.0
+        version: 36.3.0
+      d3-selection:
+        specifier: ^3.0.1
+        version: 3.0.1
+      graphology:
+        specifier: ^0.26.0
+        version: 0.26.0(graphology-types@0.24.8)
+      graphology-layout:
+        specifier: ^0.6.1
+        version: 0.6.1(graphology-types@0.24.8)
+      graphology-layout-forceatlas2:
+        specifier: ^0.10.1
+        version: 0.10.1(graphology-types@0.24.8)
+      plotly.js-dist-min:
+        specifier: ^4.2.0
+        version: 4.2.0
+      sigma:
+        specifier: ^3.0.3
+        version: 3.0.3(graphology-types@0.24.8)
+      umap-js:
+        specifier: ^1.4.0
+        version: 1.4.0
+      vanilla-jsoneditor:
+        specifier: ^3.13.0
+        version: 3.13.0(@typescript-eslint/types@8.72.0)
+    devDependencies:
+      '@azure/identity':
+        specifier: ^4.14.1
+        version: 4.14.1(supports-color@8.1.1)
+      '@types/d3-selection':
+        specifier: ^3.0.12
+        version: 3.0.12
+      '@types/node':
+        specifier: ^20.19.43
+        version: 20.19.43
+      '@types/plotly.js-dist-min':
+        specifier: ^2.3.4
+        version: 2.3.4
+      graphology-types:
+        specifier: ^0.24.8
+        version: 0.24.8
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vite:
+        specifier: ^8.3.6
+        version: 8.3.6(@types/node@20.19.43)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.9.1)
+
   module/accessManager/func:
     dependencies:
       '@azure/functions':
@@ -466,67 +527,6 @@ importers:
       vitest:
         specifier: ^4.1.9
         version: 4.1.12(@opentelemetry/api@1.10.0)(@types/node@20.19.23)(@vitest/coverage-v8@4.1.12)(vite@7.3.7(@types/node@20.19.23)(jiti@2.6.1)(lightningcss@1.33.0)(yaml@2.9.1))
-
-  module/QFF/QFFViz:
-    dependencies:
-      '@sigma/edge-curve':
-        specifier: ^3.1.0
-        version: 3.1.0(sigma@3.0.3(graphology-types@0.24.8))
-      '@upsetjs/bundle':
-        specifier: ^1.11.0
-        version: 1.11.0
-      '@upsetjs/venn.js':
-        specifier: ^2.0.0
-        version: 2.0.0
-      ag-grid-community:
-        specifier: ^36.3.0
-        version: 36.3.0
-      d3-selection:
-        specifier: ^3.0.1
-        version: 3.0.1
-      graphology:
-        specifier: ^0.26.0
-        version: 0.26.0(graphology-types@0.24.8)
-      graphology-layout:
-        specifier: ^0.6.1
-        version: 0.6.1(graphology-types@0.24.8)
-      graphology-layout-forceatlas2:
-        specifier: ^0.10.1
-        version: 0.10.1(graphology-types@0.24.8)
-      plotly.js-dist-min:
-        specifier: ^4.2.0
-        version: 4.2.0
-      sigma:
-        specifier: ^3.0.3
-        version: 3.0.3(graphology-types@0.24.8)
-      umap-js:
-        specifier: ^1.4.0
-        version: 1.4.0
-      vanilla-jsoneditor:
-        specifier: ^3.13.0
-        version: 3.13.0(@typescript-eslint/types@8.72.0)
-    devDependencies:
-      '@azure/identity':
-        specifier: ^4.14.1
-        version: 4.14.1(supports-color@8.1.1)
-      '@types/d3-selection':
-        specifier: ^3.0.12
-        version: 3.0.12
-      '@types/node':
-        specifier: ^20.19.43
-        version: 20.19.43
-      '@types/plotly.js-dist-min':
-        specifier: ^2.3.4
-        version: 2.3.4
-      graphology-types:
-        specifier: ^0.24.8
-        version: 0.24.8
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-      vite:
-        specifier: ^8.3.6
-        version: 8.3.6(@types/node@20.19.43)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.9.1)
 
   module/profile/func:
     dependencies:

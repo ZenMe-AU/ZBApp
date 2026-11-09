@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start",
+      "type": "shell",
+      "command": "pnpm run dev",
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}/QFFViz"
+      },
+      "problemMatcher": {
+        "owner": "agent-viewer",
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*VITE v.*",
+          "endsPattern": "^.*Local:\\s+http"
+        }
+      }
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "pnpm install"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:5180",
+      "webRoot": "${workspaceFolder}/QFFViz",
+      "preLaunchTask": "Start"
+    }
+  ]
+}
