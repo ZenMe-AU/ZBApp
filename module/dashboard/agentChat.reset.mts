@@ -43,7 +43,7 @@ export async function getTableClient(tableName: string): Promise<TableClient> {
     }
     clients.set(tableName, client);
   }
-  await client.createTable().catch(() => {});
+  await client.createTable();
   return client;
 }
 

@@ -15,7 +15,7 @@
     .chat-trigger{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:12px;font-weight:750;cursor:pointer}.chat-trigger:hover{background:var(--soft);border-color:#b6b8b4}.chat-trigger:disabled{cursor:not-allowed;opacity:.5}
     .app{display:grid;grid-template-columns:minmax(0,1fr);min-height:calc(100dvh - 64px)}.runs{display:none}.runs h2{margin:0 8px 12px;font-size:12px;letter-spacing:.05em;text-transform:uppercase}.run-list{display:flex;max-width:100%;flex-direction:column;gap:4px}.run-item{width:100%;padding:10px 11px;border:1px solid transparent;border-radius:7px;background:transparent;text-align:left;cursor:pointer}.run-item:hover{background:#fff8}.run-item.is-selected{border-color:var(--line);background:#fff}.run-item strong,.run-item span{display:block}.run-item strong{font-size:12px}.run-item span{margin-top:4px;color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .main{min-width:0;padding:24px clamp(16px,2.5vw,36px) 36px}.run-head{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:16px}.run-heading{min-width:180px}.run-head h1{margin:3px 0 0;font-size:24px;letter-spacing:-.035em}.run-head p{margin:6px 0 0;color:var(--muted);font-size:12px}.eyebrow{color:var(--muted);font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
-    .metrics{display:grid;grid-template-columns:repeat(5,minmax(86px,1fr));min-width:min(100%,570px);margin:0;border:1px solid var(--line);border-radius:9px;background:var(--panel)}.metric{padding:9px 11px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric dt{color:var(--muted);font-size:9px;font-weight:650;white-space:nowrap}.metric dd{margin:4px 0 0;font:750 16px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric small{margin-left:4px;color:var(--muted);font:500 9px/1 system-ui,sans-serif}
+    .metrics{display:grid;grid-template-columns:repeat(5,minmax(86px,1fr));min-width:min(100%,570px);margin:0;border:1px solid var(--line);border-radius:9px;background:var(--panel)}.topbar .metrics{min-width:0;max-width:570px;margin-left:clamp(24px,4vw,64px);flex:1;border-top:0;border-bottom:0;border-radius:0;background:transparent}.metric{padding:9px 11px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric dt{color:var(--muted);font-size:9px;font-weight:650;white-space:nowrap}.metric dd{margin:4px 0 0;font:750 16px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric small{margin-left:4px;color:var(--muted);font:500 9px/1 system-ui,sans-serif}
     .agents{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:18px}.agent-card{--agent:#8b918d;--shirt:#65716b;--hair:#252725;--skin:#e3b18b;display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:8px;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);text-align:left;cursor:pointer;opacity:.52}.agent-card.is-online{opacity:1}.agent-card.is-selected{border-color:var(--agent);box-shadow:inset 0 0 0 1px var(--agent)}.agent-card.is-active .sprite{animation:bob 700ms steps(2,end) infinite alternate}.slot-mike{--agent:#3975c6;--shirt:#3d6fa6;--hair:#1a1b20}.slot-bella{--agent:#d4583f;--shirt:#c95945;--hair:#a95334}.slot-ian{--agent:#39805a;--shirt:#487f5c;--hair:#71533c;--skin:#d5a37e}.slot-eric{--agent:#7655a7;--shirt:#7655a7;--hair:#191921}.slot-human{--agent:#9b642e;--shirt:#b4773c;--hair:#3c2b24;--skin:#d9a47e}.agent-info{min-width:0}.agent-title{display:flex;gap:6px;align-items:baseline}.agent-title strong{font-size:13px}.agent-title span{color:var(--muted);font-size:10px}.agent-state{display:block;margin-top:4px;color:var(--agent);font:700 9px/1.2 ui-monospace,monospace;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.agent-budget,.agent-profile{display:block;margin-top:5px;color:var(--muted);font:500 9px/1 ui-monospace,monospace}
     .sprite{position:relative;width:42px;height:52px;image-rendering:pixelated;transform:scale(.72);transform-origin:center}.sprite-shadow{position:absolute;left:5px;bottom:0;width:34px;height:7px;border-radius:50%;background:#0002}.sprite-head{position:absolute;top:8px;left:10px;width:27px;height:25px;border:4px solid #2c241e;background:var(--skin);box-shadow:inset 0 -4px #c88c6d}.sprite-hair{position:absolute;top:3px;left:7px;width:33px;height:13px;border:4px solid #2c241e;border-bottom:0;background:var(--hair)}.sprite-eye{position:absolute;z-index:2;top:21px;width:3px;height:3px;background:#282019}.sprite-eye.left{left:17px}.sprite-eye.right{left:30px}.sprite-body{position:absolute;top:32px;left:5px;width:36px;height:20px;border:4px solid #2c241e;background:var(--shirt)}.sprite-leg{position:absolute;bottom:1px;width:12px;height:13px;border:4px solid #2c241e;background:#33443f}.sprite-leg.left{left:8px}.sprite-leg.right{right:8px}
     .workspace{display:grid;grid-template-columns:minmax(0,1fr) 320px;min-height:560px;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--panel)}.workbench{min-width:0;border-right:1px solid var(--line)}.tabs{display:flex;gap:3px;padding:8px 12px 0;overflow-x:auto;border-bottom:1px solid var(--line)}.tab{min-height:44px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;touch-action:manipulation}.tab:hover{color:var(--ink);background:var(--soft)}.tab[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--accent);background:transparent}
@@ -46,10 +46,15 @@
     .chat-message-row.user{align-self:flex-end;justify-content:flex-end}
     .chat-message-row.assistant{align-self:flex-start}
     button.chat-message{width:auto;max-width:min(88%,64ch);border:0;cursor:pointer;font:inherit;font-size:12px;line-height:1.5;text-align:left}
+    .referee-evidence{margin:0 16px;border-bottom:1px solid var(--line);font-size:11px}
+    .referee-evidence summary{padding:10px 0;color:var(--muted);font-weight:750;cursor:pointer}
+    .referee-evidence-list{display:grid;gap:8px;margin:0;padding:0 0 12px;list-style:none}
+    .referee-evidence-list strong{display:block;margin-bottom:2px;color:var(--ink)}
+    .referee-evidence-list code{display:block;overflow-wrap:anywhere;color:var(--muted);white-space:pre-wrap}
     .chat-message-row.user button.chat-message{text-align:right}
     button.chat-message[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:2px}
     @keyframes bob{to{transform:scale(.72) translateY(-5px)}}@keyframes pulse{50%{opacity:.35;box-shadow:0 0 0 5px #2b956822}}
-    @media(max-width:1050px){.run-head{align-items:flex-start;flex-direction:column}.metrics{width:100%}}
+    @media(max-width:1050px){.topbar{height:auto;min-height:64px;padding-top:8px;padding-bottom:8px;flex-wrap:wrap}.topbar .metrics{order:3;width:100%;max-width:none;margin-left:0;flex-basis:100%;border:1px solid var(--line);border-radius:9px;background:var(--panel)}.run-head{align-items:flex-start;flex-direction:column}}
     @media(max-width:900px){.app{grid-template-columns:1fr}.runs{padding:10px 12px;border-right:0;border-bottom:1px solid var(--line)}.runs h2{display:none}.run-list{flex-direction:row;overflow-x:auto}.run-item{min-width:170px}.workspace{grid-template-columns:1fr}.workbench{border-right:0;border-bottom:1px solid var(--line)}.inspector{min-height:220px}}
     @media(max-width:650px){.topbar{height:auto;min-height:64px;padding:8px 14px;flex-wrap:wrap}.brand{display:none}.top-actions{min-width:0;flex-wrap:wrap;justify-content:flex-end;gap:6px}.new-test,.profile-access{padding:0 10px}.profile-access span{display:none}.main{padding:16px 14px 28px}.run-status{display:none}.metrics,.result-grid,.relationship-grid{grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}.metric{border-bottom:1px solid var(--line)}.metric:nth-child(2n){border-right:0}.metric:last-child{grid-column:1/-1;border-bottom:0}.agents{grid-template-columns:repeat(2,minmax(0,1fr))}.tabs{padding-left:8px}.feed-head{align-items:flex-start;flex-direction:column;gap:5px}.relationship-choice{align-items:flex-start;flex-direction:column;gap:7px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
@@ -60,6 +65,13 @@
   <header class="topbar">
     <div class="brand-mark" role="img" aria-label="Zenblox"></div>
     <div class="brand">ZB Agent Lab</div>
+    <dl class="metrics" aria-label="Run metrics">
+      <div class="metric"><dt>Participants</dt><dd data-count="participants">0</dd></div>
+      <div class="metric"><dt>Questions created</dt><dd data-count="questions">0</dd></div>
+      <div class="metric"><dt>Answer submissions</dt><dd data-count="answers">0</dd></div>
+      <div class="metric"><dt>Shares</dt><dd data-count="shares">0</dd></div>
+      <div class="metric"><dt>Findings</dt><dd data-count="findings">0</dd></div>
+    </dl>
     <div class="top-actions">
       <button id="human-profile" class="profile-access" type="button" disabled aria-label="Human profile is not available for this run">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c.8-4.5 3.5-7 8-7s7.2 2.5 8 7"></path></svg>
@@ -77,13 +89,6 @@
     <main class="main">
       <header class="run-head">
         <div class="run-heading"><h1 id="run-title">No runs yet</h1><p id="run-participants"></p></div>
-        <dl class="metrics" aria-label="Run metrics">
-          <div class="metric"><dt>Participants</dt><dd data-count="participants">0</dd></div>
-          <div class="metric"><dt>Questions created</dt><dd data-count="questions">0</dd></div>
-          <div class="metric"><dt>Answer submissions</dt><dd data-count="answers">0</dd></div>
-          <div class="metric"><dt>Shares</dt><dd data-count="shares">0</dd></div>
-          <div class="metric"><dt>Findings</dt><dd data-count="findings">0</dd></div>
-        </dl>
       </header>
       <section id="profile-cards" class="agents" aria-label="Profiles"></section>
       <section class="workspace" aria-label="Run evaluation">
@@ -92,7 +97,7 @@
             <button class="tab" type="button" data-view="questions" aria-pressed="true">Questions</button>
             <button class="tab" type="button" data-view="activity" aria-pressed="false">Activity</button>
             <button class="tab" type="button" data-view="chat" aria-pressed="false">Chat</button>
-            <button class="tab" type="button" data-view="judge-chat" aria-pressed="false">Judge Chat</button>
+            <button class="tab" type="button" data-view="referee-chat" aria-pressed="false">Referee Chat</button>
           </div>
           <header class="feed-head"><h2 id="view-title">Run overview</h2><span id="filter-note" class="filter-note">Judge summary</span></header>
           <div id="activity-layout" class="activity-layout" hidden>
@@ -111,6 +116,10 @@
               <input id="chat-input" class="chat-input" type="text" maxlength="1000" placeholder="Why was the memory score low?" autocomplete="off">
               <button id="chat-send" class="chat-send" type="submit">Send</button>
             </form>
+            <details id="referee-evidence" class="referee-evidence" hidden>
+              <summary id="referee-evidence-summary">Evidence used</summary>
+              <ul id="referee-evidence-list" class="referee-evidence-list"></ul>
+            </details>
             <ol id="chat-messages" class="chat-messages"><li class="chat-empty">Ask about scores, answers, leaks or agent behaviour.</li></ol>
           </aside>
         </div>

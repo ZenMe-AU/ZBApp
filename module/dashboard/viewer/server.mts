@@ -13,10 +13,13 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { initRepository } from "quest3Tier/dist/repository/table/repository.mjs";
+import { NAMES } from "../agentChat.config.mjs";
+import { createRefereeContextBuilder } from "../agentChat.referee-context.mjs";
 import { sendLiveChat } from "../agentChat.live.mjs";
 import { createActivityRepository } from "../activity/activity-repository.mjs";
 import * as authDev from "../service/authDev.mjs";
 import { answerResults } from "./results-chat.mjs";
+import { answerRefereeChat } from "./referee-chat.mjs";
 
 const VIEWER_DIR = path.dirname(fileURLToPath(import.meta.url));
 const viewerParent = path.resolve(VIEWER_DIR, "..");
@@ -58,6 +61,7 @@ const registeredHuman: { profileId?: string; name?: string } = {};
 const HUMAN_STATE_PATH = path.join(RUNS_DIR, ".human.json");
 const activityRepository = createActivityRepository(process.env.ACTIVITY_DB_PATH ?? path.join(DASHBOARD_DIR, "activity.lancedb"));
 let resultsChatPending = false;
+let refereeChatPending = false;
 
 async function loadRegisteredHuman() {
   const saved = JSON.parse(await readFile(HUMAN_STATE_PATH, "utf8").catch(() => "{}"));
@@ -144,6 +148,15 @@ async function getAnswersForAgent(name: string, questionId: string, request = fe
     profileId: undefined,
   }));
 }
+
+async function readRefereeApi(actor: string, apiPath: string) {
+  if (apiPath === "/questions") return getQuestionsForAgent(actor);
+  const answers = apiPath.match(/^\/question\/([A-Za-z0-9-]+)\/answers$/);
+  if (answers) return getAnswersForAgent(actor, answers[1]);
+  throw new Error(`Referee API path is not implemented: ${apiPath}`);
+}
+
+const buildRefereeContext = createRefereeContextBuilder({ dashboardDir: DASHBOARD_DIR, repositoryDir: REPO_DIR, activity: activityRepository, readApi: readRefereeApi });
 
 const spawnPnpm = (args: string[], cwd: string, env = CHILD_ENV) =>
   spawn(process.platform === "win32" ? (process.env.ComSpec ?? "cmd.exe") : "pnpm", process.platform === "win32" ? ["/d", "/s", "/c", "pnpm", ...args] : args, {
@@ -386,6 +399,28 @@ async function waitForPendingHuman(timeoutMs = 2000) {
 
 async function handle(request, response) {
   const url = new URL(request.url, `http://${HOST}:${PORT}`);
+  if (request.method === "POST" && url.pathname === "/api/referee-chat") {
+    if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Same-origin request required" });
+    if (refereeChatPending) return sendJson(response, 409, { error: "Referee is already answering a message" });
+    try {
+      const body = await readJson(request);
+      const runs = await listRuns();
+      const run = typeof body.run === "string" ? body.run : "";
+      const message = typeof body.message === "string" ? body.message.trim() : "";
+      if (!isRunName(run) || !runs.some((item) => item.name === run)) return sendJson(response, 404, { error: "Run not found" });
+      if (!message || message.length > 1000) return sendJson(response, 400, { error: "Message must be 1-1000 characters" });
+      refereeChatPending = true;
+      const context = await buildRefereeContext({ runId: run, question: message, apiRequests: NAMES.map((actor) => ({ actor, path: "/questions" })) });
+      const env = { ...CHILD_ENV, ...(await localSettings()) };
+      const result = await answerRefereeChat({ message, history: body.history, context, model: chatModel(env, env.REFEREE_MODEL ?? env.JUDGE_MODEL), env });
+      return sendJson(response, 200, result);
+    } catch (error) {
+      console.error("Referee chat failed:", error);
+      return sendJson(response, 503, { error: error instanceof Error ? error.message : String(error) });
+    } finally {
+      refereeChatPending = false;
+    }
+  }
   if (request.method === "POST" && url.pathname === "/api/chat") {
     if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Same-origin request required" });
     try {
@@ -586,7 +621,7 @@ async function selfCheck() {
       else reject(new Error(`pnpm launcher exited with code ${code}`));
     });
   });
-  const { classifyFinding, parseLine, parseLog, parseReport, questionTopic, redactSecrets } = await import("./viewer-data.mjs");
+  const { classifyFinding, parseLine, parseLog, parseReport, presentLegacyActivityEvents, questionTopic, redactSecrets } = await import("./viewer-data.mjs");
   assert.deepEqual(redactSecrets({ title: "Pets", apiKey: "abc", nested: [{ token: "x" }], reason: "Bearer abc.def failed" }), {
     title: "Pets",
     apiKey: "[redacted]",
@@ -649,6 +684,13 @@ async function selfCheck() {
   );
   assert.equal(parseLine('[03:44:13] Ian edited "A useful question"').kind, "edit");
   assert.equal(parseLog('[03:44:10] Run starts. Online: Mike, Josh.\n\n[03:44:13] Josh answered "A useful question": Yes')[1].agent, "Josh");
+  assert.deepEqual(
+    presentLegacyActivityEvents('[03:44:13] Mike answered [q:q-1] "A useful question": Yes', "run-1", { Mike: "agent-1" })[0],
+    {
+      time: "03:44:13", agent: "Mike", kind: "answer", text: 'answered "A useful question": Yes', questionId: "q-1",
+      id: "run-1:legacy:0", runId: "run-1", aggregateType: "question", aggregateId: "q-1", legacy: true,
+    }
+  );
   assert.equal(profileKind("Josh"), "Human");
   assert.equal(classifyFinding("permission allowed unauthorized access"), "Security");
   assert.equal(classifyFinding("answer profile was misattributed"), "Data");

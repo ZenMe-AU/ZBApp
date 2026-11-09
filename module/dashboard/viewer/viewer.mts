@@ -3,7 +3,7 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-import { AGENTS, classifyFinding, KINDS, parseLog, parseReport, presentActivityEvents, VIEWS } from "./viewer-data.mjs";
+import { AGENTS, classifyFinding, KINDS, parseReport, presentActivityEvents, presentLegacyActivityEvents, VIEWS } from "./viewer-data.mjs";
 import { elements } from "./viewer-elements.mjs";
 import { renderProfileCards } from "./viewer-profiles.mjs";
 import { renderQuestions } from "./viewer-questions.mjs";
@@ -17,6 +17,14 @@ let expandedActivityId = "";
 const activityFilterSelections = new Map<string, Set<string>>();
 const activityFilterText = new Map<string, string>();
 let activityFilterSignature = "";
+type RefereeEvidence = {
+  scope?: string;
+  activity?: Array<{ runId: string; eventIds: string[] }>;
+  memories?: Array<{ owner: string; subject: string; path: string }>;
+  repository?: Array<{ path: string; line: number }>;
+  api?: Array<{ actor: string; path: string }>;
+};
+type ChatMessage = { role: "user" | "assistant"; content: string; evidence?: RefereeEvidence };
 // Visible columns use fields shared by LanceDB events and legacy .chat.md logs.
 const activityColumns: any[] = [
   {
@@ -67,10 +75,14 @@ const state = {
   network: {},
   agentOids: {} as Record<string, string>,
   selectedEventId: null,
-  chatMessages: [] as { role: "user" | "assistant"; content: string }[],
+  chatMessages: [] as ChatMessage[],
   selectedChatMessage: -1,
   chatAgent: "",
   chatStatus: "" as "" | "Thinking…" | "Answering…",
+  refereeMessages: [] as ChatMessage[],
+  selectedRefereeMessage: -1,
+  refereeStatus: "" as "" | "Investigating…" | "Answering…",
+  refereeEvidence: null as RefereeEvidence | null,
   questionPerson: "",
   questionStatus: "idle" as "idle" | "loading" | "ready" | "error",
   questions: [] as Array<{ id: string; profileId: string; title: string | null; questionText: string; optionList: string[] | null; createdAt?: string }>,
@@ -387,6 +399,25 @@ function inspectChatMessage(message: { role: "user" | "assistant"; content: stri
   renderChat();
 }
 
+function inspectRefereeMessage(message: ChatMessage, index: number) {
+  state.selectedRefereeMessage = index;
+  if (message.evidence) state.refereeEvidence = message.evidence;
+  const sender = message.role === "user" ? "You" : "Referee";
+  renderInspector({
+    kind: "system",
+    title: `${sender} chat message`,
+    actorLabel: sender,
+    kindLabel: message.role === "user" ? "Sent" : "Response received",
+    time: "Not recorded",
+    text: [
+      `Sender\n${sender}`,
+      "Timestamp\nNot provided by the Referee API",
+      `Response content\n${message.content}`,
+    ].join("\n\n"),
+  });
+  renderChat();
+}
+
 function renderChatView(participants = new Set<string>()) {
   delete document.body.dataset.activityMode;
   const names = [...new Set([...AGENTS, ...participants])];
@@ -395,6 +426,9 @@ function renderChatView(participants = new Set<string>()) {
   elements.feed.hidden = true;
   elements.feedHead.hidden = true;
   elements.chatPanel.hidden = false;
+  elements.chatPanel.setAttribute("aria-label", "Test results chat");
+  elements.chatInput.placeholder = "Why was the memory score low?";
+  elements.refereeEvidence.hidden = true;
   setChatTarget(chatTarget);
   renderInspector({
     kind: "system",
@@ -406,6 +440,27 @@ function renderChatView(participants = new Set<string>()) {
   });
   elements.viewTitle.textContent = "Chat";
   elements.filterNote.textContent = state.chatAgent || "Choose a participant";
+}
+
+function renderRefereeChatView() {
+  delete document.body.dataset.activityMode;
+  elements.feed.hidden = true;
+  elements.feedHead.hidden = true;
+  elements.activityLayout.hidden = true;
+  elements.chatPanel.hidden = false;
+  elements.chatPanel.setAttribute("aria-label", "Referee chat");
+  elements.chatInput.placeholder = "Ask the Referee about this run…";
+  elements.viewTitle.textContent = "Referee Chat";
+  elements.filterNote.textContent = state.selectedRun ? "Read-only evidence review" : "Select a run";
+  renderChat();
+  renderInspector({
+    kind: "system",
+    title: "Referee Chat details",
+    actorLabel: "Referee",
+    kindLabel: "Read-only",
+    time: "Ready",
+    text: "Ask the Referee about agent behaviour, activity, memory or repository evidence.",
+  });
 }
 
 function renderProfiles(participants) {
@@ -436,6 +491,7 @@ function renderProfiles(participants) {
 function renderFeed() {
   const view = VIEWS[state.activeView];
   if (state.activeView === "chat") return renderChatView(participantsFor(state.currentEvents));
+  if (state.activeView === "referee-chat") return renderRefereeChatView();
   if (state.activeView === "activity") document.body.dataset.activityMode = "true";
   else delete document.body.dataset.activityMode;
   delete document.body.dataset.chatMode;
@@ -466,15 +522,6 @@ function renderFeed() {
     });
   }
   if (state.activeView === "activity") return renderActivityGrid();
-  if (state.activeView === "judge-chat") {
-    elements.viewTitle.textContent = "Judge Chat";
-    elements.filterNote.textContent = "Not connected";
-    const empty = document.createElement("li");
-    empty.className = "empty";
-    empty.textContent = "Judge Chat will be connected in the next step.";
-    elements.feed.replaceChildren(empty);
-    return renderInspector(null);
-  }
   const events = visibleEvents();
   elements.viewTitle.textContent = view.title;
   elements.filterNote.textContent = state.activeAgent ? `${state.activeAgent} only` : "All agents";
@@ -532,40 +579,72 @@ function renderFeed() {
 
 function renderChat() {
   if (!elements.chatMessages) return;
-  if (!state.chatMessages.length) {
+  const referee = state.activeView === "referee-chat";
+  const messages = referee ? state.refereeMessages : state.chatMessages;
+  const statusText = referee ? state.refereeStatus : state.chatStatus;
+  const selectedMessage = referee ? state.selectedRefereeMessage : state.selectedChatMessage;
+  renderRefereeEvidence(referee ? state.refereeEvidence : null);
+  if (!messages.length) {
     const empty = document.createElement("li");
     empty.className = "chat-empty";
-    empty.textContent = "Ask about scores, answers, leaks or agent behaviour.";
+    empty.textContent = referee
+      ? "Ask the Referee about agent behaviour, memory, activity or repository evidence."
+      : "Ask about scores, answers, leaks or agent behaviour.";
     elements.chatMessages.replaceChildren(empty);
-    if (state.chatStatus) {
+    if (statusText) {
       const status = document.createElement("li");
       status.className = "chat-message assistant chat-status-message";
-      status.textContent = state.chatStatus;
+      status.textContent = statusText;
       status.setAttribute("aria-live", "polite");
       elements.chatMessages.append(status);
     }
     return;
   }
-  const messages = state.chatMessages.map((message, index) => {
+  const renderedMessages = messages.map((message, index) => {
     const item = document.createElement("li");
     const button = document.createElement("button");
     item.className = `chat-message-row ${message.role}`;
     button.type = "button";
     button.className = `chat-message ${message.role}`;
     button.textContent = message.content;
-    button.setAttribute("aria-pressed", String(state.selectedChatMessage === index));
-    button.addEventListener("click", () => inspectChatMessage(message, index));
+    button.setAttribute("aria-pressed", String(selectedMessage === index));
+    button.addEventListener("click", () => referee ? inspectRefereeMessage(message, index) : inspectChatMessage(message, index));
     item.append(button);
     return item;
   });
-  if (state.chatStatus) {
+  if (statusText) {
     const status = document.createElement("li");
     status.className = "chat-message assistant chat-status-message";
-    status.textContent = state.chatStatus;
+    status.textContent = statusText;
     status.setAttribute("aria-live", "polite");
-    messages.push(status);
+    renderedMessages.push(status);
   }
-  elements.chatMessages.replaceChildren(...messages);
+  elements.chatMessages.replaceChildren(...renderedMessages);
+}
+
+function renderRefereeEvidence(evidence: RefereeEvidence | null) {
+  if (state.activeView !== "referee-chat" || !evidence) {
+    elements.refereeEvidence.hidden = true;
+    elements.refereeEvidenceList.replaceChildren();
+    return;
+  }
+  const rows: Array<[string, string[]]> = [
+    ["Activity", (evidence.activity ?? []).map(({ runId, eventIds }) => `${runId}: ${eventIds.length} event${eventIds.length === 1 ? "" : "s"}`)],
+    ["Memory", (evidence.memories ?? []).map(({ owner, subject, path }) => `${owner} → ${subject}: ${path}`)],
+    ["Repository", (evidence.repository ?? []).map(({ path, line }) => `${path}:${line}`)],
+    ["API", (evidence.api ?? []).map(({ actor, path }) => `${actor}: GET ${path}`)],
+  ].filter(([, values]) => values.length) as Array<[string, string[]]>;
+  elements.refereeEvidenceSummary.textContent = `Evidence used (${rows.reduce((count, [, values]) => count + values.length, 0)})`;
+  elements.refereeEvidenceList.replaceChildren(...rows.map(([label, values]) => {
+    const item = document.createElement("li");
+    const title = document.createElement("strong");
+    const detail = document.createElement("code");
+    title.textContent = label;
+    detail.textContent = values.join("\n");
+    item.append(title, detail);
+    return item;
+  }));
+  elements.refereeEvidence.hidden = false;
 }
 
 function render(events, mtime) {
@@ -667,7 +746,7 @@ async function refreshLog() {
   state.currentReport = parseReport(report.text);
   state.network = network.networks;
   state.agentOids = oids;
-  render(data.events?.length ? presentActivityEvents(data.events) : parseLog(data.legacyText ?? ""), data.mtime);
+  render(data.events?.length ? presentActivityEvents(data.events) : presentLegacyActivityEvents(data.legacyText ?? "", data.run, state.agentOids), data.mtime);
 }
 
 async function refreshAllActivity() {
@@ -681,7 +760,7 @@ async function refreshAllActivity() {
   activityFilterSignature = "";
   state.activityEvents = [...data.runs].reverse().flatMap((run) => {
     if (run.events.length) return presentActivityEvents(run.events);
-    return parseLog(run.legacyText).map((event, index) => ({ ...event, id: `${run.runId}:legacy:${index}`, runId: run.runId, legacy: true }));
+    return presentLegacyActivityEvents(run.legacyText, run.runId, state.agentOids);
   });
   renderActivityGrid();
 }
@@ -752,6 +831,10 @@ if (elements) {
     state.chatAgent = "";
     state.chatMessages = [];
     state.chatStatus = "";
+    state.refereeMessages = [];
+    state.selectedRefereeMessage = -1;
+    state.refereeStatus = "";
+    state.refereeEvidence = null;
     renderChat();
     refreshLog();
     loadRuns();
@@ -777,31 +860,41 @@ if (elements) {
     event.preventDefault();
     const message = elements.chatInput.value.trim();
     if (!message || !state.selectedRun) return;
-    state.chatMessages.push({ role: "user", content: message });
-    state.selectedChatMessage = -1;
+    const referee = state.activeView === "referee-chat";
+    const messages = referee ? state.refereeMessages : state.chatMessages;
+    messages.push({ role: "user", content: message });
+    if (referee) state.selectedRefereeMessage = -1;
+    else state.selectedChatMessage = -1;
     elements.chatInput.value = "";
     elements.chatSend.disabled = true;
-    elements.chatSend.textContent = "Thinking…";
-    state.chatStatus = "Thinking…";
+    elements.chatSend.textContent = referee ? "Investigating…" : "Thinking…";
+    if (referee) state.refereeStatus = "Investigating…";
+    else state.chatStatus = "Thinking…";
     renderChat();
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch(referee ? "/api/referee-chat" : "/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ run: state.selectedRun, agent: state.chatAgent, message, history: state.chatMessages }),
+        body: JSON.stringify(referee
+          ? { run: state.selectedRun, message, history: messages }
+          : { run: state.selectedRun, agent: state.chatAgent, message, history: messages }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? "Chat request failed");
-      state.chatStatus = "Answering…";
+      if (referee) state.refereeStatus = "Answering…";
+      else state.chatStatus = "Answering…";
       renderChat();
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      state.chatMessages.push({ role: "assistant", content: body.answer });
+      messages.push({ role: "assistant", content: body.answer, evidence: referee ? body.evidence : undefined });
+      if (referee) state.refereeEvidence = body.evidence;
     } catch (error) {
-      state.chatStatus = "Answering…";
+      if (referee) state.refereeStatus = "Answering…";
+      else state.chatStatus = "Answering…";
       renderChat();
-      state.chatMessages.push({ role: "assistant", content: `Unable to answer: ${error instanceof Error ? error.message : String(error)}` });
+      messages.push({ role: "assistant", content: `Unable to answer: ${error instanceof Error ? error.message : String(error)}` });
     } finally {
-      state.chatStatus = "";
+      if (referee) state.refereeStatus = "";
+      else state.chatStatus = "";
       elements.chatSend.disabled = false;
       elements.chatSend.textContent = "Send";
       renderChat();

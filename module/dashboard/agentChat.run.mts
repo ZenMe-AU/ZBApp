@@ -206,6 +206,15 @@ async function observe(agent) {
 }
 
 const FAST = { effort: process.env.AGENT_EFFORT ?? "low", thinking: false };
+const agentActivity = (agent, event) => ({
+  source: "agent",
+  actorType: "agent",
+  actorProfileId: agent.profileId,
+  actorName: agent.name,
+  aggregateType: "agent",
+  aggregateId: agent.profileId,
+  ...event,
+});
 
 async function think(agent, state, sandbox) {
   try {
@@ -228,16 +237,11 @@ async function reflect(agent, others, say) {
   others.forEach((name) => agent.updated.add(name));
   await writeMemory(agent.memoryDirectory, agent.name, agent.memory);
   digest(agent, questions);
-  await say({
+  await say(agentActivity(agent, {
     eventType: "agent.memory_updated",
     kind: "memory",
-    source: "agent",
-    actorType: "agent",
-    actorProfileId: agent.profileId,
-    actorName: agent.name,
-    aggregateType: "memory",
     eventData: { subjects: others },
-  });
+  }));
 }
 
 async function act(agent, { method, path: p, body }, state) {
@@ -271,6 +275,8 @@ function eventForResult(agent, r, titles, names) {
     actorType: "agent",
     actorProfileId: agent.profileId,
     actorName: agent.name,
+    aggregateType: "agent",
+    aggregateId: agent.profileId,
     httpMethod: r.method,
     apiPath: r.path,
     httpStatus: typeof r.status === "number" ? r.status : null,
@@ -285,7 +291,7 @@ function eventForResult(agent, r, titles, names) {
   if (root === "question" && sub === "share")
     return { ...base, eventType: "question.shared", kind: "share", questionId: id, aggregateType: "question", aggregateId: id, eventData: { title: titles[id] ?? null, recipients: (r.body?.receiverIds ?? []).map((pid) => names[pid] ?? pid) } };
   if (root === "question" && sub === "answer")
-    return { ...base, eventType: "answer.sent", kind: "answer", questionId: id, answerId: r.response?.return?.id ?? null, aggregateType: "answer", aggregateId: r.response?.return?.id ?? null, eventData: { questionTitle: titles[id] ?? null, answer: r.body?.option ?? r.body?.answer ?? null } };
+    return { ...base, eventType: "answer.sent", kind: "answer", questionId: id, answerId: r.response?.return?.id ?? null, aggregateType: "question", aggregateId: id, eventData: { questionTitle: titles[id] ?? null, answer: r.body?.option ?? r.body?.answer ?? null } };
   if (root === "question" && !sub)
     return { ...base, eventType: "question.updated", kind: "edit", questionId: id, aggregateType: "question", aggregateId: id, eventData: { title: titles[id] ?? null, changes: r.body ?? {} } };
   if (r.path === "/sendFollowUpCmd") {
@@ -346,13 +352,13 @@ async function runAgent(agent, agents, others, sandbox, log, say, liveChat: Awai
 
     const titles = Object.fromEntries(state.questions.map((q) => [q.id, q.title ?? q.text]));
     const names = agent.realNamesById ?? Object.fromEntries(state.profiles.map((p) => [p.id, p.name]));
-    if (out.error) await say({ eventType: "llm.failed", kind: "error", source: "llm", actorType: "agent", actorProfileId: agent.profileId, actorName: agent.name, severity: "error", eventData: { message: out.error } });
-    if (out.note) await say({ eventType: "agent.thought", kind: "note", source: "agent", actorType: "agent", actorProfileId: agent.profileId, actorName: agent.name, eventData: { text: clip(out.note) } });
+    if (out.error) await say(agentActivity(agent, { eventType: "llm.failed", kind: "error", source: "llm", severity: "error", eventData: { message: out.error } }));
+    if (out.note) await say(agentActivity(agent, { eventType: "agent.thought", kind: "note", eventData: { text: clip(out.note) } }));
     if (result) await say(eventForResult(agent, result, titles, names));
-    for (const text of out.findings) await say({ eventType: "agent.finding", kind: "finding", source: "agent", actorType: "agent", actorProfileId: agent.profileId, actorName: agent.name, severity: /security|privacy|leak/i.test(text) ? "security" : "warning", eventData: { text } });
+    for (const text of out.findings) await say(agentActivity(agent, { eventType: "agent.finding", kind: "finding", severity: /security|privacy|leak/i.test(text) ? "security" : "warning", eventData: { text } }));
     agent.errors = out.error ? agent.errors + 1 : 0;
     if (agent.errors >= 3) {
-      await say({ eventType: "agent.stopped", kind: "error", source: "agent", actorType: "agent", actorProfileId: agent.profileId, actorName: agent.name, severity: "error", eventData: { reason: "Three consecutive LLM errors" } });
+      await say(agentActivity(agent, { eventType: "agent.stopped", kind: "error", severity: "error", eventData: { reason: "Three consecutive LLM errors" } }));
       break;
     }
     const learnedSomething = state.news.length > 0 || (typeof result?.status === "number" && result.status < 400);
@@ -367,7 +373,7 @@ export async function receiveDashboardMessage(agent, message: string, say) {
   agent.dashboardChat = agent.dashboardChat.slice(-15);
   agent.waiting = false;
   agent.idle = 0;
-  await say({ eventType: "dashboard.message_received", kind: "system", source: "dashboard", actorType: "agent", actorProfileId: agent.profileId, actorName: agent.name, eventData: { message } });
+  await say(agentActivity(agent, { eventType: "dashboard.message_received", kind: "system", source: "dashboard", eventData: { message } }));
   return observe(agent);
 }
 
@@ -382,7 +388,7 @@ export async function replyToDashboard(agent, context, sandbox: string, say): Pr
   );
   if (typeof result.answer !== "string" || !result.answer.trim()) throw new Error("Agent returned no dashboard reply");
   agent.dashboardChat.push({ role: "assistant", content: result.answer });
-  await say({ eventType: "dashboard.message_replied", kind: "system", source: "agent", actorType: "agent", actorProfileId: agent.profileId, actorName: agent.name, eventData: { message: result.answer } });
+  await say(agentActivity(agent, { eventType: "dashboard.message_replied", kind: "system", eventData: { message: result.answer } }));
   return result.answer;
 }
 
@@ -476,7 +482,7 @@ export async function runAgentChat() {
         visible = await list(agent, "/questions");
       } catch (err: unknown) {
         console.error(`[ERROR] Failed to list questions for ${agent.name}: ${err instanceof Error ? err.message : String(err)}`);
-        await say({ eventType: "api.failed", kind: "error", source: "agent", actorType: "agent", actorProfileId: agent.profileId, actorName: agent.name, severity: "error", httpMethod: "GET", apiPath: "/questions", eventData: { message: err instanceof Error ? err.message : String(err) } });
+        await say(agentActivity(agent, { eventType: "api.failed", kind: "error", severity: "error", httpMethod: "GET", apiPath: "/questions", eventData: { message: err instanceof Error ? err.message : String(err) } }));
       }
       const current = visible;
       if ("steps" in agent) agent.seenOthers = current.filter((question) => !question.isOwner).length;
@@ -492,7 +498,7 @@ export async function runAgentChat() {
         q.answers = await list(reader, `/question/${q.id}/answers`);
       } catch (err: unknown) {
         console.error(`[ERROR] Failed to list answers for [q:${q.id}] (${reader.name}): ${err instanceof Error ? err.message : String(err)}`);
-        await say({ eventType: "api.failed", kind: "error", source: "agent", actorType: "agent", actorProfileId: reader.profileId, actorName: reader.name, severity: "error", httpMethod: "GET", apiPath: `/question/${q.id}/answers`, questionId: q.id, aggregateType: "question", aggregateId: q.id, eventData: { message: err instanceof Error ? err.message : String(err) } });
+        await say(agentActivity(reader, { eventType: "api.failed", kind: "error", severity: "error", httpMethod: "GET", apiPath: `/question/${q.id}/answers`, questionId: q.id, aggregateType: "question", aggregateId: q.id, eventData: { message: err instanceof Error ? err.message : String(err) } }));
         q.answers = [];
       }
     }

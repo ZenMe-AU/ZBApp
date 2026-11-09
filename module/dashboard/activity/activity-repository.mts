@@ -4,10 +4,18 @@
  */
 
 import { connect, type Table } from "@lancedb/lancedb";
-import type { ActivityEvent } from "./activity-event.mjs";
+import { activityAggregate, type ActivityEvent } from "./activity-event.mjs";
 
 const TABLE_NAME = "activity_events";
 const quote = (value: string) => `'${value.replaceAll("'", "''")}'`;
+const parseEventData = (value: unknown) => {
+  try {
+    const parsed = JSON.parse(String(value || "{}"));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+};
 
 const toRow = (event: ActivityEvent) => ({
   ...event,
@@ -24,20 +32,23 @@ const toRow = (event: ActivityEvent) => ({
   eventData: JSON.stringify(event.eventData),
 });
 
-const fromRow = (row: Record<string, unknown>): ActivityEvent => ({
-  ...(row as unknown as ActivityEvent),
-  causationId: String(row.causationId || "") || null,
-  aggregateType: String(row.aggregateType || "") || null,
-  aggregateId: String(row.aggregateId || "") || null,
-  actorProfileId: String(row.actorProfileId || "") || null,
-  actorName: String(row.actorName || "") || null,
-  questionId: String(row.questionId || "") || null,
-  answerId: String(row.answerId || "") || null,
-  httpMethod: String(row.httpMethod || "") || null,
-  apiPath: String(row.apiPath || "") || null,
-  httpStatus: Number(row.httpStatus) < 0 ? null : Number(row.httpStatus),
-  eventData: JSON.parse(String(row.eventData || "{}")),
-});
+const fromRow = (row: Record<string, unknown>): ActivityEvent => {
+  const event = {
+    ...(row as unknown as ActivityEvent),
+    causationId: String(row.causationId || "") || null,
+    aggregateType: String(row.aggregateType || "") || null,
+    aggregateId: String(row.aggregateId || "") || null,
+    actorProfileId: String(row.actorProfileId || "") || null,
+    actorName: String(row.actorName || "") || null,
+    questionId: String(row.questionId || "") || null,
+    answerId: String(row.answerId || "") || null,
+    httpMethod: String(row.httpMethod || "") || null,
+    apiPath: String(row.apiPath || "") || null,
+    httpStatus: Number(row.httpStatus) < 0 ? null : Number(row.httpStatus),
+    eventData: parseEventData(row.eventData),
+  };
+  return { ...event, ...activityAggregate(event) };
+};
 
 export function createActivityRepository(databasePath: string) {
   const databasePromise = connect(databasePath);

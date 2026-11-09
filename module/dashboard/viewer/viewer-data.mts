@@ -27,7 +27,7 @@ export const VIEWS = {
   followups: { title: "Follow-ups", kinds: ["followup"] },
   findings: { title: "Findings", kinds: ["finding", "error"] },
   activity: { title: "Activity", kinds: null, reverse: true },
-  "judge-chat": { title: "Judge Chat", kinds: [] },
+  "referee-chat": { title: "Referee Chat", kinds: [] },
 };
 
 export function questionTopic(question) {
@@ -82,6 +82,13 @@ export const parseLog = (text) => {
     .map((event) => parseLine(event.trimEnd(), people))
     .filter(Boolean);
 };
+
+export const presentLegacyActivityEvents = (text, runId, agentOids = {}) =>
+  parseLog(text).map((event, index) => {
+    const aggregateType = event.questionId ? "question" : event.agent ? "agent" : "run";
+    const aggregateId = event.questionId ?? (event.agent ? agentOids[event.agent] ?? event.agent : runId);
+    return { ...event, id: `${runId}:legacy:${index}`, runId, aggregateType, aggregateId, legacy: true };
+  });
 
 const SECRET_KEY = /password|secret|token|authori[sz]ation|api[-_]?key|cookie|credential/i;
 const SECRET_VALUE = /\b(?:Bearer\s+\S+|eyJ[\w-]+\.[\w-]+\.[\w-]+|sk-[\w-]{12,})/g;

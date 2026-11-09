@@ -27,7 +27,7 @@ type ActivityReader = {
 };
 
 type ApiRequest = { actor: string; path: string };
-type JudgeContextOptions = {
+type RefereeContextOptions = {
   dashboardDir: string;
   repositoryDir: string;
   activity: ActivityReader;
@@ -54,7 +54,7 @@ const redactLine = (line: string) => {
 const searchTerms = (question: string) =>
   [...new Set(question.toLowerCase().match(/[\p{L}\p{N}_-]{3,}/gu) ?? [])].filter((term) => !["about", "from", "that", "this", "what", "when", "where", "which", "with", "전체", "모든", "과거", "이력"].includes(term));
 
-export function isAllowedJudgeApiPath(value: string) {
+export function isAllowedRefereeApiPath(value: string) {
   if (!value.startsWith("/") || value.includes("?") || value.includes("#") || value.includes("..")) return false;
   return API_PATHS.some((pattern) => pattern.test(value));
 }
@@ -110,8 +110,8 @@ async function searchRepository(repositoryDir: string, question: string) {
   return matches;
 }
 
-export function createJudgeContextBuilder({ dashboardDir, repositoryDir, activity, readApi }: JudgeContextOptions) {
-  return async function buildJudgeContext({ runId, question, apiRequests = [] }: { runId: string; question: string; apiRequests?: ApiRequest[] }) {
+export function createRefereeContextBuilder({ dashboardDir, repositoryDir, activity, readApi }: RefereeContextOptions) {
+  return async function buildRefereeContext({ runId, question, apiRequests = [] }: { runId: string; question: string; apiRequests?: ApiRequest[] }) {
     const selectedEvents = await activity.listByRun(runId);
     const activityRuns = [{ runId, events: redact(selectedEvents) }];
     if (ALL_HISTORY.test(question)) {
@@ -120,12 +120,12 @@ export function createJudgeContextBuilder({ dashboardDir, repositoryDir, activit
       }
     }
 
-    if (apiRequests.length > 20) throw new Error("Judge API request limit exceeded");
+    if (apiRequests.length > 20) throw new Error("Referee API request limit exceeded");
     const api = [];
     for (const request of apiRequests) {
       if (!NAMES.includes(request.actor)) throw new Error(`Unknown API actor: ${request.actor}`);
-      if (!isAllowedJudgeApiPath(request.path)) throw new Error(`Judge API path is not allowed: ${request.path}`);
-      if (!readApi) throw new Error("Judge API reader is not configured");
+      if (!isAllowedRefereeApiPath(request.path)) throw new Error(`Referee API path is not allowed: ${request.path}`);
+      if (!readApi) throw new Error("Referee API reader is not configured");
       api.push({ ...request, data: redact(await readApi(request.actor, request.path)) });
     }
 
