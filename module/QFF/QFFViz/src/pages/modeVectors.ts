@@ -4,6 +4,8 @@
  */
 
 import Plotly, { type Data, type PlotlyHTMLElement } from "plotly.js-dist-min";
+import * as echarts from "echarts";
+import "echarts-gl";
 import { createGrid, type GridApi } from "ag-grid-community";
 import { store } from "../data/store";
 import { esc, openInfo, q } from "../shared/dom";
@@ -24,45 +26,94 @@ interface VectorRow {
   gap: number | null;
 }
 
+interface ECharts3DPoint {
+  name: string;
+  value: number[];
+  id: string;
+  weight: number | null;
+  issue: string | null;
+  itemStyle: { color: string; borderColor: string; borderWidth: number };
+}
+
+interface ECharts3DSeries {
+  type: "scatter3D";
+  name: string;
+  symbol: "triangle" | "circle";
+  symbolSize: (_value: unknown, params: { dataIndex: number }) => number;
+  data: ECharts3DPoint[];
+}
+
+interface ECharts3DOption {
+  animation: boolean;
+  tooltip: { formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => string };
+  xAxis3D: ECharts3DAxis;
+  yAxis3D: ECharts3DAxis;
+  zAxis3D: ECharts3DAxis;
+  grid3D: { viewControl: { projection: "perspective"; distance: number; zoomSensitivity: number } };
+  series: ECharts3DSeries[];
+}
+
+interface ECharts3DAxis {
+  type: "value";
+  min: number;
+  max: number;
+  name: "";
+  axisLabel: { show: false };
+  axisTick: { show: false };
+}
+
+const vectorFilterFields: { field: keyof VectorRow; label: string }[] = [
+  { field: "mode", label: "Mode" },
+  { field: "type", label: "Type" },
+  { field: "text", label: "Submode / mode text" },
+  { field: "weight", label: "Weight" },
+  { field: "parentCosine", label: "Parent cosine" },
+  { field: "siblingCosine", label: "Sibling cosine" },
+  { field: "rival", label: "Rival mode" },
+  { field: "gap", label: "Gap" },
+];
+
 const help = `
   <p>Triangles are current weighted mode averages; circles are independently embedded submodes. Colours group each parent with its submodes. Zero-weight submodes are visible with smaller circles but do not affect averages.</p>
   <p>Averages are derived offline from the current draft. Nothing is saved. Missing/stale embeddings are listed, not fabricated. A parent whose saved average needs recalculation is marked “preview average”.</p>
   <h4>Projection versus alignment</h4>
-  <p>UMAP (cosine, seed 42) highlights local neighbourhoods; global distances and apparent outliers can be misleading. PCA is linear and reports retained variance. Both use all valid points; hiding points does not refit or move the layout.</p>
+  <p>UMAP (cosine, seed 42) and t-SNE (unit-normalized Euclidean, seed 42) highlight local neighbourhoods; global distances and apparent outliers can be misleading. t-SNE uses 500 iterations and adapts perplexity to the number of points. PCA is linear and reports retained variance. All projections use all valid points; hiding points does not refit or move the layout.</p>
   <p>Modes → Heatmap is a separate page for full-dimensional comparison. It compares each submode with every mode average and includes the alignment table. Hover for the exact cosine.</p>
   <p><b>Sibling cosine</b> compares a submode with the weighted parent average <em>excluding itself</em>, reducing self-inclusion bias. <b>Parent cosine</b> includes itself. <b>Rival</b> is its nearest other parent (including hidden modes); <b>gap</b> = sibling cosine − rival cosine. A negative gap suggests cross-mode ambiguity, not proof of incorrect wording. The table is sorted by weakest sibling alignment.</p>
   <h4>Testing alternative wording</h4>
   <p>Compare “attend” with “attend gallery” and “attend venue” as separately embedded submodes. Add candidates at weight zero in Modes → Edit, Save and Refresh embeddings; they can be evaluated without moving the parent average. Refresh automatically recalculates averages. Use sibling cosine, rival gap and keyword scores before assigning weight. Only the exact submode text is embedded, without the parent mode prefix.</p>
-  <p>On 3D, rotate by dragging; wheel zooms and right-drag pans. Expand Filters for linked mode/submode choices and quick search. Show data reveals the supporting grid below the plot; its column filters also control the plot and remain active while the table is hidden. Clear filters restores all points.</p>
+  <p>On 3D, rotate by dragging; normal wheel scrolls the page and Ctrl+wheel zooms. The filter panel applies to both the plot and supporting grid; grid column filters work the same way. Show data reveals the grid below the plot. Clear filters restores all points.</p>
   <p>Click a point to select its grid row; Ctrl-click (or Command-click) toggles additional selections. Selecting grid rows highlights the same points. Filtering does not clear selection; selected points hidden by filters reappear highlighted when shown again.</p>
   <p>On Heatmap, mode checkboxes hide/show whole groups; submode choices are retained while their parent is hidden. Show all restores every point.</p>`;
 
 export const render3d = (root: HTMLElement): (() => void) => render(root, false);
+export const render3dE = (root: HTMLElement): (() => void) => render(root, false, "echarts");
 export const renderHeatmap = (root: HTMLElement): (() => void) => render(root, true);
 
-function render(root: HTMLElement, heatmap: boolean): () => void {
-  const title = heatmap ? "Heatmap" : "3D";
+function render(root: HTMLElement, heatmap: boolean, plotEngine: "plotly" | "echarts" = "plotly"): () => void {
+  const title = heatmap ? "Heatmap" : plotEngine === "echarts" ? "3DE" : "3D";
   if (!heatmap) root.classList.add("mode-grid-page");
   root.innerHTML = `
     <div class="toolbar">
       <h2>Modes: ${title} <button class="info-btn" aria-label="How to read mode ${title.toLowerCase()}">ⓘ</button></h2>
-      ${heatmap ? "" : '<label>Projection <select class="proj"><option value="umap">UMAP</option><option value="pca">PCA</option></select></label>'}
-      <button class="show-all">${heatmap ? "Show all" : "Clear filters"}</button>${heatmap ? "" : '<label><input type="checkbox" class="show-data" /> Show data</label><span class="hint">▲ Modes · ● Submodes</span><span class="hint selection-info" role="status"></span>'}
+      ${heatmap ? "" : '<label>Projection <select class="proj"><option value="umap">UMAP</option><option value="pca">PCA</option><option value="tsne">t-SNE</option></select></label>'}
+      <button class="show-all">${heatmap ? "Show all" : "Clear filters"}</button>${heatmap ? "" : '<label><input type="checkbox" class="show-data" /> Show data</label><label>Quick search <input class="filter-search" type="search" placeholder="Filter plot and grid..." /></label><span class="hint">▲ Modes · ● Submodes</span><span class="hint selection-info" role="status"></span>'}
     </div>
     <p class="hint projection-info" role="status"></p>
-    ${heatmap ? "" : `<details class="vector-filters"><summary>Filters <span class="filter-count"></span></summary>
-      <div class="toolbar"><label>Mode <select class="filter-mode"><option value="">All modes</option></select></label>
-      <label>Submode <select class="filter-submode"><option value="">All submodes</option></select></label>
-      <label>Search <input class="filter-search" type="search" placeholder="Filter grid and plot..." /></label></div>
-      <p class="hint">Submode choices depend on Mode. Show data to use column filters. All filters remain active when collapsed or hidden.</p>
-    </details><div class="vector-warnings"></div>`}
-    <div class="${heatmap ? "split mode-vectors" : "vector-plot-wrap"}">
+    ${heatmap ? "" : '<div class="vector-warnings"></div>'}
+    <div class="${heatmap ? "split mode-vectors" : "vector-plot-wrap is-filter-open"}">
       <div class="plot"></div>
+      ${heatmap ? "" : `<aside class="vector-filter-panel" aria-label="Vector filters">
+        <label class="sr-only" for="vector-filter-search">Search filter attributes</label>
+        <input id="vector-filter-search" class="vector-filter-search" type="search" placeholder="Search filters..." />
+        <div class="vector-filter-fields"></div>
+      </aside><button class="vector-filter-toggle" type="button" aria-expanded="true">⌁ Filters</button>`}
       ${heatmap ? '<aside class="panel"><div class="vector-warnings"></div><h3>Visibility</h3><div class="visibility"></div><h3>Full-dimensional alignment</h3><p class="hint">Weakest sibling cosine first. Negative gap: closer to another mode. Hover scores for details.</p><div class="alignment"></div></aside>' : ""}
     </div>
     ${heatmap ? "" : '<section class="vector-data" hidden><h3>Vector data</h3><p class="hint">Filtered rows are shown in the plot. Click rows or use checkboxes to select points; Ctrl-click adds or removes a selection.</p><div class="vector-grid"></div></section>'}`;
   q(root, ".info-btn").addEventListener("click", () => openInfo(`Mode ${title.toLowerCase()} and outliers`, help));
   const plot = q(root, ".plot");
+  const echartsChart = plotEngine === "echarts" ? echarts.init(plot) : undefined;
   let geometry = modeGeometry(store.modes!.data);
   const hiddenModes = new Set<string>();
   const hiddenSubmodes = new Set<string>();
@@ -72,12 +123,43 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
   let queued = false;
   let grid: GridApi<VectorRow> | undefined;
   const selectedIds = new Set<string>();
+  const filterSelections = new Map<keyof VectorRow, Set<string>>();
+  const filterText = new Map<keyof VectorRow, string>();
   let plotEventsAttached = false;
   let plotGesture: { additive: boolean; handled: boolean } | undefined;
   const beginPlotGesture = (event: PointerEvent) => {
     plotGesture = { additive: event.ctrlKey || event.metaKey, handled: event.button !== 0 };
   };
   if (!heatmap) plot.addEventListener("pointerdown", beginPlotGesture, true);
+  const zoomPlot = (event: WheelEvent) => {
+    if (!event.ctrlKey) return;
+    event.preventDefault();
+    const layout = (plot as PlotlyHTMLElement & {
+      layout?: { scene?: { camera?: { eye?: { x?: number; y?: number; z?: number } } } };
+    }).layout;
+    const eye = layout?.scene?.camera?.eye ?? { x: 1.25, y: 1.25, z: 1.25 };
+    const x = eye.x ?? 1.25;
+    const y = eye.y ?? 1.25;
+    const z = eye.z ?? 1.25;
+    const distance = Math.hypot(x, y, z);
+    const targetDistance = Math.min(10, Math.max(0.1, distance * (event.deltaY > 0 ? 1.05 : 0.95)));
+    const scale = targetDistance / distance;
+    void Plotly.relayout(plot, { "scene.camera.eye": { x: x * scale, y: y * scale, z: z * scale } });
+  };
+  const passPageScroll = (event: WheelEvent) => {
+    if (!event.ctrlKey) event.stopImmediatePropagation();
+  };
+  if (!heatmap) plot.addEventListener("wheel", passPageScroll, true);
+  if (!heatmap && !echartsChart) plot.addEventListener("wheel", zoomPlot, { passive: false });
+  let echartsDistance = 160;
+  const zoomEcharts = (event: WheelEvent) => {
+    if (!event.ctrlKey || !echartsChart) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    echartsDistance = Math.min(500, Math.max(20, echartsDistance * (event.deltaY > 0 ? 1.05 : 0.95)));
+    echartsChart.setOption({ grid3D: { viewControl: { distance: echartsDistance } } });
+  };
+  if (!heatmap && echartsChart) plot.addEventListener("wheel", zoomEcharts, { passive: false });
   const score = (value: number | null | undefined) => (value == null ? "—" : value.toFixed(3));
   const label = (p: ModePoint) => (p.submode === null ? `${p.mode} (mode)` : `${p.mode} / ${p.text}`);
   const gridRows = (): VectorRow[] => geometry.points.map((point) => {
@@ -89,16 +171,6 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
       rival: alignment?.rival?.mode ?? "", gap: alignment?.margin ?? null,
     };
   });
-  const updateSubmodeChoices = () => {
-    const mode = q<HTMLSelectElement>(root, ".filter-mode").value;
-    const select = q<HTMLSelectElement>(root, ".filter-submode");
-    const previous = select.value;
-    const children = geometry.points.filter((p) => p.submode !== null && (!mode || p.mode === mode));
-    select.innerHTML = '<option value="">All submodes</option>' +
-      children.map((p) => `<option value="${esc(p.id)}">${esc(mode ? p.text : label(p))}</option>`).join("");
-    select.value = children.some((p) => p.id === previous) ? previous : "";
-  };
-
   const controls = () => {
     if (heatmap) q(root, ".visibility").innerHTML = Object.entries(store.modes!.data.modes)
       .map(
@@ -117,19 +189,78 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
       </details>`
       )
       .join("");
-    else {
-      const select = q<HTMLSelectElement>(root, ".filter-mode");
-      const previous = select.value;
-      select.innerHTML = '<option value="">All modes</option>' +
-        Object.keys(store.modes!.data.modes).map((name) => `<option value="${esc(name)}">${esc(name)}</option>`).join("");
-      select.value = Object.hasOwn(store.modes!.data.modes, previous) ? previous : "";
-      updateSubmodeChoices();
-    }
     const preview = geometry.points.filter((p) => p.submode === null && p.issue).map((p) => p.mode);
     q(root, ".vector-warnings").innerHTML = `
       ${store.areModesDirty ? '<p class="hint">Showing unsaved mode draft.</p>' : ""}
       ${preview.length ? `<p class="hint">Preview averages: ${esc(preview.join(", "))}. Recalculate in Edit to persist.</p>` : ""}
       ${geometry.warnings.length ? `<details open><summary class="mode-error">Unavailable vectors (${geometry.warnings.length})</summary><ul>${geometry.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></details>` : ""}`;
+  };
+
+  const renderFilterFields = () => {
+    const rows = gridRows();
+    const fields = vectorFilterFields.map(({ field, label: fieldLabel }) => {
+      const values = [...new Set(rows.map((row) => String(row[field] ?? "")))].sort((a, b) => a.localeCompare(b));
+      const selected = filterSelections.get(field);
+      if (selected) {
+        const valid = new Set([...selected].filter((value) => values.includes(value)));
+        if (valid.size === values.length) filterSelections.delete(field);
+        else filterSelections.set(field, valid);
+      }
+      const section = document.createElement("details");
+      section.className = "vector-filter-field";
+      section.dataset.filterField = `${fieldLabel} ${field}`.toLowerCase();
+      const summary = document.createElement("summary");
+      summary.textContent = fieldLabel;
+      const body = document.createElement("div");
+      body.className = "vector-filter-body";
+      if (values.length > 20) {
+        const input = document.createElement("input");
+        input.type = "search";
+        input.placeholder = `Filter ${fieldLabel.toLowerCase()} values...`;
+        input.value = filterText.get(field) ?? "";
+        input.addEventListener("input", () => {
+          const query = input.value.trim().toLowerCase();
+          if (query) filterText.set(field, query);
+          else filterText.delete(field);
+          grid?.onFilterChanged();
+        });
+        body.append(input);
+      } else {
+        const selectedValues = new Set(filterSelections.get(field) ?? values);
+        const options: HTMLInputElement[] = [];
+        const addOption = (text: string, value: string, selectAll = false) => {
+          const label = document.createElement("label");
+          label.className = "vector-filter-value";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = selectAll || selectedValues.has(value);
+          if (selectAll) checkbox.className = "select-all";
+          else options.push(checkbox);
+          checkbox.addEventListener("change", () => {
+            if (selectAll) options.forEach((option) => { option.checked = checkbox.checked; });
+            else {
+              const all = body.querySelector<HTMLInputElement>(".select-all")!;
+              all.checked = options.every((option) => option.checked);
+              all.indeterminate = !all.checked && options.some((option) => option.checked);
+            }
+            const checked = new Set(values.filter((_, index) => options[index].checked));
+            if (checked.size === values.length) filterSelections.delete(field);
+            else filterSelections.set(field, checked);
+            grid?.onFilterChanged();
+          });
+          label.append(checkbox, document.createTextNode(text || "(empty)"));
+          body.append(label);
+        };
+        addOption("(Select All)", "", true);
+        values.forEach((value) => addOption(value, value));
+        const all = body.querySelector<HTMLInputElement>(".select-all")!;
+        all.checked = selectedValues.size === values.length;
+        all.indeterminate = !all.checked && selectedValues.size > 0;
+      }
+      section.append(summary, body);
+      return section;
+    });
+    q(root, ".vector-filter-fields").replaceChildren(...fields);
   };
 
   const draw = async () => {
@@ -145,7 +276,7 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
       const visible = heatmap ? visibleModePoints(geometry.points, hiddenModes, hiddenSubmodes) :
         geometry.points.filter((p) => filteredIds.has(p.id));
       if (!heatmap) {
-        q(root, ".filter-count").textContent = `(${visible.length} of ${geometry.points.length} points)`;
+        q<HTMLButtonElement>(root, ".vector-filter-toggle").textContent = `⌁ Filters (${visible.length}/${geometry.points.length})`;
         q(root, ".selection-info").textContent = `${selectedIds.size} selected`;
       }
       const visibleIds = new Set(visible.map((p) => p.id));
@@ -163,6 +294,7 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
             )
             .join("")}</tbody></table>`;
       let traces: Data[] = [];
+      const echartsSeries: ECharts3DSeries[] = [];
       let info = "";
       let axisRanges: [number, number][] | undefined;
       if (heatmap) {
@@ -213,6 +345,31 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
             const members = group.filter((p) => (p.submode === null) === parent);
             if (!members.length) continue;
             const coords = members.map((p) => projection.coords[index.get(p.id)!]);
+            if (echartsChart) {
+              echartsSeries.push({
+                type: "scatter3D",
+                name,
+                symbol: parent ? "triangle" : "circle",
+                symbolSize: (_value, params) => {
+                  const point = members[params.dataIndex];
+                  return parent ? (selectedIds.has(point.id) ? 13 : 10) :
+                    selectedIds.has(point.id) ? 10 : point.weight === 0 ? 4 : 6;
+                },
+                data: members.map((point, i) => ({
+                  name: label(point),
+                  value: coords[i],
+                  id: point.id,
+                  weight: point.weight,
+                  issue: point.issue,
+                  itemStyle: {
+                    color: modeColor(name),
+                    borderColor: selectedIds.has(point.id) ? "#1f2933" : modeColor(name),
+                    borderWidth: selectedIds.has(point.id) ? 2 : 0,
+                  },
+                })),
+              });
+              continue;
+            }
             traces.push({
               type: "scatter3d",
               name,
@@ -239,38 +396,59 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
         }
       }
       q(root, ".projection-info").textContent = `${visible.length}/${geometry.points.length} vectors visible. ${info}`;
-      await Plotly.react(
-        plot,
-        traces,
-        {
-          uirevision: `${heatmap ? "heatmap" : q<HTMLSelectElement>(root, ".proj").value}`,
-          margin: heatmap ? { l: 10, r: 10, t: 10, b: 40 } : { l: 0, r: 0, t: 0, b: 0 },
-          scene: {
-            xaxis: { title: { text: "" }, range: axisRanges?.[0] },
-            yaxis: { title: { text: "" }, range: axisRanges?.[1] },
-            zaxis: { title: { text: "" }, range: axisRanges?.[2] },
+      if (echartsChart && axisRanges) {
+        const option: ECharts3DOption = {
+          animation: false,
+          tooltip: {
+            formatter: (params) => {
+              const point = (Array.isArray(params) ? params[0] : params).data as {
+                name: string; weight: number | null; issue: string | null;
+              };
+              return `<b>${esc(point.name)}</b>${point.weight !== null ? `<br>Weight: ${point.weight}` : ""}${point.issue ? "<br>Preview average" : ""}`;
+            },
           },
-          yaxis: {
-            automargin: true,
-            tickmode: heatmap ? "array" : "auto",
-            tickvals: heatmap ? visible.filter((p) => p.submode !== null).map((p) => p.id) : undefined,
-            ticktext: heatmap
-              ? visible
-                  .filter((p) => p.submode !== null)
-                  .map((p) => {
-                    const text = label(p);
-                    return esc(text.length > 48 ? `${text.slice(0, 45)}...` : text);
-                  })
-              : undefined,
+          xAxis3D: { type: "value", min: axisRanges[0][0], max: axisRanges[0][1], name: "", axisLabel: { show: false }, axisTick: { show: false } },
+          yAxis3D: { type: "value", min: axisRanges[1][0], max: axisRanges[1][1], name: "", axisLabel: { show: false }, axisTick: { show: false } },
+          zAxis3D: { type: "value", min: axisRanges[2][0], max: axisRanges[2][1], name: "", axisLabel: { show: false }, axisTick: { show: false } },
+          grid3D: { viewControl: { projection: "perspective", distance: echartsDistance, zoomSensitivity: 0 } },
+          series: echartsSeries,
+        };
+        // ECharts GL currently ships no TypeScript option declarations.
+        echartsChart.setOption(option as unknown as echarts.EChartsOption, { replaceMerge: ["series"] });
+      } else {
+        await Plotly.react(
+          plot,
+          traces,
+          {
+            uirevision: `${heatmap ? "heatmap" : q<HTMLSelectElement>(root, ".proj").value}`,
+            margin: heatmap ? { l: 10, r: 10, t: 10, b: 40 } : { l: 0, r: 0, t: 0, b: 0 },
+            scene: {
+              xaxis: { title: { text: "" }, range: axisRanges?.[0] },
+              yaxis: { title: { text: "" }, range: axisRanges?.[1] },
+              zaxis: { title: { text: "" }, range: axisRanges?.[2] },
+            },
+            yaxis: {
+              automargin: true,
+              tickmode: heatmap ? "array" : "auto",
+              tickvals: heatmap ? visible.filter((p) => p.submode !== null).map((p) => p.id) : undefined,
+              ticktext: heatmap
+                ? visible
+                    .filter((p) => p.submode !== null)
+                    .map((p) => {
+                      const text = label(p);
+                      return esc(text.length > 48 ? `${text.slice(0, 45)}...` : text);
+                    })
+                : undefined,
+            },
+            xaxis: { automargin: true },
+            annotations: !traces.length
+              ? [{ text: "No visible valid vectors. Show all or refresh missing embeddings.", showarrow: false, xref: "paper", yref: "paper", x: 0.5, y: 0.5 }]
+              : [],
           },
-          xaxis: { automargin: true },
-          annotations: !traces.length
-            ? [{ text: "No visible valid vectors. Show all or refresh missing embeddings.", showarrow: false, xref: "paper", yref: "paper", x: 0.5, y: 0.5 }]
-            : [],
-        },
-        { responsive: true, displaylogo: false }
-      );
-      if (!heatmap && !plotEventsAttached && !disposed) {
+          { responsive: true, displaylogo: false, scrollZoom: false }
+        );
+      }
+      if (!heatmap && !echartsChart && !plotEventsAttached && !disposed) {
         (plot as PlotlyHTMLElement).on("plotly_click", (event) => {
           const data = event.points[0]?.customdata;
           const id: unknown = Array.isArray(data) ? data[0] : undefined;
@@ -319,11 +497,13 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
     hiddenModes.clear();
     hiddenSubmodes.clear();
     if (grid) {
-      q<HTMLSelectElement>(root, ".filter-mode").value = "";
-      q<HTMLSelectElement>(root, ".filter-submode").value = "";
       q<HTMLInputElement>(root, ".filter-search").value = "";
+      q<HTMLInputElement>(root, ".vector-filter-search").value = "";
+      filterSelections.clear();
+      filterText.clear();
       grid.setGridOption("quickFilterText", "");
       grid.setFilterModel(null);
+      renderFilterFields();
       grid.onFilterChanged();
     }
     controls();
@@ -334,12 +514,15 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
     projections = new Map();
     controls();
     grid?.setGridOption("rowData", gridRows());
+    if (!heatmap) renderFilterFields();
     grid?.onFilterChanged();
     void draw();
   };
   store.addEventListener("modes", refresh);
   const resize = new ResizeObserver(() => {
-    if (!disposed && (plot as PlotlyHTMLElement).data) Plotly.Plots.resize(plot);
+    if (disposed) return;
+    if (echartsChart) echartsChart.resize();
+    else if ((plot as PlotlyHTMLElement).data) Plotly.Plots.resize(plot);
   });
   resize.observe(plot);
   controls();
@@ -360,14 +543,11 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
         })),
         { field: "rival", filter: "agTextColumnFilter" },
       ],
-      isExternalFilterPresent: () => !!(q<HTMLSelectElement>(root, ".filter-mode").value || q<HTMLSelectElement>(root, ".filter-submode").value),
+      isExternalFilterPresent: () => filterSelections.size > 0 || filterText.size > 0,
       doesExternalFilterPass: (node) => {
         if (!node.data) return false;
-        const mode = q<HTMLSelectElement>(root, ".filter-mode").value;
-        const submode = q<HTMLSelectElement>(root, ".filter-submode").value;
-        const child = geometry.points.find((p) => p.id === submode);
-        return (!mode || node.data.mode === mode) &&
-          (!submode || node.data.id === submode || (node.data.type === "Mode" && node.data.mode === child?.mode));
+        return [...filterSelections].every(([field, selected]) => selected.has(String(node.data![field] ?? ""))) &&
+          [...filterText].every(([field, query]) => String(node.data![field] ?? "").toLowerCase().includes(query));
       },
       onFilterChanged: () => { void draw(); },
       onSelectionChanged: (event) => {
@@ -376,10 +556,35 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
         void draw();
       },
     });
-    q(root, ".filter-mode").addEventListener("change", () => { updateSubmodeChoices(); grid!.onFilterChanged(); });
-    q(root, ".filter-submode").addEventListener("change", () => grid!.onFilterChanged());
+    echartsChart?.on("click", (event) => {
+      if (event.seriesType !== "scatter3D") return;
+      const id = (event.data as { id?: unknown } | undefined)?.id;
+      if (typeof id !== "string" || !grid) return;
+      const node = grid.getRowNode(id);
+      if (!node) return;
+      const multiple = plotGesture?.additive ?? false;
+      if (plotGesture) plotGesture.handled = true;
+      node.setSelected(multiple ? !node.isSelected() : true, !multiple);
+      if (!q<HTMLElement>(root, ".vector-data").hidden) grid.ensureNodeVisible(node);
+    });
     q<HTMLInputElement>(root, ".filter-search").addEventListener("input", (event) =>
       grid!.setGridOption("quickFilterText", (event.target as HTMLInputElement).value));
+    q<HTMLInputElement>(root, ".vector-filter-search").addEventListener("input", (event) => {
+      const query = (event.target as HTMLInputElement).value.trim().toLowerCase();
+      for (const section of q(root, ".vector-filter-fields").children) {
+        (section as HTMLElement).hidden = Boolean(query) && !(section as HTMLElement).dataset.filterField!.includes(query);
+      }
+    });
+    q<HTMLButtonElement>(root, ".vector-filter-toggle").addEventListener("click", (event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      const open = button.getAttribute("aria-expanded") !== "true";
+      button.setAttribute("aria-expanded", String(open));
+      q<HTMLElement>(root, ".vector-filter-panel").hidden = !open;
+      q<HTMLElement>(root, ".vector-plot-wrap").classList.toggle("is-filter-open", open);
+      if (echartsChart) echartsChart.resize();
+      else void Plotly.Plots.resize(plot);
+    });
+    renderFilterFields();
     q<HTMLInputElement>(root, ".show-data").addEventListener("change", (event) => {
       q<HTMLElement>(root, ".vector-data").hidden = !(event.target as HTMLInputElement).checked;
     });
@@ -391,7 +596,13 @@ function render(root: HTMLElement, heatmap: boolean): () => void {
     store.removeEventListener("modes", refresh);
     grid?.destroy();
     plot.removeEventListener("pointerdown", beginPlotGesture, true);
+    plot.removeEventListener("wheel", passPageScroll, true);
+    plot.removeEventListener("wheel", zoomPlot);
+    plot.removeEventListener("wheel", zoomEcharts);
     root.classList.remove("mode-grid-page");
-    if (!drawing) Plotly.purge(plot);
+    if (!drawing) {
+      if (echartsChart) echartsChart.dispose();
+      else Plotly.purge(plot);
+    }
   };
 }
