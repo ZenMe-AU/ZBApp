@@ -4,12 +4,12 @@
  */
 
 import { test, expect } from "vitest";
-import answerHandler from "../../handler/answerHandler.mjs";
+import { GetAnswerListByQuestionId } from "../../handler/answer/GetAnswerListByQuestionId.mjs";
 import { invokeHandler } from "./functionAppMock.mjs";
 
 const checkAnswer = (profileIdLookup, questionIdLookup) => {
   test.each(getAnswerTestResult())("There should be $count answers for question $questionId.", async (r) => {
-    const response = await invokeHandler(answerHandler.GetAnswerListByQuestionId, {
+    const response = await invokeHandler(GetAnswerListByQuestionId, {
       userData: {
         profileId: await profileIdLookup.getProfileId(r.userId),
       },
