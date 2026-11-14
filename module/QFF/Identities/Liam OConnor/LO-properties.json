@@ -349,5 +349,77 @@
           "persona": "outdoor activity friend",
           "affinity": -0.8
         }]
+    }, {
+      "keyword": "loyalty",
+      "definition": "Being dependable and standing by teammates, friends, or a team.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.7
+        }]
+    }, {
+      "keyword": "humour",
+      "definition": "The ability to appreciate or share amusement in a friendly way.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.6
+        }]
+    }, {
+      "keyword": "sportsmanship",
+      "definition": "Playing fairly and treating teammates, opponents, and officials with respect.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.9
+        }]
+    }, {
+      "keyword": "curiosity",
+      "definition": "An interest in discovering local places, culture, and new experiences.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.8
+        }]
+    }, {
+      "keyword": "authenticity",
+      "definition": "Being sincere and genuine rather than presenting a false or performative self.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.8
+        }]
+    }, {
+      "keyword": "reliability",
+      "definition": "Following through on plans and commitments consistently.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.9
+        }]
+    }, {
+      "keyword": "curiosity",
+      "definition": "An interest in exploring and learning about places, activities, and nature.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.6
+        }]
+    }, {
+      "keyword": "consideration",
+      "definition": "Taking other people’s comfort, needs, and limits into account.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.8
+        }]
     }]
 }

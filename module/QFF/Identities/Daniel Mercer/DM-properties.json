@@ -235,5 +235,104 @@
           "persona": "outdoor activity friend",
           "affinity": 0.8
         }]
+    }, {
+      "keyword": "competence",
+      "definition": "Demonstrating the knowledge and ability to handle technical work effectively.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.9
+        }]
+    }, {
+      "keyword": "curiosity",
+      "definition": "A desire to ask questions and explore ideas to gain understanding.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.9
+        }]
+    }, {
+      "keyword": "openness",
+      "definition": "Willingness to consider different ideas, evidence, and perspectives.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.8
+        }]
+    }, {
+      "keyword": "ethics",
+      "definition": "Principles used to consider what is right, responsible, and fair.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.8
+        }]
+    }, {
+      "keyword": "faith in daily life",
+      "definition": "Putting religious trust and convictions into practice in everyday choices and actions.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.9
+        }]
+    }, {
+      "keyword": "honesty",
+      "definition": "Communicating truthfully and accurately, including when it is difficult.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.9
+        }]
+    }, {
+      "keyword": "humility",
+      "definition": "Recognizing one’s limitations and valuing others without seeking superiority.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.9
+        }]
+    }, {
+      "keyword": "respectful disagreement",
+      "definition": "Discussing different views without insults, contempt, or dismissiveness.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.9
+        }]
+    }, {
+      "keyword": "reliability",
+      "definition": "Following through on plans and commitments consistently.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.8
+        }]
+    }, {
+      "keyword": "curiosity",
+      "definition": "Interest in exploring, noticing, and learning about places and nature.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.7
+        }]
+    }, {
+      "keyword": "consideration",
+      "definition": "Taking other people’s comfort, needs, and limits into account.",
+      "kind": "value",
+      "embedding": null,
+      "personas": [{
+          "persona": "",
+          "affinity": 0.8
+        }]
     }]
 }
