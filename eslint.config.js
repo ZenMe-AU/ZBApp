@@ -1,5 +1,5 @@
 /**
- * @license SPDX-FileCopyrightText: © 2025 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
  * @license SPDX-License-Identifier: MIT
  */
 
@@ -8,12 +8,19 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import licenseheader from "eslint-plugin-license-header";
 import globals from "globals";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import stylistic from "@stylistic/eslint-plugin";
+import jsonc from "eslint-plugin-jsonc";
 
 export default [
+  {
+    ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/node_modules/**"],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  eslintPluginPrettierRecommended,
+  {
+    ...stylistic.configs.recommended,
+    files: ["**/*.{ts,tsx,mts,cts}", "**/*.{js,jsx,mjs,cjs}"],
+  },
   {
     files: ["**/*.{ts,tsx,mts,cts}", "**/*.{js,jsx,mjs,cjs}"],
     languageOptions: {
@@ -27,6 +34,8 @@ export default [
       licenseheader,
     },
     rules: {
+      "@stylistic/quotes": ["error", "double"],
+      "@stylistic/semi": ["error", "always"],
       "@typescript-eslint/no-require-imports": "warn",
       "@typescript-eslint/no-explicit-any": ["warn", { fixToUnknown: true, ignoreRestArgs: false }],
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
@@ -40,19 +49,22 @@ export default [
         ],
       ],
       "linebreak-style": "off", // Do not check line endings
-      "prettier/prettier": [
-        "warn",
-        {
-          printWidth: 160,
-          trailingComma: "es5",
-          endOfLine: "auto",
-        },
-      ],
     },
     linterOptions: {
       reportUnusedDisableDirectives: true,
     },
     settings: {},
+  },
+  {
+    files: ["**/*.json"],
+    plugins: {
+      jsonc,
+    },
+    language: "jsonc/json",
+    rules: {
+      "jsonc/array-bracket-newline": ["error", "never"],
+      "jsonc/array-element-newline": ["error", "never"],
+    },
   },
   {
     files: ["**/*.cjs", "**/*.cts"],

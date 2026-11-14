@@ -40,7 +40,7 @@ export function render(root: HTMLElement): () => void {
     <div class="mode-editor"></div>`;
   q(root, '.info-btn').addEventListener('click', () => openInfo('Editing modes', `
     <p>Edit modes and their weighted submodes. Global Save and Reload include mode edits and identity files. Draft edits survive menu navigation; View unsaved shows pending changes.</p>
-    <p>Text changes clear embeddings. Save and refresh embeddings; mode averages are calculated automatically afterwards. Weight changes and deletions need only saving and offline recalculation.</p>
+    <p>Submode text or definition changes clear embeddings. Save and refresh embeddings; mode averages are calculated automatically afterwards. Weight changes and deletions need only saving and offline recalculation.</p>
     <p>Select a test keyword to compare saved scores with a preview using current weights without saving. Scores are raw cosine, not probabilities.</p>`));
   const message = q(root, '.message');
   const list = q(root, '.mode-editor');
@@ -82,17 +82,18 @@ export function render(root: HTMLElement): () => void {
       const savedVector = savedMode && !modeIssue(name, savedMode, data.embedding_model.dimensions) ? savedMode.vector : null;
       return `<details data-mode="${mi}" ${expanded.has(name) ? 'open' : ''}>
         <summary><b>${esc(name)}</b> · <span class="mode-status">${status}</span> · ${mode.submodes.length} submodes · Saved score: ${score(savedVector)} · Preview score: ${score(preview)}</summary>
-        <label class="mode-description">Description <textarea rows="1" data-field="description" aria-label="${esc(name)} description">${esc(mode.description)}</textarea></label>
+        <label class="mode-description">Definition <textarea rows="1" data-field="mode-definition" aria-label="${esc(name)} definition">${esc(mode.definition)}</textarea></label>
         ${issue ? `<p class="hint">${esc(issue)}</p>` : ''}
-        <table class="mini mode-submodes"><colgroup><col class="enabled-col" /><col /><col class="weight-col" /><col class="contribution-col" /><col class="embedding-col" /><col class="score-col" /><col class="delete-col" /></colgroup><thead><tr><th>Enabled</th><th>Text</th><th>Weight</th><th>Contribution</th><th>Embedding</th><th>Keyword score</th><th></th></tr></thead>
+        <table class="mini mode-submodes"><colgroup><col class="enabled-col" /><col /><col /><col class="weight-col" /><col class="contribution-col" /><col class="embedding-col" /><col class="score-col" /><col class="delete-col" /></colgroup><thead><tr><th>Enabled</th><th>Text</th><th>Definition</th><th>Weight</th><th>Contribution</th><th>Embedding</th><th>Keyword score</th><th></th></tr></thead>
         <tbody>${mode.submodes.map((s, i) => {
           const subIssue = submodeIssue(name, s, data.embedding_model.dimensions);
           return `<tr data-submode="${i}">
             <td><input type="checkbox" data-field="enabled" aria-label="Enable ${esc(name)} submode ${i + 1}" ${s.weight > 0 ? 'checked' : ''} /></td>
             <td><textarea rows="1" data-field="text" aria-label="${esc(name)} submode ${i + 1} text">${esc(s.text)}</textarea></td>
+            <td><textarea rows="1" data-field="definition" aria-label="${esc(name)} submode ${i + 1} definition">${esc(s.definition)}</textarea></td>
             <td><input type="number" min="0" step="0.1" data-field="weight" aria-label="${esc(name)} submode ${i + 1} weight" value="${s.weight}" /></td>
             <td class="contribution">${total > 0 ? (100 * s.weight / total).toFixed(1) : '0.0'}%</td>
-            <td title="${esc(subIssue ?? 'Embedding matches its text')}">${subIssue ? 'Needs embedding' : 'Ready'}</td>
+            <td title="${esc(subIssue ?? 'Embedding available')}">${subIssue ? 'Needs embedding' : 'Ready'}</td>
             <td>${score(subIssue ? null : s.vector)}</td>
             <td><button class="danger" data-action="delete" ${mode.submodes.length <= 1 ? 'disabled' : ''}>Delete</button></td>
           </tr>`;
@@ -153,14 +154,14 @@ export function render(root: HTMLElement): () => void {
     const name = Object.keys(state.data.modes)[Number(detail.dataset.mode)];
     const mode = state.data.modes[name];
     const row = target.closest<HTMLTableRowElement>('tr[data-submode]');
-    if (target instanceof HTMLTextAreaElement && target.dataset.field === 'description') mode.description = target.value;
+    if (target instanceof HTMLTextAreaElement && target.dataset.field === 'mode-definition') mode.definition = target.value;
     else if (row) {
       const submode = mode.submodes[Number(row.dataset.submode)];
-      if (target instanceof HTMLTextAreaElement && target.dataset.field === 'text') {
-        if (submode.text !== target.value) {
-          submode.text = target.value;
+      if (target instanceof HTMLTextAreaElement && (target.dataset.field === 'text' || target.dataset.field === 'definition')) {
+        const field = target.dataset.field;
+        if (submode[field] !== target.value) {
+          submode[field] = target.value;
           submode.vector = null;
-          submode.embeddedText = null;
           mode.vector = null;
         }
       } else if (target instanceof HTMLInputElement && target.dataset.field === 'weight') {
@@ -193,7 +194,7 @@ export function render(root: HTMLElement): () => void {
     const name = Object.keys(state.data.modes)[Number(detail.dataset.mode)];
     const mode = state.data.modes[name];
     if (target.dataset.action === 'add') {
-      mode.submodes.push({ text: '', weight: 1, vector: null, embeddedText: null });
+      mode.submodes.push({ text: '', definition: '', weight: 1, vector: null });
     } else if (target.dataset.action === 'delete') {
       const row = target.closest<HTMLTableRowElement>('tr[data-submode]');
       if (!row || mode.submodes.length <= 1 || !confirm('Delete this submode?')) return;

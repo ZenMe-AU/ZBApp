@@ -14,6 +14,8 @@
 .mode-grid-page .vector-plot-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 260px 34px; height: max(460px, calc(100vh - 180px)); border-top: 1px solid #d9dee3; }
 .mode-grid-page .vector-plot-wrap:not(.is-filter-open) { grid-template-columns: minmax(0, 1fr) 34px; }
 .mode-grid-page .plot { width: 100%; height: 100%; }
+.mode-grid-page .projection-info { height: 3.6em; overflow-y: auto; }
+.mode-grid-page .plot .hovertext { opacity: 0.2; }
 .vector-filter-panel { min-width: 0; overflow: auto; border-left: 1px solid #d9dee3; background: #fafafa; }
 .vector-filter-panel[hidden] { display: none; }
 .vector-filter-search { width: calc(100% - 18px); height: 36px; margin: 9px; }

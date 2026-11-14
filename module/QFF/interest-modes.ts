@@ -1,12 +1,12 @@
 export interface InterestSubmode {
   text: string;
+  definition: string;
   weight: number;
   vector: number[] | null;
-  embeddedText: string | null;
 }
 
 export interface InterestMode {
-  description: string;
+  definition: string;
   vector: number[] | null;
   submodes: InterestSubmode[];
 }
@@ -35,24 +35,24 @@ export function parseInterestModes(value: unknown): InterestModesFile {
   }
   const modes: Record<string, InterestMode> = {};
   for (const [name, mode] of Object.entries(value.modes)) {
-    if (!name.trim() || !isObject(mode) || typeof mode.description !== 'string' ||
+    if (!name.trim() || !isObject(mode) || typeof mode.definition !== 'string' ||
       !isVector(mode.vector) || !Array.isArray(mode.submodes) || !mode.submodes.length) {
-      throw new Error(`Invalid interest mode "${name}": expected description, vector and nonempty submodes`);
+      throw new Error(`Invalid interest mode "${name}": expected definition, vector and nonempty submodes`);
     }
     const submodes: InterestSubmode[] = mode.submodes.map((submode: unknown, i: number) => {
       if (!isObject(submode) || typeof submode.text !== 'string' || !submode.text.trim() ||
+        typeof submode.definition !== 'string' || !submode.definition.trim() ||
         typeof submode.weight !== 'number' || !Number.isFinite(submode.weight) || submode.weight < 0 ||
-        !isVector(submode.vector) ||
-        (submode.embeddedText !== null && typeof submode.embeddedText !== 'string')) {
-        throw new Error(`Invalid submode ${i + 1} of "${name}": expected text, nonnegative weight, vector and embeddedText`);
+        !isVector(submode.vector)) {
+        throw new Error(`Invalid submode ${i + 1} of "${name}": expected text, definition, nonnegative weight and vector`);
       }
-      return { text: submode.text, weight: submode.weight, vector: submode.vector, embeddedText: submode.embeddedText };
+      return { text: submode.text, definition: submode.definition, weight: submode.weight, vector: submode.vector };
     });
     const totalWeight = submodes.reduce((sum, s) => sum + s.weight, 0);
     if (!Number.isFinite(totalWeight) || totalWeight <= 0) {
       throw new Error(`Invalid interest mode "${name}": total submode weight must be positive and finite`);
     }
-    modes[name] = { description: mode.description, vector: mode.vector, submodes };
+    modes[name] = { definition: mode.definition, vector: mode.vector, submodes };
   }
   return {
     embedding_model: { name: model.name, version: model.version, dimensions: model.dimensions },
@@ -60,10 +60,10 @@ export function parseInterestModes(value: unknown): InterestModesFile {
   };
 }
 
-export const submodeInput = (_name: string, submode: InterestSubmode): string => submode.text;
+export const submodeInput = (_name: string, submode: InterestSubmode): string => submode.definition.trim();
 
-export function submodeIssue(name: string, submode: InterestSubmode, dimensions: number): string | null {
-  if (submode.embeddedText !== submodeInput(name, submode)) return 'submode text changed; refresh embeddings';
+export function submodeIssue(_name: string, submode: InterestSubmode, dimensions: number): string | null {
+  if (!submode.definition.trim()) return 'missing submode definition; refresh embeddings';
   if (!submode.vector?.length) return 'missing submode vector; refresh embeddings';
   if (submode.vector.length !== dimensions) return 'submode vector dimensions differ; refresh embeddings';
   return null;
@@ -98,36 +98,18 @@ export function modeIssue(name: string, mode: InterestMode, dimensions: number):
   return null;
 }
 
-export function clearChangedSubmodes(file: InterestModesFile): number {
-  let cleared = 0;
-  for (const [name, mode] of Object.entries(file.modes)) {
-    for (const submode of mode.submodes) {
-      if (submode.embeddedText !== submodeInput(name, submode)) {
-        if (submode.vector !== null) cleared++;
-        if (mode.vector !== null) cleared++;
-        submode.vector = null;
-        submode.embeddedText = null;
-        mode.vector = null;
-      }
-    }
-  }
-  return cleared;
-}
-
 export function applyModeEdits(current: InterestModesFile, draft: InterestModesFile): InterestModesFile {
   const result = parseInterestModes(draft);
   result.embedding_model = { ...current.embedding_model };
   for (const [name, mode] of Object.entries(result.modes)) {
     const previous = current.modes[name];
     for (const submode of mode.submodes) {
-      const existing = previous?.submodes.find((s) => s.text === submode.text);
+      const existing = previous?.submodes.find((s) => s.text === submode.text && s.definition === submode.definition);
       submode.vector = existing?.vector ?? null;
-      submode.embeddedText = existing?.embeddedText ?? null;
     }
-    const unchanged = previous && JSON.stringify(previous.submodes.map((s) => [s.text, s.weight])) ===
-      JSON.stringify(mode.submodes.map((s) => [s.text, s.weight]));
+    const unchanged = previous && JSON.stringify(previous.submodes.map((s) => [s.text, s.definition, s.weight])) ===
+      JSON.stringify(mode.submodes.map((s) => [s.text, s.definition, s.weight]));
     mode.vector = unchanged ? previous.vector : null;
   }
-  clearChangedSubmodes(result);
   return result;
 }

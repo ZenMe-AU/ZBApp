@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { DefaultAzureCredential } from '@azure/identity';
 import { identitiesDir, listFiles, qffDir, vizDir, writeJson } from './files.ts';
-import { applyModeEdits, averageMode, clearChangedSubmodes, modeIssue, parseInterestModes, submodeInput, submodeIssue, type InterestModesFile } from '../../../interest-modes.ts';
+import { applyModeEdits, averageMode, modeIssue, parseInterestModes, submodeInput, submodeIssue, type InterestModesFile } from '../../../interest-modes.ts';
 
 export interface EmbedOptions {
   dimensions: number;
@@ -14,6 +14,7 @@ export interface EmbedOptions {
 
 interface Preference {
   keyword: string;
+  definition?: string;
   kind: string;
   embedding: number[] | null;
 }
@@ -33,10 +34,16 @@ const batchSize = 256;
 const pricePerMillion: Record<string, number> = { 'text-embedding-3-small': 0.022, 'text-embedding-3-large': 0.143 };
 const credential = new DefaultAzureCredential();
 
-const normalize = (s: string) => s.trim().toLowerCase();
 const round = (v: number) => Math.round(v * 1e6) / 1e6;
 const sameVector = (a: number[], b: number[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 const describe = (label: string, description: string) => `${label}: ${description}`;
+
+function preferenceText(preference: Preference, file: string, persona: string): string {
+  if (typeof preference.definition !== 'string' || !preference.definition.trim()) {
+    throw new Error(`Missing definition for "${preference.keyword}" in ${file} (${persona})`);
+  }
+  return preference.definition.trim();
+}
 
 async function readJson<T>(file: string, fallback?: T): Promise<T> {
   if (!existsSync(file)) {
@@ -50,9 +57,24 @@ async function readModes(): Promise<InterestModesFile> {
   return parseInterestModes(await readJson<unknown>(modesFile));
 }
 
+async function verifiedModes(file: InterestModesFile): Promise<InterestModesFile> {
+  const cache = await readJson<Record<string, number[]>>(cacheFile, {});
+  const { name: model, dimensions } = file.embedding_model;
+  for (const [name, mode] of Object.entries(file.modes)) {
+    for (const submode of mode.submodes) {
+      const cached = cache[`${model}|${dimensions}|${submodeInput(name, submode)}`];
+      if (!cached || !submode.vector || !sameVector(cached, submode.vector)) {
+        submode.vector = null;
+        if (submode.weight > 0) mode.vector = null;
+      }
+    }
+  }
+  return file;
+}
+
 export async function modesEditorData() {
   const text = await readFile(modesFile, 'utf8');
-  return { revision: createHash('sha256').update(text).digest('hex'), data: parseInterestModes(JSON.parse(text)) };
+  return { revision: createHash('sha256').update(text).digest('hex'), data: await verifiedModes(parseInterestModes(JSON.parse(text))) };
 }
 
 export async function saveModesEditor(draft: unknown, revision: string, calculate: boolean) {
@@ -68,12 +90,12 @@ export async function saveModesEditor(draft: unknown, revision: string, calculat
 }
 
 export async function interestModesForUi() {
-  const file = await readModes();
+  const file = await verifiedModes(await readModes());
   return {
     embedding_model: file.embedding_model,
     modes: Object.fromEntries(Object.entries(file.modes).map(([name, mode]) => [
       name,
-      { description: mode.description, vector: modeIssue(name, mode, file.embedding_model.dimensions) ? null : mode.vector },
+      { definition: mode.definition, vector: modeIssue(name, mode, file.embedding_model.dimensions) ? null : mode.vector },
     ])),
   };
 }
@@ -119,7 +141,7 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
   for (const f of files) {
     for (const g of (f.content as PropertiesFile).personas) {
       for (const p of g.preferences) {
-        texts.add(normalize(p.keyword));
+        texts.add(preferenceText(p, f.path, g.persona));
         if (!kinds[p.kind]) missingKinds.add(p.kind);
       }
     }
@@ -145,7 +167,6 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
     return;
   }
 
-  const cleared = clearChangedSubmodes(modes);
   const modelChanged = modes.embedding_model.name !== config.deployment ||
     modes.embedding_model.dimensions !== options.dimensions;
   for (const [name, mode] of Object.entries(modes.modes)) {
@@ -153,13 +174,11 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
       const cached = cache[cacheKey(submodeInput(name, submode))];
       if (options.force || modelChanged || !cached || !submode.vector || !sameVector(submode.vector, cached)) {
         submode.vector = null;
-        submode.embeddedText = null;
         mode.vector = null;
       }
     }
   }
   await writeJson(modesFile, modes);
-  if (cleared) log(`Cleared ${cleared} submode vector(s) whose text changed`);
 
   let tokens = 0;
   for (let i = 0; i < missing.length; i += batchSize) {
@@ -180,7 +199,7 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
     const used = new Set<string>();
     for (const g of content.personas) {
       for (const p of g.preferences) {
-        p.embedding = cache[cacheKey(normalize(p.keyword))];
+        p.embedding = cache[cacheKey(preferenceText(p, f.path, g.persona))];
         used.add(p.kind);
       }
     }
@@ -199,7 +218,6 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
         throw new Error(`Missing or invalid embedding for ${input}`);
       }
       submode.vector = vector;
-      submode.embeddedText = input;
       submodeCount++;
     }
   }
@@ -255,7 +273,9 @@ export async function embeddingStatus(): Promise<EmbeddingStatus> {
     for (const g of content.personas) {
       for (const p of g.preferences) {
         used.add(p.kind);
-        const reason = check(p.embedding, content.embedding_model.name, dims, normalize(p.keyword));
+        const reason = typeof p.definition !== 'string' || !p.definition.trim()
+          ? 'missing definition'
+          : check(p.embedding, content.embedding_model.name, dims, p.definition.trim());
         if (reason) status.stale.push({ path: f.path, persona: g.persona, keyword: p.keyword, reason });
       }
     }
@@ -314,7 +334,6 @@ export async function clearStale(): Promise<number> {
     if (changed) await writeJson(path.join(identitiesDir, f.path), content);
   }
   const modes = await readModes();
-  cleared += clearChangedSubmodes(modes);
   const config = await readJson<{ deployment: string }>(configFile);
   const cache = await readJson<Record<string, number[]>>(cacheFile, {});
   for (const hit of status.staleModes.filter((s) => s.reason !== unverified)) {
@@ -327,7 +346,6 @@ export async function clearStale(): Promise<number> {
         (cached ? !sameVector(submode.vector, cached) : Object.keys(cache).length > 0)
       )) {
         submode.vector = null;
-        submode.embeddedText = null;
         cleared++;
       }
     }

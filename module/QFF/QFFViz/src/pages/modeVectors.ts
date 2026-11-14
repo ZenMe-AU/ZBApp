@@ -45,11 +45,14 @@ interface ECharts3DSeries {
 
 interface ECharts3DOption {
   animation: boolean;
-  tooltip: { formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => string };
+  tooltip: { formatter: (params: echarts.TooltipComponentFormatterCallbackParams) => string; extraCssText: string };
   xAxis3D: ECharts3DAxis;
   yAxis3D: ECharts3DAxis;
   zAxis3D: ECharts3DAxis;
-  grid3D: { viewControl: { projection: "perspective"; distance: number; zoomSensitivity: number } };
+  grid3D: {
+    viewControl: { projection: "perspective"; distance: number; zoomSensitivity: number };
+    axisPointer: { lineStyle: { opacity: number } };
+  };
   series: ECharts3DSeries[];
 }
 
@@ -81,7 +84,7 @@ const help = `
   <p>Modes → Heatmap is a separate page for full-dimensional comparison. It compares each submode with every mode average and includes the alignment table. Hover for the exact cosine.</p>
   <p><b>Sibling cosine</b> compares a submode with the weighted parent average <em>excluding itself</em>, reducing self-inclusion bias. <b>Parent cosine</b> includes itself. <b>Rival</b> is its nearest other parent (including hidden modes); <b>gap</b> = sibling cosine − rival cosine. A negative gap suggests cross-mode ambiguity, not proof of incorrect wording. The table is sorted by weakest sibling alignment.</p>
   <h4>Testing alternative wording</h4>
-  <p>Compare “attend” with “attend gallery” and “attend venue” as separately embedded submodes. Add candidates at weight zero in Modes → Edit, Save and Refresh embeddings; they can be evaluated without moving the parent average. Refresh automatically recalculates averages. Use sibling cosine, rival gap and keyword scores before assigning weight. Only the exact submode text is embedded, without the parent mode prefix.</p>
+  <p>Compare “attend” with “attend gallery” and “attend venue” as separately embedded submodes. Add candidates at weight zero in Modes → Edit, Save and Refresh embeddings; they can be evaluated without moving the parent average. Refresh automatically recalculates averages. Use sibling cosine, rival gap and keyword scores before assigning weight. Each submode's definition is embedded.</p>
   <p>On 3D, rotate by dragging; normal wheel scrolls the page and Ctrl+wheel zooms. The filter panel applies to both the plot and supporting grid; grid column filters work the same way. Show data reveals the grid below the plot. Clear filters restores all points.</p>
   <p>Click a point to select its grid row; Ctrl-click (or Command-click) toggles additional selections. Selecting grid rows highlights the same points. Filtering does not clear selection; selected points hidden by filters reappear highlighted when shown again.</p>
   <p>On Heatmap, mode checkboxes hide/show whole groups; submode choices are retained while their parent is hidden. Show all restores every point.</p>`;
@@ -162,6 +165,14 @@ function render(root: HTMLElement, heatmap: boolean, plotEngine: "plotly" | "ech
   if (!heatmap && echartsChart) plot.addEventListener("wheel", zoomEcharts, { passive: false });
   const score = (value: number | null | undefined) => (value == null ? "—" : value.toFixed(3));
   const label = (p: ModePoint) => (p.submode === null ? `${p.mode} (mode)` : `${p.mode} / ${p.text}`);
+  const hoverLabel = (p: ModePoint) => p.submode === null ? `${p.mode} (mode)` : p.text;
+  const showDefinition = (id?: string) => {
+    const point = geometry.points.find((p) => p.id === id);
+    const mode = point && store.modes!.data.modes[point.mode];
+    q(root, ".projection-info").textContent = point && mode
+      ? point.submode === null ? mode.definition : mode.submodes[point.submode].definition
+      : "Hover over a mode or submode to see its definition.";
+  };
   const gridRows = (): VectorRow[] => geometry.points.map((point) => {
     const alignment = geometry.alignment.find((a) => a.point.id === point.id);
     return {
@@ -356,7 +367,7 @@ function render(root: HTMLElement, heatmap: boolean, plotEngine: "plotly" | "ech
                     selectedIds.has(point.id) ? 10 : point.weight === 0 ? 4 : 6;
                 },
                 data: members.map((point, i) => ({
-                  name: label(point),
+                  name: hoverLabel(point),
                   value: coords[i],
                   id: point.id,
                   weight: point.weight,
@@ -380,9 +391,10 @@ function render(root: HTMLElement, heatmap: boolean, plotEngine: "plotly" | "ech
               z: coords.map((p) => p[2]),
               // Plotly scatter3d has no triangle marker; camera-facing text preserves the requested shape.
               text: parent ? members.map(() => "▲") : undefined,
+              textposition: "middle center",
               textfont: { color: modeColor(name), size: members.some((p) => selectedIds.has(p.id)) ? 34 : 28 },
               customdata: members.map(
-                (p) => [p.id, `<b>${esc(label(p))}</b>${p.weight !== null ? `<br>Weight: ${p.weight}` : ""}${p.issue ? "<br>Preview average" : ""}`]
+                (p) => [p.id, `<b>${esc(hoverLabel(p))}</b>${p.issue ? "<br>Preview average" : ""}`]
               ),
               hovertemplate: "%{customdata[1]}<extra></extra>",
               marker: {
@@ -395,22 +407,27 @@ function render(root: HTMLElement, heatmap: boolean, plotEngine: "plotly" | "ech
           }
         }
       }
-      q(root, ".projection-info").textContent = `${visible.length}/${geometry.points.length} vectors visible. ${info}`;
+      if (heatmap) q(root, ".projection-info").textContent = `${visible.length}/${geometry.points.length} vectors visible. ${info}`;
+      else showDefinition();
       if (echartsChart && axisRanges) {
         const option: ECharts3DOption = {
           animation: false,
           tooltip: {
+            extraCssText: "opacity: 0.2",
             formatter: (params) => {
               const point = (Array.isArray(params) ? params[0] : params).data as {
-                name: string; weight: number | null; issue: string | null;
+                name: string; issue: string | null;
               };
-              return `<b>${esc(point.name)}</b>${point.weight !== null ? `<br>Weight: ${point.weight}` : ""}${point.issue ? "<br>Preview average" : ""}`;
+              return `<b>${esc(point.name)}</b>${point.issue ? "<br>Preview average" : ""}`;
             },
           },
           xAxis3D: { type: "value", min: axisRanges[0][0], max: axisRanges[0][1], name: "", axisLabel: { show: false }, axisTick: { show: false } },
           yAxis3D: { type: "value", min: axisRanges[1][0], max: axisRanges[1][1], name: "", axisLabel: { show: false }, axisTick: { show: false } },
           zAxis3D: { type: "value", min: axisRanges[2][0], max: axisRanges[2][1], name: "", axisLabel: { show: false }, axisTick: { show: false } },
-          grid3D: { viewControl: { projection: "perspective", distance: echartsDistance, zoomSensitivity: 0 } },
+          grid3D: {
+            viewControl: { projection: "perspective", distance: echartsDistance, zoomSensitivity: 0 },
+            axisPointer: { lineStyle: { opacity: 0.2 } },
+          },
           series: echartsSeries,
         };
         // ECharts GL currently ships no TypeScript option declarations.
@@ -423,9 +440,9 @@ function render(root: HTMLElement, heatmap: boolean, plotEngine: "plotly" | "ech
             uirevision: `${heatmap ? "heatmap" : q<HTMLSelectElement>(root, ".proj").value}`,
             margin: heatmap ? { l: 10, r: 10, t: 10, b: 40 } : { l: 0, r: 0, t: 0, b: 0 },
             scene: {
-              xaxis: { title: { text: "" }, range: axisRanges?.[0] },
-              yaxis: { title: { text: "" }, range: axisRanges?.[1] },
-              zaxis: { title: { text: "" }, range: axisRanges?.[2] },
+              xaxis: { title: { text: "" }, range: axisRanges?.[0], spikecolor: "rgba(0,0,0,0.2)" },
+              yaxis: { title: { text: "" }, range: axisRanges?.[1], spikecolor: "rgba(0,0,0,0.2)" },
+              zaxis: { title: { text: "" }, range: axisRanges?.[2], spikecolor: "rgba(0,0,0,0.2)" },
             },
             yaxis: {
               automargin: true,
@@ -449,6 +466,11 @@ function render(root: HTMLElement, heatmap: boolean, plotEngine: "plotly" | "ech
         );
       }
       if (!heatmap && !echartsChart && !plotEventsAttached && !disposed) {
+        (plot as PlotlyHTMLElement).on("plotly_hover", (event) => {
+          const data = event.points[0]?.customdata;
+          showDefinition(Array.isArray(data) && typeof data[0] === "string" ? data[0] : undefined);
+        });
+        (plot as PlotlyHTMLElement).on("plotly_unhover", () => showDefinition());
         (plot as PlotlyHTMLElement).on("plotly_click", (event) => {
           const data = event.points[0]?.customdata;
           const id: unknown = Array.isArray(data) ? data[0] : undefined;
@@ -567,6 +589,11 @@ function render(root: HTMLElement, heatmap: boolean, plotEngine: "plotly" | "ech
       node.setSelected(multiple ? !node.isSelected() : true, !multiple);
       if (!q<HTMLElement>(root, ".vector-data").hidden) grid.ensureNodeVisible(node);
     });
+    echartsChart?.on("mouseover", (event) => {
+      const id = (event.data as { id?: unknown } | undefined)?.id;
+      showDefinition(typeof id === "string" ? id : undefined);
+    });
+    echartsChart?.on("mouseout", () => showDefinition());
     q<HTMLInputElement>(root, ".filter-search").addEventListener("input", (event) =>
       grid!.setGridOption("quickFilterText", (event.target as HTMLInputElement).value));
     q<HTMLInputElement>(root, ".vector-filter-search").addEventListener("input", (event) => {

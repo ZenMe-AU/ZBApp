@@ -5,17 +5,17 @@ import { type InterestModesFile } from '../../../interest-modes.ts';
 
 function fixture(): InterestModesFile {
   const submode = (name: string, text: string, vector: number[], weight = 1) => ({
-    text, weight, vector, embeddedText: text,
+    text, definition: text, weight, vector,
   });
   return {
     embedding_model: { name: 'test', version: '1', dimensions: 2 },
     modes: {
-      visit: { description: 'Visit', vector: null, submodes: [
+      visit: { definition: 'Visit', vector: null, submodes: [
         submode('visit', 'gallery', [1, 0]),
         submode('visit', 'attend', [0, 1]),
         submode('visit', 'candidate', [1, 1], 0),
       ] },
-      spectate: { description: 'Spectate', vector: [0, 1], submodes: [
+      spectate: { definition: 'Spectate', vector: [0, 1], submodes: [
         submode('spectate', 'watch', [0, 1]),
       ] },
     },
@@ -58,11 +58,11 @@ test('zero-weight candidates remain visible but do not move parent averages', ()
 
 test('stale and dimension-mismatched vectors are excluded and explained', () => {
   const data = fixture();
-  data.modes.visit.submodes[0].embeddedText = 'old text';
+  data.modes.visit.submodes[0].vector = null;
   data.modes.visit.submodes[2].vector = [1];
   const result = modeGeometry(data);
   assert.ok(!result.points.some((p) => p.id === 'visit' || p.id === 'visit:0' || p.id === 'visit:2'));
-  assert.ok(result.warnings.some((w) => w.includes('text changed')));
+  assert.ok(result.warnings.some((w) => w.includes('missing submode vector')));
   assert.ok(result.warnings.some((w) => w.includes('dimensions differ')));
   assert.equal(result.alignment.find((a) => a.point.text === 'attend')!.siblingScore, null);
 });

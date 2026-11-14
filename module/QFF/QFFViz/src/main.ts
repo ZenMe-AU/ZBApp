@@ -82,7 +82,7 @@ const pages: Page[] = [
   { id: 'modes-heatmap', group: 'Modes', title: 'Heatmap', render: modeVectors.renderHeatmap,
     info: 'Compare submodes with mode averages using full-dimensional cosine and leave-one-out sibling alignment.' },
   { id: 'embedding-update', group: 'Embeddings', title: 'Update', render: embeddingUpdate.render,
-    info: 'Regenerates all preference and kind embeddings with the Azure AI Foundry deployment, with a dry-run cost estimate and a live run log. Run after editing keywords or kind descriptions.' },
+    info: 'Regenerates all preference and kind embeddings with the Azure AI Foundry deployment, with a dry-run cost estimate and a live run log. Run after editing preference definitions or kind descriptions.' },
   { id: 'embeddings', group: 'Embeddings', title: 'Heatmap', render: embeddingsGrid.render,
     info: 'The raw embedding numbers for every preference and kind vector. Useful for spotting missing or odd vectors; values are editable but normally regenerated, not hand-edited.' },
   { id: 'embedding-distribution', group: 'Embeddings', title: 'Similarity distribution', render: embeddingDistribution.render,

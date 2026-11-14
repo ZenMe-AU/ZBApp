@@ -14,7 +14,7 @@ export function render(root: HTMLElement): () => void {
   root.innerHTML = `
     <h2>Update embeddings</h2>
     <p class="hint">Regenerates every preference and kind vector in <code>*-properties.json</code> with the Azure AI Foundry deployment in <code>embedding.config.json</code>
-      (created by <code>QFF/infra</code> Terraform). Kind descriptions come from <code>QFF/embedding-kinds.json</code> and interest submode texts from <code>QFF/interest-modes.json</code>. Submodes are embedded using only their exact text, without a parent mode prefix. Uses your <code>az login</code> identity; results are cached so unchanged keywords are not re-billed. Successful refreshes automatically calculate mode averages offline.</p>
+      (created by <code>QFF/infra</code> Terraform). Preferences and submodes are embedded from their definitions. Kind descriptions come from <code>QFF/embedding-kinds.json</code>. Uses your <code>az login</code> identity; results are cached so unchanged texts are not re-billed. Successful refreshes automatically calculate mode averages offline.</p>
     <div class="toolbar">
       <label>Dimensions <input class="dims" type="number" min="16" max="1536" step="16" value="1536" style="width:80px" /></label>
       <label title="List what would be embedded and the estimated cost without calling the API"><input type="checkbox" class="dry" /> Dry run</label>

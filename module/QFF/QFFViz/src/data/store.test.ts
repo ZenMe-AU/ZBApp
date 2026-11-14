@@ -9,9 +9,9 @@ function fixture() {
     data: {
       embedding_model: { name: 'test', version: '1', dimensions: 2 },
       modes: { discuss: {
-        description: 'Discuss',
+        definition: 'Discuss',
         vector: [1, 0],
-        submodes: [{ text: 'discuss', weight: 1, vector: [1, 0], embeddedText: 'discuss' }],
+        submodes: [{ text: 'discuss', definition: 'Exchange ideas.', weight: 1, vector: [1, 0] }],
       } },
     },
   };
@@ -43,24 +43,24 @@ test('global drafts, review, save and reload cover modes and identity files', as
   const api = server(t);
   const store = new Store();
   await store.load();
-  store.modes!.data.modes.discuss.description = 'Edited mode';
+  store.modes!.data.modes.discuss.definition = 'Edited mode';
   store.touchModes();
   store.replaceContent(store.files[0], { name: 'Edited identity' });
   assert.equal(store.dirtyCount, 2);
   assert.deepEqual(store.unsavedChanges.map((f) => f.path), ['Identities/test/identity.json', 'interest-modes.json']);
   assert.deepEqual(store.unsavedChanges[1].changes, [{
-    path: '$.modes.discuss.description', before: 'Discuss', after: 'Edited mode',
+    path: '$.modes.discuss.definition', before: 'Discuss', after: 'Edited mode',
   }]);
   await store.save();
   assert.equal(api.writes.length, 2);
   assert.equal(store.dirtyCount, 0);
   assert.deepEqual(store.unsavedChanges, []);
   assert.equal(store.modes!.revision, 'revision-2');
-  store.modes!.data.modes.discuss.description = 'Discard me';
+  store.modes!.data.modes.discuss.definition = 'Discard me';
   store.touchModes();
   store.replaceContent(store.files[0], { name: 'Discard me' });
   await store.load();
-  assert.equal(store.modes!.data.modes.discuss.description, 'Edited mode');
+  assert.equal(store.modes!.data.modes.discuss.definition, 'Edited mode');
   assert.deepEqual(store.files[0].content, { name: 'Edited identity' });
   assert.equal(store.dirtyCount, 0);
 });
@@ -71,9 +71,9 @@ test('reverting edits removes them from the review', async (t) => {
   await store.load();
   store.replaceContent(store.files[0], { name: 'Other' });
   store.replaceContent(store.files[0], { name: 'Test' });
-  store.modes!.data.modes.discuss.description = 'Other';
+  store.modes!.data.modes.discuss.definition = 'Other';
   store.touchModes();
-  store.modes!.data.modes.discuss.description = 'Discuss';
+  store.modes!.data.modes.discuss.definition = 'Discuss';
   store.touchModes();
   assert.equal(store.dirtyCount, 0);
 });
@@ -82,7 +82,7 @@ test('revision conflict preserves mode drafts and does not report successful sav
   const api = server(t);
   const store = new Store();
   await store.load();
-  store.modes!.data.modes.discuss.description = 'Pending';
+  store.modes!.data.modes.discuss.definition = 'Pending';
   store.touchModes();
   api.fail('/api/modes');
   await assert.rejects(store.save(), /Conflict/);
@@ -95,7 +95,7 @@ test('partial saves keep failed files dirty and notify listeners', async (t) => 
   const api = server(t);
   const store = new Store();
   await store.load();
-  store.modes!.data.modes.discuss.description = 'Saved';
+  store.modes!.data.modes.discuss.definition = 'Saved';
   store.touchModes();
   store.replaceContent(store.files[0], { name: 'Pending' });
   api.fail('/api/files');
@@ -111,29 +111,29 @@ test('failed reload preserves drafts and saved baselines', async (t) => {
   server(t);
   const store = new Store();
   await store.load();
-  store.modes!.data.modes.discuss.description = 'Pending';
+  store.modes!.data.modes.discuss.definition = 'Pending';
   store.touchModes();
   t.mock.method(globalThis, 'fetch', async () => Response.json({}, { status: 500 }));
   await assert.rejects(store.load(), /Failed to load/);
   assert.equal(store.dirtyCount, 1);
-  assert.equal(store.modes!.data.modes.discuss.description, 'Pending');
+  assert.equal(store.modes!.data.modes.discuss.definition, 'Pending');
 });
 
 test('edits made during a save remain pending with an updated baseline', async (t) => {
   server(t);
   const store = new Store();
   await store.load();
-  store.modes!.data.modes.discuss.description = 'Saved snapshot';
+  store.modes!.data.modes.discuss.definition = 'Saved snapshot';
   store.touchModes();
   let release!: (response: Response) => void;
   t.mock.method(globalThis, 'fetch', () => new Promise<Response>((resolve) => { release = resolve; }));
   const saving = store.save();
   assert.equal(store.busy, true);
   await assert.rejects(store.save(), /Wait for/);
-  store.modes!.data.modes.discuss.description = 'New draft';
+  store.modes!.data.modes.discuss.definition = 'New draft';
   store.touchModes();
   const response = fixture();
-  response.data.modes.discuss.description = 'Saved snapshot';
+  response.data.modes.discuss.definition = 'Saved snapshot';
   response.revision = 'new-revision';
   release(Response.json(response));
   await saving;
@@ -180,7 +180,7 @@ test('mode refresh updates vectors without discarding identity drafts', async (t
   store.replaceContent(store.files[0], { name: 'Pending' });
   await store.refreshModes();
   assert.equal(store.dirtyCount, 1);
-  store.modes!.data.modes.discuss.description = 'Pending mode';
+  store.modes!.data.modes.discuss.definition = 'Pending mode';
   store.touchModes();
   await assert.rejects(store.refreshModes(), /Save or reload/);
 });

@@ -46,13 +46,13 @@ export async function loadModes(): Promise<ModeVectors> {
   if (!res.ok) throw new Error(`Failed to load interest modes: ${res.status}`);
   const body = (await res.json()) as {
     embedding_model?: { name: string; dimensions: number };
-    modes: Record<string, { description: string; vector: number[] | null }>;
+    modes: Record<string, { definition: string; vector: number[] | null }>;
   };
   const entries = Object.entries(body.modes).filter(([, m]) => hasVector(m.vector));
   return {
     model: body.embedding_model ? `${body.embedding_model.name}, ${body.embedding_model.dimensions} dims` : 'unknown model',
     names: entries.map(([n]) => n),
-    descriptions: Object.fromEntries(entries.map(([n, m]) => [n, m.description])),
+    descriptions: Object.fromEntries(entries.map(([n, m]) => [n, m.definition])),
     vectors: Object.fromEntries(entries.map(([n, m]) => [n, m.vector as number[]])),
   };
 }

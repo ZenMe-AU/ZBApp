@@ -9,6 +9,7 @@
   // "azureFunctions.preDeployTask": "npm prune (functions)",
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "eslint.format.enable": true,
   "endOfLine": "auto",
   "workbench.editorAssociations": {
     "*.copilotmd": "vscode.markdown.preview.editor",
@@ -28,7 +29,8 @@
     "javascript",
     "javascriptreact",
     "typescript",
-    "typescriptreact"
+    "typescriptreact",
+    "json"
   ],
   "sarif-viewer.connectToGithubCodeScanning": "off",
   "cSpell.language": "en-AU",
