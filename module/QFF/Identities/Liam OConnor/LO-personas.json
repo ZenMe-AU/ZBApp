@@ -6,7 +6,7 @@
       "motivation": "Sport is one of my main ways of spending time with friends. I enjoy the atmosphere and conversation more than aggressive rivalry.",
       "contributions": ["Knowledge of Melbourne sporting culture", "Reliable company for matches and events", "Friendly discussion about teams, tactics and sporting history", "Willingness to organise occasional outings"],
       "expectations": ["Genuine interest in sport", "Good-natured rivalry", "Reliability when plans are made", "Respectful behaviour towards players, officials and other supporters"],
-      "important_interests_and_values": ["[value] Loyalty (+0.7)", "[value] Humour (+0.6)", "[value] Sportsmanship (+0.9)"],
+      "important_interests_and_values": [],
       "communication_style": "Informal, concise and friendly. I prefer practical messages about plans rather than constant group chat.",
       "boundaries": ["Aggressive supporter behaviour (-0.9)", "Gambling pressure (-0.9)", "Abusive language toward players or officials (-0.9)", "Repeated last-minute cancellations (-0.9)"],
       "initial_disclosure": "I will initially share broad sporting interests, preferred event types and general availability. I will not disclose precise routines, financial information or contact details until mutual trust develops."
@@ -16,7 +16,7 @@
       "motivation": "I enjoy discovering places through shared experiences and conversation, particularly smaller venues and neighbourhood events rather than formal networking.",
       "contributions": ["Familiarity with Melbourne neighbourhoods and venues", "Ideas for low-pressure outings", "Curiosity about food, music, design and local history", "Reliable planning"],
       "expectations": ["Openness to different neighbourhoods and cultural interests", "Respect for different tastes and budgets", "Balanced participation in choosing activities", "Friendly, low-pressure company"],
-      "important_interests_and_values": ["[value] Curiosity (+0.8)", "[want] Inclusion (+0.8)", "[value] Authenticity (+0.8)"],
+      "important_interests_and_values": ["[want] Inclusion (+0.8)"],
       "communication_style": "Relaxed and conversational. I like short messages followed by in-person experiences rather than long online discussions.",
       "boundaries": ["Snobbery about taste, suburb or income (-0.9)", "Pressure to drink alcohol (-0.9)", "Disrespectful behaviour toward hospitality or venue staff (-0.9)", "One-sided planning (-0.9)"],
       "initial_disclosure": "I will share interests, broad neighbourhood preferences and activity ideas. My home address, family details and regular schedule remain private initially."
@@ -26,7 +26,7 @@
       "motivation": "Outdoor activities are a good way to maintain health, explore Victoria and build friendship without requiring constant social contact.",
       "contributions": ["Reliable company", "Practical trip planning", "A calm, safety-conscious approach", "Moderate fitness and willingness to adjust pace", "Interest in scenery, wildlife and photography"],
       "expectations": ["Reliability", "Honest communication about fitness and experience", "Respect for weather, track conditions and safety advice", "Shared enjoyment rather than competition"],
-      "important_interests_and_values": ["[value] Reliability (+0.9)", "[want] Safety (+0.9)", "[value] Curiosity (+0.6)", "[value] Consideration (+0.8)"],
+      "important_interests_and_values": ["[want] Safety (+0.9)"],
       "communication_style": "Friendly, direct and low-maintenance. I prefer plans made in advance and do not expect immediate replies.",
       "boundaries": ["Reckless or extreme activities (-0.9)", "Ignoring weather or safety warnings (-0.9)", "Pressure to exceed agreed difficulty (-0.9)", "Repeated unreliability (-0.9)", "Sharing precise routines or locations without consent (-0.9)"],
       "initial_disclosure": "I will share general activity preferences, approximate fitness level and broad availability. I will not initially share my home address, exact routine or private family information."

@@ -6,7 +6,7 @@
       "motivation": "Good-natured sport is my favourite way to spend time with friends.",
       "contributions": ["Match planning", "Friendly sporting discussion"],
       "expectations": ["Sportsmanship", "Reliability"],
-      "important_interests_and_values": ["[value] sportsmanship (+0.9)", "[value] loyalty (+0.8)"],
+      "important_interests_and_values": [],
       "communication_style": "Informal and practical",
       "boundaries": ["gambling pressure (-0.9)"],
       "initial_disclosure": "Favourite sports and general availability."
@@ -16,7 +16,7 @@
       "motivation": "Small shared projects make a neighbourhood feel more welcoming.",
       "contributions": ["Project coordination", "Practical planning"],
       "expectations": ["Realistic commitments", "Shared responsibility"],
-      "important_interests_and_values": ["[value] service (+0.8)", "[value] responsibility (+0.9)"],
+      "important_interests_and_values": [],
       "communication_style": "Direct and cooperative",
       "boundaries": ["unrealistic unpaid-work expectations (-0.9)"],
       "initial_disclosure": "Volunteer interests and relevant experience."
@@ -26,7 +26,7 @@
       "motivation": "I enjoy exploring regional trails with people who prepare well.",
       "contributions": ["Route planning", "Basic equipment checks"],
       "expectations": ["Honest fitness expectations", "Agreed plans"],
-      "important_interests_and_values": ["[want] safety (+0.9)", "[value] reliability (+0.9)"],
+      "important_interests_and_values": ["[want] safety (+0.9)"],
       "communication_style": "Friendly and organised",
       "boundaries": ["disregard for agreed plans (-0.9)"],
       "initial_disclosure": "Activity experience and approximate fitness."
