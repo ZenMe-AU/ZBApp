@@ -36,6 +36,7 @@ export default [
     rules: {
       "@stylistic/quotes": ["error", "double"],
       "@stylistic/semi": ["error", "always"],
+      "@stylistic/max-statements-per-line": ["warn", { max: 2 }],
       "@typescript-eslint/no-require-imports": "warn",
       "@typescript-eslint/no-explicit-any": ["warn", { fixToUnknown: true, ignoreRestArgs: false }],
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],

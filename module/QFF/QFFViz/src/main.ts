@@ -29,6 +29,7 @@ import * as contrastAxes from './pages/contrastAxes';
 import * as modeComparison from './pages/modeComparison';
 import * as modesEdit from './pages/modesEdit';
 import * as modeVectors from './pages/modeVectors';
+import * as modesHeatmap from './pages/modesHeatmap';
 import { changeValue } from './shared/changes';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -79,7 +80,7 @@ const pages: Page[] = [
     info: 'Inspect modes and submodes in 3D with UMAP/PCA/t-SNE and control mode/submode visibility.' },
   { id: 'mode-3d-echarts', group: 'Modes', title: '3DE', render: modeVectors.render3dE,
     info: 'Apache ECharts GL version of the 3D modes and submodes view.' },
-  { id: 'modes-heatmap', group: 'Modes', title: 'Heatmap', render: modeVectors.renderHeatmap,
+  { id: 'modes-heatmap', group: 'Modes', title: 'Heatmap', render: modesHeatmap.render,
     info: 'Compare submodes with mode averages using full-dimensional cosine and leave-one-out sibling alignment.' },
   { id: 'embedding-update', group: 'Embeddings', title: 'Update', render: embeddingUpdate.render,
     info: 'Regenerates all preference and kind embeddings with the Azure AI Foundry deployment, with a dry-run cost estimate and a live run log. Run after editing preference definitions or kind descriptions.' },

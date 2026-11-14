@@ -65,7 +65,7 @@ When editing a submode's text or definition directly, clear its `vector` and par
 
 Open **Modes -> 3D** for a 3D view with **UMAP** selected initially; **PCA** is also available. Triangles represent mode averages and circles represent submodes, sharing their parent's colour. All valid vectors start visible, including zero-weight candidates (smaller circles). Filtering does not refit the projection, so points stay in the same positions.
 
-Expand the collapsible **Filters** section for Mode, dependent Submode choices and quick search. Choosing a mode limits the submode choices; choosing a submode retains its parent for comparison. These filters combine with AG Grid column filters. **Clear filters** resets all filters, including hidden table filters. The filtered point count remains visible.
+The **Filters** panel and header **Quick search** filter both the plot and grid. The panel's field filters combine with AG Grid column filters. **Clear filters** resets all filters, including hidden table filters. The filtered point count remains visible.
 
 The **Show data** checkbox starts unchecked. When checked, an AG Grid table appears below the plot; scroll the whole page down to the table or up to the plot. Column text/number filters control visible Plotly points even after hiding the table or collapsing Filters. This uses AG Grid Community, not Enterprise Set Filters or its Filters Tool Panel.
 
@@ -75,9 +75,13 @@ The view derives current weighted averages offline without saving. Missing or ou
 
 UMAP preserves neighbourhoods imperfectly; apparent separation does not prove a submode is wrong. PCA shows the fraction of variance retained in three axes.
 
+Modes -> 3DE uses the same controls and data with the ECharts GL renderer. Both pages use the reusable `src/shared/vector3d.ts` template; a dataset adapter supplies unique row IDs, valid nonzero vectors of matching dimensions, marker and hover details, filter fields, grid columns, warnings, and an optional refresh subscription. The template projects all supplied points before filtering. Shared hover font and background settings are in `src/styles.css` under `.vector-grid-page`.
+
+Run the template regression check from the repository root with `node --test module/QFF/QFFViz/tests/vector3d.test.ts`; it starts a temporary local server and uses the repository's Playwright browser.
+
 ## Modes -> Heatmap: full-dimensional alignment
 
-Open the separate **Modes -> Heatmap** page to compare submodes with mode averages using all original dimensions. It has its own mode/submode visibility controls and an accompanying diagnostic alignment table, but no 3D plot or projection selector.
+Open the separate **Modes -> Heatmap** page to compare submodes with mode averages using all original dimensions. Implemented in `src/pages/modesHeatmap.ts`, it has its own mode/submode visibility controls and an accompanying diagnostic alignment table, but no 3D plot or projection selector.
 
 - **Parent cosine**: similarity to the weighted parent, including the submode itself.
 - **Sibling cosine**: similarity to the weighted average of the other submodes, excluding itself. This avoids a high-weight outlier pulling its own reference toward itself.

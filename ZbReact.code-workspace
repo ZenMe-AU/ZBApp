@@ -106,6 +106,9 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "eslint.format.enable": true,
+    "[json]": {
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    },
     "[javascript]": {
       "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     },
