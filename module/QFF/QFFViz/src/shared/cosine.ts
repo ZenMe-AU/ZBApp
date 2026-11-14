@@ -1,3 +1,8 @@
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
+
 export const hasVector = (v: number[] | null | undefined): v is number[] => !!v?.length;
 
 /** Cosine similarity; 0 when either vector is missing (stale or not yet embedded). */

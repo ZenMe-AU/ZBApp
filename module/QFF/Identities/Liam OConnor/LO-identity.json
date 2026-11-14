@@ -6,62 +6,53 @@
   "location": "Melbourne, Victoria, Australia",
   "occupation": "Operations manager for a mid-sized construction supplier",
   "summary": "A grounded Melbourne local who enjoys Australian rules football, live music, neighbourhood food and coffee, walking, day hikes and practical community involvement. He is friendly but not highly extroverted, values reliability and prefers relationships that develop through shared activities.",
-  "preferences": [
-    {
+  "preferences": [{
       "persona": "melbourne sport friend",
       "keyword": "loyalty",
       "kind": "value",
       "affinity": 0.7,
       "definition": "Being dependable and standing by teammates, friends, or a team."
-    },
-    {
+    }, {
       "persona": "melbourne sport friend",
       "keyword": "humour",
       "kind": "value",
       "affinity": 0.6,
       "definition": "The ability to appreciate or share amusement in a friendly way."
-    },
-    {
+    }, {
       "persona": "melbourne sport friend",
       "keyword": "sportsmanship",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Playing fairly and treating teammates, opponents, and officials with respect."
-    },
-    {
+    }, {
       "persona": "melbourne culture friend",
       "keyword": "curiosity",
       "kind": "value",
       "affinity": 0.8,
       "definition": "An interest in discovering local places, culture, and new experiences."
-    },
-    {
+    }, {
       "persona": "melbourne culture friend",
       "keyword": "authenticity",
       "kind": "value",
       "affinity": 0.8,
       "definition": "Being sincere and genuine rather than presenting a false or performative self."
-    },
-    {
+    }, {
       "persona": "outdoor activity friend",
       "keyword": "reliability",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Following through on plans and commitments consistently."
-    },
-    {
+    }, {
       "persona": "outdoor activity friend",
       "keyword": "curiosity",
       "kind": "value",
       "affinity": 0.6,
       "definition": "An interest in exploring and learning about places, activities, and nature."
-    },
-    {
+    }, {
       "persona": "outdoor activity friend",
       "keyword": "consideration",
       "kind": "value",
       "affinity": 0.8,
       "definition": "Taking other people’s comfort, needs, and limits into account."
-    }
-  ]
+    }]
 }

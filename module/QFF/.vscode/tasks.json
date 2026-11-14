@@ -1,7 +1,6 @@
 {
   "version": "2.0.0",
-  "tasks": [
-    {
+  "tasks": [{
       "label": "Start",
       "type": "shell",
       "command": "pnpm run dev",
@@ -24,11 +23,9 @@
           "endsPattern": "^.*Local:\\s+http"
         }
       }
-    },
-    {
+    }, {
       "label": "Install Dependencies",
       "type": "shell",
       "command": "pnpm install"
-    }
-  ]
+    }]
 }

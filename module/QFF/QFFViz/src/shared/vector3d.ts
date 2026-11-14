@@ -130,6 +130,8 @@ export function renderVector3d<Row extends { id: string }>(root: HTMLElement, op
   let disposed = false;
   let drawing = false;
   let queued = false;
+  // Grid callbacks may run during creation, before its API is assigned.
+  // eslint-disable-next-line prefer-const
   let grid: GridApi<Row> | undefined;
   const selectedIds = new Set<string>();
   const filterSelections = new Map<keyof Row & string, Set<string>>();

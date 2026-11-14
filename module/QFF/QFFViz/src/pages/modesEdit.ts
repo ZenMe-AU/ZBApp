@@ -163,7 +163,10 @@ export function render(root: HTMLElement): () => void {
         mode.vector = null;
       }
       else if (target instanceof HTMLInputElement && target.dataset.field === "enabled") {
-        if (!target.checked) { disabledWeights.set(submode, submode.weight); submode.weight = 0; }
+        if (!target.checked) {
+          disabledWeights.set(submode, submode.weight);
+          submode.weight = 0;
+        }
         else submode.weight = disabledWeights.get(submode) ?? 1;
         mode.vector = null;
       }
@@ -224,7 +227,10 @@ export function render(root: HTMLElement): () => void {
   });
   const modesChanged = () => {
     state = store.modes;
-    if (!disposed) { draw(); report(""); }
+    if (!disposed) {
+      draw();
+      report("");
+    }
   };
   store.addEventListener("modes", modesChanged);
   store.addEventListener("dirty", controls);

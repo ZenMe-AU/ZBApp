@@ -70,7 +70,7 @@ test("cache-only refresh migrates inputs and averages automatically; dry run cha
       "test|2|First meaning": [1, 0],
       "test|2|Second meaning": [0, 1],
       "test|2|interest: A topic": [1, 1],
-    })
+    }),
   );
   const run = (dryRun: boolean) =>
     spawnSync(
@@ -80,7 +80,7 @@ test("cache-only refresh migrates inputs and averages automatically; dry run cha
         "-e",
         `import {runEmbeddings} from './src/server/embeddings.ts'; await runEmbeddings({dimensions:2,force:false,dryRun:${dryRun}}, console.log);`,
       ],
-      { cwd: viz, encoding: "utf8" }
+      { cwd: viz, encoding: "utf8" },
     );
   const original = await readFile(file, "utf8");
   const originalPreferences = await readFile(preferencesFile, "utf8");
@@ -99,12 +99,12 @@ test("cache-only refresh migrates inputs and averages automatically; dry run cha
   assert.deepEqual(saved.modes.visit.vector, [0.25, 0.75]);
   assert.deepEqual(saved.modes.spectate.vector, [0, 1]);
   for (const mode of Object.values(saved.modes) as (typeof data.modes.visit)[]) {
-    assert.ok(mode.submodes.every((s) => !('embeddedText' in s)));
+    assert.ok(mode.submodes.every(s => !("embeddedText" in s)));
   }
   assert.notDeepEqual(saved.modes.visit.submodes[0].vector, saved.modes.spectate.submodes[0].vector);
   assert.deepEqual(
     saved.modes.visit.submodes.map((s: { weight: number }) => s.weight),
-    [1, 3, 0]
+    [1, 3, 0],
   );
   assert.deepEqual(saved.modes.visit.submodes[2].vector, [0.5, 0.5]);
 

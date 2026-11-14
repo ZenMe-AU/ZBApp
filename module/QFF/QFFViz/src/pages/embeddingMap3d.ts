@@ -1,44 +1,49 @@
-import Plotly, { type Data, type PlotlyHTMLElement } from 'plotly.js-dist-min';
-import { createGrid, type GridApi } from 'ag-grid-community';
-import { store } from '../data/store';
-import type { PreferenceKind } from '../data/types';
-import { heat, kindColor } from '../shared/colors';
-import { esc, openInfo, q } from '../shared/dom';
-import { normalize } from '../shared/sets';
-import { cosine, kmeans, modelSummary } from '../shared/vectors';
-import { project3d } from '../shared/projection3d';
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
+
+import Plotly, { type Data, type PlotlyHTMLElement } from "plotly.js-dist-min";
+import { createGrid, type GridApi } from "ag-grid-community";
+import { store } from "../data/store";
+import type { PreferenceKind } from "../data/types";
+import { heat, kindColor } from "../shared/colors";
+import { esc, openInfo, q } from "../shared/dom";
+import { normalize } from "../shared/sets";
+import { cosine, kmeans, modelSummary } from "../shared/vectors";
+import { project3d } from "../shared/projection3d";
 
 interface Use {
-  person: string;
-  persona: string;
-  kind: PreferenceKind;
-  affinity: number;
+  person: string
+  persona: string
+  kind: PreferenceKind
+  affinity: number
 }
 
 interface Point {
-  key: string;
-  text: string;
-  vec: number[];
-  uses: Use[];
+  key: string
+  text: string
+  vec: number[]
+  uses: Use[]
 }
 
-type ColourMode = 'kind' | 'identity' | 'persona' | 'affinity' | 'cluster' | 'similarity';
+type ColourMode = "kind" | "identity" | "persona" | "affinity" | "cluster" | "similarity";
 
 const colourModes: Record<ColourMode, string> = {
-  kind: 'Kind',
-  identity: 'Identity',
-  persona: 'Persona',
-  affinity: 'Mean affinity',
-  cluster: 'Cluster (k-means)',
-  similarity: 'Similarity to selected',
+  kind: "Kind",
+  identity: "Identity",
+  persona: "Persona",
+  affinity: "Mean affinity",
+  cluster: "Cluster (k-means)",
+  similarity: "Similarity to selected",
 };
 
 const palette = [
-  '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc948', '#b07aa1', '#ff9da7', '#9c755f', '#bab0ac',
-  '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+  "#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ac",
+  "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
 ];
 
-const unique = <T,>(xs: T[]) => [...new Set(xs)];
+const unique = <T>(xs: T[]) => [...new Set(xs)];
 const meanAffinity = (p: Point) => p.uses.reduce((s, u) => s + u.affinity, 0) / p.uses.length;
 
 function buildPoints(): Point[] {
@@ -58,7 +63,7 @@ function buildPoints(): Point[] {
 }
 
 function hoverText(p: Point): string {
-  const uses = p.uses.map((u) => `${esc(u.person)} · ${esc(u.persona)} · ${u.kind} ${u.affinity}`).join('<br>');
+  const uses = p.uses.map(u => `${esc(u.person)} · ${esc(u.persona)} · ${u.kind} ${u.affinity}`).join("<br>");
   return `<b>${esc(p.text)}</b><br>${uses}`;
 }
 
@@ -103,7 +108,7 @@ export function render(root: HTMLElement): () => void {
     <div class="toolbar">
       <h2>Keyword map 3D <button class="info-btn" title="How to read this page" aria-label="How to read this page">ⓘ</button></h2>
       <label>Projection <select class="proj"><option value="pca">PCA</option><option value="umap">UMAP</option></select></label>
-      <label>Colour by <select class="colour">${Object.entries(colourModes).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+      <label>Colour by <select class="colour">${Object.entries(colourModes).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></label>
       <label class="k-wrap">k <input class="k" type="number" min="2" max="20" value="8" style="width:50px" /></label>
       <label>Link pairs ≥ <input class="cut" type="range" min="0" max="1" step="0.01" value="0.55" /> <b class="cut-val"></b></label>
       <label><input type="checkbox" class="rotate" /> Auto-rotate</label>
@@ -115,39 +120,39 @@ export function render(root: HTMLElement): () => void {
       <aside class="panel"><p class="empty">Click a keyword to see its nearest neighbours and to colour by similarity.</p></aside>
     </div>`;
 
-  q(root, '.info-btn').addEventListener('click', () => openInfo('How to read the 3D keyword map', helpHtml));
+  q(root, ".info-btn").addEventListener("click", () => openInfo("How to read the 3D keyword map", helpHtml));
 
-  const plotEl = q(root, '.plot') as unknown as PlotlyHTMLElement & HTMLElement;
-  const panel = q(root, '.panel');
-  const split = q(root, '.split');
+  const plotEl = q(root, ".plot") as unknown as PlotlyHTMLElement & HTMLElement;
+  const panel = q(root, ".panel");
+  const split = q(root, ".split");
   const points = buildPoints();
-  const kindVectors = store.people.find((p) => p.properties.kind_vectors)?.properties.kind_vectors ?? {};
+  const kindVectors = store.people.find(p => p.properties.kind_vectors)?.properties.kind_vectors ?? {};
   const kindNames = Object.keys(kindVectors);
-  const allVecs = [...points.map((p) => p.vec), ...kindNames.map((k) => kindVectors[k])];
-  const sims = points.map((a) => points.map((b) => cosine(a.vec, b.vec)));
-  const projections = new Map<string, { coords: number[][]; info: string }>();
+  const allVecs = [...points.map(p => p.vec), ...kindNames.map(k => kindVectors[k])];
+  const sims = points.map(a => points.map(b => cosine(a.vec, b.vec)));
+  const projections = new Map<string, { coords: number[][], info: string }>();
   let selected: number | undefined;
   let grid: GridApi | undefined;
 
   const project = (method: string) => {
     if (!projections.has(method)) {
-      projections.set(method, project3d(allVecs, method === 'pca' ? 'pca' : 'umap'));
+      projections.set(method, project3d(allVecs, method === "pca" ? "pca" : "umap"));
     }
     return projections.get(method)!;
   };
 
   const pointTrace = (idx: number[], coords: number[][], name: string, marker: Record<string, unknown>): Data =>
     ({
-      type: 'scatter3d',
-      mode: 'markers',
+      type: "scatter3d",
+      mode: "markers",
       name: `${name} (${idx.length})`,
-      x: idx.map((i) => coords[i][0]),
-      y: idx.map((i) => coords[i][1]),
-      z: idx.map((i) => coords[i][2]),
-      text: idx.map((i) => hoverText(points[i])),
+      x: idx.map(i => coords[i][0]),
+      y: idx.map(i => coords[i][1]),
+      z: idx.map(i => coords[i][2]),
+      text: idx.map(i => hoverText(points[i])),
       customdata: idx,
-      hovertemplate: '%{text}<extra></extra>',
-      marker: { size: idx.map((i) => 4 + unique(points[i].uses.map((u) => u.person)).length * 2), line: { width: 0 }, ...marker },
+      hovertemplate: "%{text}<extra></extra>",
+      marker: { size: idx.map(i => 4 + unique(points[i].uses.map(u => u.person)).length * 2), line: { width: 0 }, ...marker },
     }) as Data;
 
   const groupTraces = (coords: number[][], groupOf: (p: Point, i: number) => string, colourOf: (group: string, n: number) => string): Data[] => {
@@ -161,51 +166,51 @@ export function render(root: HTMLElement): () => void {
   const keywordTraces = (mode: ColourMode, coords: number[][], cut: number): Data[] => {
     const all = points.map((_, i) => i);
     switch (mode) {
-      case 'kind':
+      case "kind":
         return groupTraces(
           coords,
-          (p) => unique(p.uses.map((u) => u.kind)).sort().join(' + '),
-          (g) => kindColor[g as PreferenceKind] ?? '#777',
+          p => unique(p.uses.map(u => u.kind)).sort().join(" + "),
+          g => kindColor[g as PreferenceKind] ?? "#777",
         );
-      case 'identity':
+      case "identity":
         return groupTraces(
           coords,
-          (p) => (unique(p.uses.map((u) => u.person)).length > 1 ? 'Shared by 2+ identities' : p.uses[0].person),
-          (g, n) => (g.startsWith('Shared') ? '#222' : palette[n % palette.length]),
+          p => (unique(p.uses.map(u => u.person)).length > 1 ? "Shared by 2+ identities" : p.uses[0].person),
+          (g, n) => (g.startsWith("Shared") ? "#222" : palette[n % palette.length]),
         );
-      case 'persona':
+      case "persona":
         return groupTraces(
           coords,
           (p) => {
-            const personas = unique(p.uses.map((u) => `${u.person}: ${u.persona}`));
-            return personas.length > 1 ? 'Multiple personas' : personas[0];
+            const personas = unique(p.uses.map(u => `${u.person}: ${u.persona}`));
+            return personas.length > 1 ? "Multiple personas" : personas[0];
           },
-          (g, n) => (g === 'Multiple personas' ? '#222' : palette[n % palette.length]),
+          (g, n) => (g === "Multiple personas" ? "#222" : palette[n % palette.length]),
         );
-      case 'affinity':
+      case "affinity":
         return [
-          pointTrace(all, coords, 'Keywords', {
+          pointTrace(all, coords, "Keywords", {
             color: points.map(meanAffinity),
-            colorscale: 'RdYlGn',
+            colorscale: "RdYlGn",
             cmin: -1,
             cmax: 1,
-            colorbar: { title: { text: 'mean affinity' }, thickness: 12 },
+            colorbar: { title: { text: "mean affinity" }, thickness: 12 },
           }),
         ];
-      case 'cluster': {
-        const k = Number(q<HTMLInputElement>(root, '.k').value) || 8;
-        const labels = kmeans(points.map((p) => p.vec), k);
+      case "cluster": {
+        const k = Number(q<HTMLInputElement>(root, ".k").value) || 8;
+        const labels = kmeans(points.map(p => p.vec), k);
         // Name each cluster after its most central keyword.
         const names = new Map<number, string>();
         unique(labels).forEach((c) => {
-          const members = points.map((_, i) => i).filter((i) => labels[i] === c);
+          const members = points.map((_, i) => i).filter(i => labels[i] === c);
           const best = members.reduce((b, i) => (members.reduce((s, j) => s + sims[i][j], 0) > members.reduce((s, j) => s + sims[b][j], 0) ? i : b), members[0]);
           names.set(c, `C${c + 1}: ${points[best].text}`);
         });
         return groupTraces(coords, (_, i) => names.get(labels[i])!, (_, n) => palette[n % palette.length]);
       }
-      case 'similarity': {
-        if (selected === undefined) return [pointTrace(all, coords, 'Select a keyword', { color: '#b8c1cb' })];
+      case "similarity": {
+        if (selected === undefined) return [pointTrace(all, coords, "Select a keyword", { color: "#b8c1cb" })];
         const values = sims[selected];
         const min = Math.min(...values);
         const pos = Math.min(Math.max((cut - min) / (1 - min || 1), 0), 1);
@@ -215,8 +220,8 @@ export function render(root: HTMLElement): () => void {
             cmin: min,
             cmax: 1,
             // Sharp step at the cut-off: grey below, warm colours above.
-            colorscale: [[0, '#e6eaee'], [pos, '#b8c1cb'], [pos, '#fdae61'], [1, '#d62728']],
-            colorbar: { title: { text: 'cosine' }, thickness: 12 },
+            colorscale: [[0, "#e6eaee"], [pos, "#b8c1cb"], [pos, "#fdae61"], [1, "#d62728"]],
+            colorbar: { title: { text: "cosine" }, thickness: 12 },
           }),
         ];
       }
@@ -224,13 +229,13 @@ export function render(root: HTMLElement): () => void {
   };
 
   const draw = () => {
-    const method = q<HTMLSelectElement>(root, '.proj').value;
-    const mode = q<HTMLSelectElement>(root, '.colour').value as ColourMode;
-    const cut = Number(q<HTMLInputElement>(root, '.cut').value);
-    q(root, '.cut-val').textContent = cut.toFixed(2);
-    q(root, '.k-wrap').style.display = mode === 'cluster' ? '' : 'none';
+    const method = q<HTMLSelectElement>(root, ".proj").value;
+    const mode = q<HTMLSelectElement>(root, ".colour").value as ColourMode;
+    const cut = Number(q<HTMLInputElement>(root, ".cut").value);
+    q(root, ".cut-val").textContent = cut.toFixed(2);
+    q(root, ".k-wrap").style.display = mode === "cluster" ? "" : "none";
     const { coords, info } = project(method);
-    q(root, '.info').textContent = `${modelSummary(store.people)} · ${info}`;
+    q(root, ".info").textContent = `${modelSummary(store.people)} · ${info}`;
 
     const lx: (number | null)[] = [], ly: (number | null)[] = [], lz: (number | null)[] = [];
     points.forEach((_, i) =>
@@ -243,33 +248,33 @@ export function render(root: HTMLElement): () => void {
     );
     const anchorIdx = kindNames.map((_, n) => points.length + n);
     const traces: Data[] = [
-      { type: 'scatter3d', mode: 'lines', name: `Links ≥ ${cut.toFixed(2)}`, x: lx, y: ly, z: lz, hoverinfo: 'skip', line: { color: '#9fb3c8', width: 2 } } as Data,
+      { type: "scatter3d", mode: "lines", name: `Links ≥ ${cut.toFixed(2)}`, x: lx, y: ly, z: lz, hoverinfo: "skip", line: { color: "#9fb3c8", width: 2 } } as Data,
       ...keywordTraces(mode, coords, cut),
       {
-        type: 'scatter3d',
-        mode: 'text+markers',
-        name: 'Kind vectors',
-        x: anchorIdx.map((i) => coords[i][0]),
-        y: anchorIdx.map((i) => coords[i][1]),
-        z: anchorIdx.map((i) => coords[i][2]),
+        type: "scatter3d",
+        mode: "text+markers",
+        name: "Kind vectors",
+        x: anchorIdx.map(i => coords[i][0]),
+        y: anchorIdx.map(i => coords[i][1]),
+        z: anchorIdx.map(i => coords[i][2]),
         text: kindNames,
-        textposition: 'top center',
-        hovertemplate: 'kind vector: %{text}<extra></extra>',
-        marker: { symbol: 'diamond', size: 9, color: kindNames.map((k) => kindColor[k as PreferenceKind] ?? '#777'), line: { color: '#000', width: 2 } },
+        textposition: "top center",
+        hovertemplate: "kind vector: %{text}<extra></extra>",
+        marker: { symbol: "diamond", size: 9, color: kindNames.map(k => kindColor[k as PreferenceKind] ?? "#777"), line: { color: "#000", width: 2 } },
       } as Data,
     ];
     if (selected !== undefined) {
       traces.push({
-        type: 'scatter3d',
-        mode: 'text+markers',
-        name: 'Selected',
+        type: "scatter3d",
+        mode: "text+markers",
+        name: "Selected",
         x: [coords[selected][0]],
         y: [coords[selected][1]],
         z: [coords[selected][2]],
         text: [points[selected].text],
-        textposition: 'top center',
-        hoverinfo: 'skip',
-        marker: { size: 14, color: 'rgba(0,0,0,0)', line: { color: '#000', width: 3 } },
+        textposition: "top center",
+        hoverinfo: "skip",
+        marker: { size: 14, color: "rgba(0,0,0,0)", line: { color: "#000", width: 3 } },
       } as Data);
     }
     void Plotly.react(
@@ -278,8 +283,8 @@ export function render(root: HTMLElement): () => void {
       {
         uirevision: method,
         margin: { l: 0, r: 0, t: 0, b: 0 },
-        legend: { itemsizing: 'constant', font: { size: 11 }, x: 0, y: 1, bgcolor: 'rgba(255,255,255,0.75)' },
-        scene: { xaxis: { title: { text: '' } }, yaxis: { title: { text: '' } }, zaxis: { title: { text: '' } } },
+        legend: { itemsizing: "constant", font: { size: 11 }, x: 0, y: 1, bgcolor: "rgba(255,255,255,0.75)" },
+        scene: { xaxis: { title: { text: "" } }, yaxis: { title: { text: "" } }, zaxis: { title: { text: "" } } },
       },
       { responsive: true, displaylogo: false },
     );
@@ -289,54 +294,54 @@ export function render(root: HTMLElement): () => void {
     selected = i;
     grid?.destroy();
     const rows = points
-      .map((p, j) => ({ keyword: p.text, sim: sims[i][j], kinds: unique(p.uses.map((u) => u.kind)).join(', '), owners: unique(p.uses.map((u) => u.person)).join(', ') }))
+      .map((p, j) => ({ keyword: p.text, sim: sims[i][j], kinds: unique(p.uses.map(u => u.kind)).join(", "), owners: unique(p.uses.map(u => u.person)).join(", ") }))
       .filter((_, j) => j !== i)
       .sort((a, b) => b.sim - a.sim)
       .slice(0, 15);
-    panel.innerHTML = `<h3>${esc(points[i].text)}</h3><p class="hint">${points[i].uses.map((u) => `${esc(u.person)} · ${esc(u.persona)} · ${u.kind} ${u.affinity}`).join('<br>')}</p>
+    panel.innerHTML = `<h3>${esc(points[i].text)}</h3><p class="hint">${points[i].uses.map(u => `${esc(u.person)} · ${esc(u.persona)} · ${u.kind} ${u.affinity}`).join("<br>")}</p>
       <p><button class="clear">Clear selection</button></p><div class="g"></div>`;
-    q(panel, '.clear').addEventListener('click', () => {
+    q(panel, ".clear").addEventListener("click", () => {
       selected = undefined;
       grid?.destroy();
       grid = undefined;
-      panel.innerHTML = '<p class="empty">Click a keyword to see its nearest neighbours and to colour by similarity.</p>';
+      panel.innerHTML = "<p class=\"empty\">Click a keyword to see its nearest neighbours and to colour by similarity.</p>";
       draw();
     });
-    grid = createGrid(q(panel, '.g'), {
+    grid = createGrid(q(panel, ".g"), {
       rowData: rows,
-      domLayout: 'autoHeight',
+      domLayout: "autoHeight",
       defaultColDef: { flex: 1, wrapText: true, autoHeight: true },
       columnDefs: [
-        { field: 'keyword', flex: 2 },
-        { field: 'sim', headerName: 'Cosine', maxWidth: 90, valueFormatter: (p) => p.value.toFixed(3), cellStyle: (p) => heat(p.value) },
-        { field: 'kinds' },
-        { field: 'owners', headerName: 'Identities', flex: 2 },
+        { field: "keyword", flex: 2 },
+        { field: "sim", headerName: "Cosine", maxWidth: 90, valueFormatter: p => p.value.toFixed(3), cellStyle: p => heat(p.value) },
+        { field: "kinds" },
+        { field: "owners", headerName: "Identities", flex: 2 },
       ],
     });
     draw();
   };
 
   draw();
-  plotEl.on('plotly_click', (ev) => {
+  plotEl.on("plotly_click", (ev) => {
     const index = ev.points[0]?.customdata;
-    if (typeof index === 'number') select(index);
+    if (typeof index === "number") select(index);
   });
 
   let angle = 0;
   let rotateTimer: number | undefined;
-  q<HTMLInputElement>(root, '.rotate').addEventListener('change', (e) => {
+  q<HTMLInputElement>(root, ".rotate").addEventListener("change", (e) => {
     window.clearInterval(rotateTimer);
     if (!(e.target as HTMLInputElement).checked) return;
     rotateTimer = window.setInterval(() => {
       angle += 0.01;
-      void Plotly.relayout(plotEl, { 'scene.camera.eye': { x: 1.8 * Math.cos(angle), y: 1.8 * Math.sin(angle), z: 0.8 } });
+      void Plotly.relayout(plotEl, { "scene.camera.eye": { x: 1.8 * Math.cos(angle), y: 1.8 * Math.sin(angle), z: 0.8 } });
     }, 50);
   });
 
-  root.querySelectorAll('.toolbar select, .toolbar input:not(.rotate)').forEach((el) => el.addEventListener('input', draw));
+  root.querySelectorAll(".toolbar select, .toolbar input:not(.rotate)").forEach(el => el.addEventListener("input", draw));
 
-  const splitter = q(root, '.splitter');
-  splitter.addEventListener('pointerdown', (e) => {
+  const splitter = q(root, ".splitter");
+  splitter.addEventListener("pointerdown", (e) => {
     splitter.setPointerCapture(e.pointerId);
     const move = (ev: PointerEvent) => {
       const rect = split.getBoundingClientRect();
@@ -344,12 +349,12 @@ export function render(root: HTMLElement): () => void {
       split.style.gridTemplateColumns = `minmax(0, 1fr) 6px ${width}px`;
     };
     const up = () => {
-      splitter.removeEventListener('pointermove', move);
-      splitter.removeEventListener('pointerup', up);
+      splitter.removeEventListener("pointermove", move);
+      splitter.removeEventListener("pointerup", up);
       Plotly.Plots.resize(plotEl);
     };
-    splitter.addEventListener('pointermove', move);
-    splitter.addEventListener('pointerup', up);
+    splitter.addEventListener("pointermove", move);
+    splitter.addEventListener("pointerup", up);
   });
 
   return () => {

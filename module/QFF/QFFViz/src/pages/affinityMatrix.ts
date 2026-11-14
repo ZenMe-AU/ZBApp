@@ -1,14 +1,19 @@
-import { createGrid, themeQuartz, type ColGroupDef } from 'ag-grid-community';
-import { store } from '../data/store';
-import { preferenceKinds, type PreferenceKind } from '../data/types';
-import { heat, kindColor } from '../shared/colors';
-import { q } from '../shared/dom';
-import { normalize } from '../shared/sets';
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
+
+import { createGrid, themeQuartz, type ColGroupDef } from "ag-grid-community";
+import { store } from "../data/store";
+import { preferenceKinds, type PreferenceKind } from "../data/types";
+import { heat, kindColor } from "../shared/colors";
+import { q } from "../shared/dom";
+import { normalize } from "../shared/sets";
 
 interface Row {
-  norm: string;
-  keyword: string;
-  kind: PreferenceKind;
+  norm: string
+  keyword: string
+  kind: PreferenceKind
 }
 
 const trim = (text: string) => (text.length > 20 ? `${text.slice(0, 20)}…` : text);
@@ -19,7 +24,7 @@ export function render(root: HTMLElement): () => void {
       <h2>Affinity matrix</h2>
       <input class="search" placeholder="Quick filter…" />
       <input class="keyword" placeholder="New keyword row" />
-      <select class="kind">${preferenceKinds.map((k) => `<option>${k}</option>`).join('')}</select>
+      <select class="kind">${preferenceKinds.map(k => `<option>${k}</option>`).join("")}</select>
       <button class="add">Add row</button>
       <label title="Persona column width in px; press Enter to apply">Col width <input class="col-width" type="number" min="20" max="400" value="70" style="width:60px" /></label>
     </div>
@@ -27,7 +32,7 @@ export function render(root: HTMLElement): () => void {
 
   const rowMap = new Map<string, Row & { count: number }>();
   for (const person of store.people) {
-    for (const pref of person.properties.personas.flatMap((g) => g.preferences)) {
+    for (const pref of person.properties.personas.flatMap(g => g.preferences)) {
       const key = `${pref.kind}|${normalize(pref.keyword)}`;
       const row = rowMap.get(key) ?? { norm: normalize(pref.keyword), keyword: pref.keyword, kind: pref.kind, count: 0 };
       row.count++;
@@ -37,9 +42,9 @@ export function render(root: HTMLElement): () => void {
   const rows = [...rowMap.values()].sort((a, b) => b.count - a.count || a.norm.localeCompare(b.norm));
 
   const findPref = (personId: string, groupIndex: number, row: Row) =>
-    store.person(personId)!.properties.personas[groupIndex].preferences.find((p) => p.kind === row.kind && normalize(p.keyword) === row.norm);
+    store.person(personId)!.properties.personas[groupIndex].preferences.find(p => p.kind === row.kind && normalize(p.keyword) === row.norm);
 
-  const personGroups: ColGroupDef<Row>[] = store.people.map((person) => ({
+  const personGroups: ColGroupDef<Row>[] = store.people.map(person => ({
     headerName: trim(person.identity.name),
     headerTooltip: person.identity.name,
     children: person.properties.personas.map((group, i) => ({
@@ -51,10 +56,10 @@ export function render(root: HTMLElement): () => void {
       wrapHeaderText: true,
       autoHeaderHeight: true,
       editable: true,
-      cellDataType: 'number',
+      cellDataType: "number",
       cellEditorParams: { min: -1, max: 1, step: 0.1 },
-      cellStyle: (p) => heat(p.value),
-      valueGetter: (p) => findPref(person.id, i, p.data!)?.affinity ?? null,
+      cellStyle: p => heat(p.value),
+      valueGetter: p => findPref(person.id, i, p.data!)?.affinity ?? null,
       valueSetter: (p) => {
         const value = p.newValue as number | null;
         const pref = findPref(person.id, i, p.data);
@@ -67,42 +72,42 @@ export function render(root: HTMLElement): () => void {
     })),
   }));
 
-  const api = createGrid<Row>(q(root, '.fill'), {
+  const api = createGrid<Row>(q(root, ".fill"), {
     rowData: rows,
     theme: themeQuartz.withParams({ spacing: 4, cellHorizontalPadding: 1, rowHeight: 24, headerHeight: 26, fontSize: 12, headerFontSize: 12 }),
     tooltipShowDelay: 300,
     defaultColDef: { sortable: true, resizable: true },
     columnDefs: [
-      { field: 'keyword', pinned: 'left', width: 200, filter: true, tooltipField: 'keyword', headerTooltip: 'Keyword' },
+      { field: "keyword", pinned: "left", width: 200, filter: true, tooltipField: "keyword", headerTooltip: "Keyword" },
       {
-        field: 'kind',
-        pinned: 'left',
+        field: "kind",
+        pinned: "left",
         width: 80,
-        headerTooltip: 'Preference kind',
+        headerTooltip: "Preference kind",
         filter: true,
-        cellStyle: (p) => ({ color: kindColor[p.value as PreferenceKind], fontWeight: 600 }),
+        cellStyle: p => ({ color: kindColor[p.value as PreferenceKind], fontWeight: 600 }),
       },
       ...personGroups,
     ],
-    onCellValueChanged: (e) => store.touch(store.person(e.column.getColId().split('|')[0])!.properties),
+    onCellValueChanged: e => store.touch(store.person(e.column.getColId().split("|")[0])!.properties),
   });
 
-  q<HTMLInputElement>(root, '.search').addEventListener('input', (e) =>
-    api.setGridOption('quickFilterText', (e.target as HTMLInputElement).value),
+  q<HTMLInputElement>(root, ".search").addEventListener("input", e =>
+    api.setGridOption("quickFilterText", (e.target as HTMLInputElement).value),
   );
 
-  q<HTMLInputElement>(root, '.col-width').addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
+  q<HTMLInputElement>(root, ".col-width").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
     const width = Number((e.target as HTMLInputElement).value);
     if (!(width > 0)) return;
-    const ids = personGroups.flatMap((g) => g.children.map((c) => (c as { colId: string }).colId));
-    api.setColumnWidths(ids.map((key) => ({ key, newWidth: width })));
+    const ids = personGroups.flatMap(g => g.children.map(c => (c as { colId: string }).colId));
+    api.setColumnWidths(ids.map(key => ({ key, newWidth: width })));
   });
 
-  q(root, '.add').addEventListener('click', () => {
-    const keyword = q<HTMLInputElement>(root, '.keyword').value.trim();
+  q(root, ".add").addEventListener("click", () => {
+    const keyword = q<HTMLInputElement>(root, ".keyword").value.trim();
     if (!keyword) return;
-    const row: Row = { norm: normalize(keyword), keyword, kind: q<HTMLSelectElement>(root, '.kind').value as PreferenceKind };
+    const row: Row = { norm: normalize(keyword), keyword, kind: q<HTMLSelectElement>(root, ".kind").value as PreferenceKind };
     api.applyTransaction({ add: [row], addIndex: 0 });
   });
 

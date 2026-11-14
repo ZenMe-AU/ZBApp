@@ -6,83 +6,71 @@
   "location": "Brisbane, Queensland, Australia",
   "occupation": "Technology architect and small-business founder",
   "summary": "An analytical and technically minded Australian man interested in cloud security, artificial intelligence, practical innovation, outdoor activities, Christian faith and community projects. He values independence, reliability, honesty and substantive conversation.",
-  "preferences": [
-    {
+  "preferences": [{
       "persona": "technology peer",
       "keyword": "competence",
       "definition": "Demonstrating the knowledge and ability to handle technical work effectively.",
       "kind": "value",
       "affinity": 0.9
-    },
-    {
+    }, {
       "persona": "technology peer",
       "keyword": "curiosity",
       "definition": "A desire to ask questions and explore ideas to gain understanding.",
       "kind": "value",
       "affinity": 0.9
-    },
-    {
+    }, {
       "persona": "technology peer",
       "keyword": "openness",
       "definition": "Willingness to consider different ideas, evidence, and perspectives.",
       "kind": "value",
       "affinity": 0.8
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "ethics",
       "definition": "Principles used to consider what is right, responsible, and fair.",
       "kind": "value",
       "affinity": 0.8
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "faith in daily life",
       "definition": "Putting religious trust and convictions into practice in everyday choices and actions.",
       "kind": "value",
       "affinity": 0.9
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "honesty",
       "definition": "Communicating truthfully and accurately, including when it is difficult.",
       "kind": "value",
       "affinity": 0.9
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "humility",
       "definition": "Recognizing one’s limitations and valuing others without seeking superiority.",
       "kind": "value",
       "affinity": 0.9
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "respectful disagreement",
       "definition": "Discussing different views without insults, contempt, or dismissiveness.",
       "kind": "value",
       "affinity": 0.9
-    },
-    {
+    }, {
       "persona": "outdoor activity friend",
       "keyword": "reliability",
       "definition": "Following through on plans and commitments consistently.",
       "kind": "value",
       "affinity": 0.8
-    },
-    {
+    }, {
       "persona": "outdoor activity friend",
       "keyword": "curiosity",
       "definition": "Interest in exploring, noticing, and learning about places and nature.",
       "kind": "value",
       "affinity": 0.7
-    },
-    {
+    }, {
       "persona": "outdoor activity friend",
       "keyword": "consideration",
       "definition": "Taking other people’s comfort, needs, and limits into account.",
       "kind": "value",
       "affinity": 0.8
-    }
-  ]
+    }]
 }

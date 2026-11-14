@@ -6,41 +6,35 @@
   "location": "Melbourne, Victoria, Australia",
   "occupation": "Civil engineer and junior sports-club volunteer",
   "summary": "A reliable sports enthusiast who enjoys local community projects, cycling and weekend hikes.",
-  "preferences": [
-    {
+  "preferences": [{
       "persona": "melbourne sport friend",
       "keyword": "sportsmanship",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Playing fairly and treating teammates, opponents, and officials with respect."
-    },
-    {
+    }, {
       "persona": "melbourne sport friend",
       "keyword": "loyalty",
       "kind": "value",
       "affinity": 0.8,
       "definition": "Being dependable and standing by teammates, friends, or a team."
-    },
-    {
+    }, {
       "persona": "community volunteer",
       "keyword": "service",
       "kind": "value",
       "affinity": 0.8,
       "definition": "Contributing time or skills to help other people or the community."
-    },
-    {
+    }, {
       "persona": "community volunteer",
       "keyword": "responsibility",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Taking ownership of commitments, duties, and their consequences."
-    },
-    {
+    }, {
       "persona": "outdoor activity friend",
       "keyword": "reliability",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Following through on plans and commitments consistently."
-    }
-  ]
+    }]
 }

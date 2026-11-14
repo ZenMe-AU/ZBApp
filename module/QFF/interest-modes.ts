@@ -1,49 +1,54 @@
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
+
 export interface InterestSubmode {
-  text: string;
-  definition: string;
-  weight: number;
-  vector: number[] | null;
+  text: string
+  definition: string
+  weight: number
+  vector: number[] | null
 }
 
 export interface InterestMode {
-  definition: string;
-  vector: number[] | null;
-  submodes: InterestSubmode[];
+  definition: string
+  vector: number[] | null
+  submodes: InterestSubmode[]
 }
 
 export interface InterestModesFile {
-  embedding_model: { name: string; version: string; dimensions: number };
-  modes: Record<string, InterestMode>;
+  embedding_model: { name: string, version: string, dimensions: number }
+  modes: Record<string, InterestMode>
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+  typeof value === "object" && value !== null && !Array.isArray(value);
 const isVector = (value: unknown): value is number[] | null =>
-  value === null || (Array.isArray(value) && value.every((x) => typeof x === 'number' && Number.isFinite(x)));
+  value === null || (Array.isArray(value) && value.every(x => typeof x === "number" && Number.isFinite(x)));
 
 export function parseInterestModes(value: unknown): InterestModesFile {
   if (!isObject(value) || !isObject(value.embedding_model) || !isObject(value.modes)) {
-    throw new Error('Invalid interest-modes.json: expected embedding_model and modes objects');
+    throw new Error("Invalid interest-modes.json: expected embedding_model and modes objects");
   }
   const model = value.embedding_model;
   if (
-    typeof model.name !== 'string' || !model.name ||
-    typeof model.version !== 'string' ||
-    typeof model.dimensions !== 'number' || !Number.isInteger(model.dimensions) || model.dimensions <= 0
+    typeof model.name !== "string" || !model.name
+    || typeof model.version !== "string"
+    || typeof model.dimensions !== "number" || !Number.isInteger(model.dimensions) || model.dimensions <= 0
   ) {
-    throw new Error('Invalid interest-modes.json: invalid embedding model metadata');
+    throw new Error("Invalid interest-modes.json: invalid embedding model metadata");
   }
   const modes: Record<string, InterestMode> = {};
   for (const [name, mode] of Object.entries(value.modes)) {
-    if (!name.trim() || !isObject(mode) || typeof mode.definition !== 'string' ||
-      !isVector(mode.vector) || !Array.isArray(mode.submodes) || !mode.submodes.length) {
+    if (!name.trim() || !isObject(mode) || typeof mode.definition !== "string"
+      || !isVector(mode.vector) || !Array.isArray(mode.submodes) || !mode.submodes.length) {
       throw new Error(`Invalid interest mode "${name}": expected definition, vector and nonempty submodes`);
     }
     const submodes: InterestSubmode[] = mode.submodes.map((submode: unknown, i: number) => {
-      if (!isObject(submode) || typeof submode.text !== 'string' || !submode.text.trim() ||
-        typeof submode.definition !== 'string' || !submode.definition.trim() ||
-        typeof submode.weight !== 'number' || !Number.isFinite(submode.weight) || submode.weight < 0 ||
-        !isVector(submode.vector)) {
+      if (!isObject(submode) || typeof submode.text !== "string" || !submode.text.trim()
+        || typeof submode.definition !== "string" || !submode.definition.trim()
+        || typeof submode.weight !== "number" || !Number.isFinite(submode.weight) || submode.weight < 0
+        || !isVector(submode.vector)) {
         throw new Error(`Invalid submode ${i + 1} of "${name}": expected text, definition, nonnegative weight and vector`);
       }
       return { text: submode.text, definition: submode.definition, weight: submode.weight, vector: submode.vector };
@@ -63,9 +68,9 @@ export function parseInterestModes(value: unknown): InterestModesFile {
 export const submodeInput = (_name: string, submode: InterestSubmode): string => submode.definition.trim();
 
 export function submodeIssue(_name: string, submode: InterestSubmode, dimensions: number): string | null {
-  if (!submode.definition.trim()) return 'missing submode definition; refresh embeddings';
-  if (!submode.vector?.length) return 'missing submode vector; refresh embeddings';
-  if (submode.vector.length !== dimensions) return 'submode vector dimensions differ; refresh embeddings';
+  if (!submode.definition.trim()) return "missing submode definition; refresh embeddings";
+  if (!submode.vector?.length) return "missing submode vector; refresh embeddings";
+  if (submode.vector.length !== dimensions) return "submode vector dimensions differ; refresh embeddings";
   return null;
 }
 
@@ -90,10 +95,10 @@ export function modeIssue(name: string, mode: InterestMode, dimensions: number):
     const issue = submodeIssue(name, submode, dimensions);
     if (issue) return issue;
   }
-  if (!mode.vector?.length) return 'missing calculated mode vector; run calculate-mode-vectors';
+  if (!mode.vector?.length) return "missing calculated mode vector; run calculate-mode-vectors";
   const expected = averageMode(name, mode, dimensions);
   if (mode.vector.length !== dimensions || mode.vector.some((x, i) => x !== expected[i])) {
-    return 'mode average is stale; run calculate-mode-vectors';
+    return "mode average is stale; run calculate-mode-vectors";
   }
   return null;
 }
@@ -104,11 +109,11 @@ export function applyModeEdits(current: InterestModesFile, draft: InterestModesF
   for (const [name, mode] of Object.entries(result.modes)) {
     const previous = current.modes[name];
     for (const submode of mode.submodes) {
-      const existing = previous?.submodes.find((s) => s.text === submode.text && s.definition === submode.definition);
+      const existing = previous?.submodes.find(s => s.text === submode.text && s.definition === submode.definition);
       submode.vector = existing?.vector ?? null;
     }
-    const unchanged = previous && JSON.stringify(previous.submodes.map((s) => [s.text, s.definition, s.weight])) ===
-      JSON.stringify(mode.submodes.map((s) => [s.text, s.definition, s.weight]));
+    const unchanged = previous && JSON.stringify(previous.submodes.map(s => [s.text, s.definition, s.weight]))
+      === JSON.stringify(mode.submodes.map(s => [s.text, s.definition, s.weight]));
     mode.vector = unchanged ? previous.vector : null;
   }
   return result;

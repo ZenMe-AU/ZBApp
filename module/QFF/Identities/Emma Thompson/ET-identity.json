@@ -6,48 +6,41 @@
   "location": "Brisbane, Queensland, Australia",
   "occupation": "Product designer and amateur photographer",
   "summary": "An open-minded designer interested in accessible technology, Christian ethics and local cultural experiences.",
-  "preferences": [
-    {
+  "preferences": [{
       "persona": "technology peer",
       "keyword": "openness",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Willingness to consider different ideas, evidence, and perspectives."
-    },
-    {
+    }, {
       "persona": "technology peer",
       "keyword": "curiosity",
       "kind": "value",
       "affinity": 0.9,
       "definition": "An interest in asking questions and exploring new ideas to understand technology."
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "ethics",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Principles used to consider what is right, responsible, and fair."
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "honesty",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Communicating truthfully and accurately, including when it is difficult."
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "respectful disagreement",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Discussing different views without insults, contempt, or dismissiveness."
-    },
-    {
+    }, {
       "persona": "culture and photography friend",
       "keyword": "curiosity",
       "kind": "value",
       "affinity": 0.9,
       "definition": "An interest in noticing and learning about visual art, places, and experiences."
-    }
-  ]
+    }]
 }

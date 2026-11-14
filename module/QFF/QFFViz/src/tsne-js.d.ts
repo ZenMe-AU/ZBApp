@@ -1,8 +1,13 @@
-declare module 'tsne-js' {
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
+
+declare module "tsne-js" {
   export default class TSNE {
-    constructor(options: { dim: number; perplexity: number; learningRate: number; nIter: number; metric: 'euclidean' });
+    constructor(options: { dim: number, perplexity: number, learningRate: number, nIter: number, metric: "euclidean" });
     outputEmbedding: { data: Float64Array };
-    init(options: { data: number[][]; type: 'dense' }): void;
+    init(options: { data: number[][], type: "dense" }): void;
     run(): [number, number];
     getOutput(): number[][];
   }

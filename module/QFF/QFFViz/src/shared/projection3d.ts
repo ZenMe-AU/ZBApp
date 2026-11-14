@@ -1,27 +1,32 @@
-import { UMAP } from 'umap-js';
-import TSNE from 'tsne-js';
-import { cosine, pca, seededRandom } from './vectors';
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
 
-export type Projection3d = 'pca' | 'umap' | 'tsne';
+import { UMAP } from "umap-js";
+import TSNE from "tsne-js";
+import { cosine, pca, seededRandom } from "./vectors";
 
-export function project3d(vectors: number[][], method: Projection3d): { coords: number[][]; info: string } {
-  if (method === 'pca' || vectors.length < 4) {
+export type Projection3d = "pca" | "umap" | "tsne";
+
+export function project3d(vectors: number[][], method: Projection3d): { coords: number[][], info: string } {
+  if (method === "pca" || vectors.length < 4) {
     const { coords, explained } = pca(vectors, 3);
-    const share = explained.map((e) => `${(e * 100).toFixed(1)}%`).join(' + ');
+    const share = explained.map(e => `${(e * 100).toFixed(1)}%`).join(" + ");
     return {
       coords,
-      info: `${method !== 'pca' ? `Too few points for 3D ${method === 'tsne' ? 't-SNE' : 'UMAP'}; using PCA. ` : ''}PCA axes explain ${share} = ${(explained.reduce((s, e) => s + e, 0) * 100).toFixed(1)}% of variance`,
+      info: `${method !== "pca" ? `Too few points for 3D ${method === "tsne" ? "t-SNE" : "UMAP"}; using PCA. ` : ""}PCA axes explain ${share} = ${(explained.reduce((s, e) => s + e, 0) * 100).toFixed(1)}% of variance`,
     };
   }
-  if (method === 'tsne') {
+  if (method === "tsne") {
     const perplexity = Math.min(30, Math.max(2, Math.floor((vectors.length - 1) / 3)));
-    const model = new TSNE({ dim: 3, perplexity, learningRate: 100, nIter: 500, metric: 'euclidean' });
+    const model = new TSNE({ dim: 3, perplexity, learningRate: 100, nIter: 500, metric: "euclidean" });
     const normalized = vectors.map((vector) => {
       const norm = Math.hypot(...vector);
-      if (!norm) throw new Error('t-SNE requires non-zero vectors');
-      return vector.map((value) => value / norm);
+      if (!norm) throw new Error("t-SNE requires non-zero vectors");
+      return vector.map(value => value / norm);
     });
-    model.init({ data: normalized, type: 'dense' });
+    model.init({ data: normalized, type: "dense" });
     // Replace the library's random initialization without changing global Math.random.
     const random = seededRandom(42);
     const initial = model.outputEmbedding.data;
@@ -30,8 +35,8 @@ export function project3d(vectors: number[][], method: Projection3d): { coords: 
     }
     model.run();
     const coords = model.getOutput();
-    if (coords.some((point) => point.length !== 3 || point.some((value) => !Number.isFinite(value)))) {
-      throw new Error('t-SNE produced invalid coordinates');
+    if (coords.some(point => point.length !== 3 || point.some(value => !Number.isFinite(value)))) {
+      throw new Error("t-SNE produced invalid coordinates");
     }
     return {
       coords,

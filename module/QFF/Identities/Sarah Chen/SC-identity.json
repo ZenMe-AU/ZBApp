@@ -6,34 +6,29 @@
   "location": "Melbourne, Victoria, Australia",
   "occupation": "Secondary-school teacher and community choir organiser",
   "summary": "A thoughtful teacher who values Christian friendship, local arts and relaxed outdoor activities.",
-  "preferences": [
-    {
+  "preferences": [{
       "persona": "christian friend",
       "keyword": "faith in daily life",
       "kind": "value",
       "affinity": 0.8,
       "definition": "Putting religious trust and convictions into practice in everyday choices and actions."
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "humility",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Recognizing one’s limitations and valuing others without seeking superiority."
-    },
-    {
+    }, {
       "persona": "christian friend",
       "keyword": "respectful disagreement",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Discussing different views without insults, contempt, or dismissiveness."
-    },
-    {
+    }, {
       "persona": "outdoor activity friend",
       "keyword": "consideration",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Taking other people’s comfort, needs, and limits into account."
-    }
-  ]
+    }]
 }

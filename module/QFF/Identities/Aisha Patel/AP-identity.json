@@ -6,34 +6,29 @@
   "location": "Brisbane, Queensland, Australia",
   "occupation": "Software engineer and volunteer digital-literacy tutor",
   "summary": "A curious engineer who enjoys practical technology, moderate hikes and making digital tools accessible.",
-  "preferences": [
-    {
+  "preferences": [{
       "persona": "technology peer",
       "keyword": "curiosity",
       "kind": "value",
       "affinity": 0.9,
       "definition": "An interest in asking questions and exploring new ideas to understand technology."
-    },
-    {
+    }, {
       "persona": "technology peer",
       "keyword": "competence",
       "kind": "value",
       "affinity": 0.8,
       "definition": "The knowledge and ability to handle technical work effectively."
-    },
-    {
+    }, {
       "persona": "community volunteer",
       "keyword": "service",
       "kind": "value",
       "affinity": 0.9,
       "definition": "Contributing time or skills to help other people or the community."
-    },
-    {
+    }, {
       "persona": "community volunteer",
       "keyword": "responsibility",
       "kind": "value",
       "affinity": 0.8,
       "definition": "Taking ownership of commitments, duties, and their consequences."
-    }
-  ]
+    }]
 }

@@ -1,13 +1,18 @@
-import Graph from 'graphology';
-import Sigma from 'sigma';
-import { createDrawCurvedEdgeLabel, createEdgeCurveProgram, DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS } from '@sigma/edge-curve';
-import type { EdgeLabelDrawingFunction } from 'sigma/rendering';
-import type { GridApi } from 'ag-grid-community';
-import { store } from '../data/store';
-import type { Relation } from '../data/types';
-import { personColor } from '../shared/colors';
-import { esc, q } from '../shared/dom';
-import { kvGrid } from '../shared/grid';
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
+
+import Graph from "graphology";
+import Sigma from "sigma";
+import { createDrawCurvedEdgeLabel, createEdgeCurveProgram, DEFAULT_EDGE_CURVE_PROGRAM_OPTIONS } from "@sigma/edge-curve";
+import type { EdgeLabelDrawingFunction } from "sigma/rendering";
+import type { GridApi } from "ag-grid-community";
+import { store } from "../data/store";
+import type { Relation } from "../data/types";
+import { personColor } from "../shared/colors";
+import { esc, q } from "../shared/dom";
+import { kvGrid } from "../shared/grid";
 
 const edgeKey = (from: string, to: string) => `${from}->${to}`;
 
@@ -15,14 +20,14 @@ const drawCurvedLabel = createDrawCurvedEdgeLabel(DEFAULT_EDGE_CURVE_PROGRAM_OPT
 const drawLabel: EdgeLabelDrawingFunction = (context, edge, source, target, settings) => {
   if (!edge.selected) return drawCurvedLabel(context, edge, source, target, settings);
   context.save();
-  context.shadowColor = '#fff';
+  context.shadowColor = "#fff";
   context.shadowBlur = 8;
   // Repeated passes build up an opaque halo around the glyphs.
   for (let i = 0; i < 4; i++) drawCurvedLabel(context, edge, source, target, settings);
   context.restore();
 };
 const CurvedArrowProgram = createEdgeCurveProgram({
-  arrowHead: { extremity: 'target', lengthToThicknessRatio: 2.5, widenessToThicknessRatio: 2 },
+  arrowHead: { extremity: "target", lengthToThicknessRatio: 2.5, widenessToThicknessRatio: 2 },
   drawLabel,
 });
 
@@ -34,8 +39,8 @@ export function render(root: HTMLElement): () => void {
       <label><input type="checkbox" class="labels" checked /> topic labels</label></div>
     <div class="split"><div class="graph"></div><aside class="panel"><p class="empty">Select a node or edge.</p></aside></div>`;
 
-  const panel = q(root, '.panel');
-  const graph = new Graph({ type: 'directed' });
+  const panel = q(root, ".panel");
+  const graph = new Graph({ type: "directed" });
   const n = store.people.length;
   store.people.forEach((p, i) =>
     graph.addNode(p.id, {
@@ -53,14 +58,14 @@ export function render(root: HTMLElement): () => void {
     for (const p of store.people) {
       for (const r of p.relations.relations) {
         if (!graph.hasNode(r.contact_ref) || graph.hasEdge(edgeKey(p.id, r.contact_ref))) continue;
-        const reciprocal = store.person(r.contact_ref)?.relations.relations.some((x) => x.contact_ref === p.id);
-        const color = reciprocal ? '#2e9d5b' : '#e08a1e';
+        const reciprocal = store.person(r.contact_ref)?.relations.relations.some(x => x.contact_ref === p.id);
+        const color = reciprocal ? "#2e9d5b" : "#e08a1e";
         graph.addDirectedEdgeWithKey(edgeKey(p.id, r.contact_ref), p.id, r.contact_ref, {
-          label: r.topics_shared.join(', '),
+          label: r.topics_shared.join(", "),
           size: 2 + r.topics_shared.length,
           color,
           labelColor: color,
-          type: 'curved',
+          type: "curved",
         });
       }
     }
@@ -80,42 +85,42 @@ export function render(root: HTMLElement): () => void {
   };
 
   let selected: string | undefined;
-  const renderer = new Sigma(graph, q(root, '.graph'), {
+  const renderer = new Sigma(graph, q(root, ".graph"), {
     renderEdgeLabels: true,
     enableEdgeEvents: true,
     zIndex: true,
-    edgeLabelColor: { attribute: 'labelColor' },
+    edgeLabelColor: { attribute: "labelColor" },
     edgeProgramClasses: { curved: CurvedArrowProgram },
     nodeReducer: (node, data) => (node === selected ? { ...data, highlighted: true } : data),
     edgeReducer: (edge, data) =>
-      edge === selectedEdge ? { ...data, zIndex: 1, selected: true, labelColor: '#000', forceLabel: true } : data,
+      edge === selectedEdge ? { ...data, zIndex: 1, selected: true, labelColor: "#000", forceLabel: true } : data,
   });
 
   let panelGrids: GridApi[] = [];
   const resetPanel = (html: string) => {
-    panelGrids.forEach((g) => g.destroy());
+    panelGrids.forEach(g => g.destroy());
     panelGrids = [];
     panel.innerHTML = html;
   };
 
   const showEdge = (key: string) => {
-    const [from, to] = key.split('->');
+    const [from, to] = key.split("->");
     const owner = store.person(from)!;
-    const rel = owner.relations.relations.find((r) => r.contact_ref === to);
+    const rel = owner.relations.relations.find(r => r.contact_ref === to);
     if (!rel) return;
     selectEdge(key);
     resetPanel(`<h3>${esc(owner.identity.name)} → ${esc(store.nameOf(to))}</h3><div class="kv"></div><p><button class="danger del">Delete relation</button></p>`);
     panelGrids.push(
-      kvGrid(q(panel, '.kv'), rel, () => {
+      kvGrid(q(panel, ".kv"), rel, () => {
         store.touch(owner.relations);
         syncEdges();
-      }, ['contact_ref']),
+      }, ["contact_ref"]),
     );
-    q(panel, '.del').addEventListener('click', () => {
+    q(panel, ".del").addEventListener("click", () => {
       owner.relations.relations.splice(owner.relations.relations.indexOf(rel), 1);
       store.touch(owner.relations);
       selectEdge(undefined);
-      resetPanel('<p class="empty">Relation deleted.</p>');
+      resetPanel("<p class=\"empty\">Relation deleted.</p>");
     });
   };
 
@@ -125,18 +130,18 @@ export function render(root: HTMLElement): () => void {
       <h3>${esc(person.identity.name)}</h3><div class="kv"></div>
       <h3>Relations</h3>
       <div class="list">${person.relations.relations
-        .map((r) => `<button data-key="${esc(edgeKey(id, r.contact_ref))}">→ ${esc(store.nameOf(r.contact_ref))}</button>`)
-        .join('')}</div>`);
-    panelGrids.push(kvGrid(q(panel, '.kv'), person.identity, () => store.touch(person.identity), ['identity_id']));
-    panel.querySelectorAll<HTMLButtonElement>('.list button').forEach((b) => b.addEventListener('click', () => showEdge(b.dataset.key!)));
+        .map(r => `<button data-key="${esc(edgeKey(id, r.contact_ref))}">→ ${esc(store.nameOf(r.contact_ref))}</button>`)
+        .join("")}</div>`);
+    panelGrids.push(kvGrid(q(panel, ".kv"), person.identity, () => store.touch(person.identity), ["identity_id"]));
+    panel.querySelectorAll<HTMLButtonElement>(".list button").forEach(b => b.addEventListener("click", () => showEdge(b.dataset.key!)));
   };
 
-  renderer.on('clickNode', ({ node, event }) => {
+  renderer.on("clickNode", ({ node, event }) => {
     const shift = (event.original as MouseEvent).shiftKey;
     if (shift && selected && selected !== node) {
       const owner = store.person(selected)!;
-      if (!owner.relations.relations.some((r) => r.contact_ref === node)) {
-        const rel: Relation = { contact_ref: node, topics_shared: [], topics_private: [], source: 'manual' };
+      if (!owner.relations.relations.some(r => r.contact_ref === node)) {
+        const rel: Relation = { contact_ref: node, topics_shared: [], topics_private: [], source: "manual" };
         owner.relations.relations.push(rel);
         store.touch(owner.relations);
         syncEdges();
@@ -149,18 +154,18 @@ export function render(root: HTMLElement): () => void {
     renderer.refresh();
     showNode(node);
   });
-  renderer.on('clickEdge', ({ edge }) => showEdge(edge));
-  q<HTMLInputElement>(root, '.labels').addEventListener('change', (e) =>
-    renderer.setSetting('renderEdgeLabels', (e.target as HTMLInputElement).checked),
+  renderer.on("clickEdge", ({ edge }) => showEdge(edge));
+  q<HTMLInputElement>(root, ".labels").addEventListener("change", e =>
+    renderer.setSetting("renderEdgeLabels", (e.target as HTMLInputElement).checked),
   );
-  renderer.on('clickStage', () => {
+  renderer.on("clickStage", () => {
     selected = undefined;
     selectEdge(undefined);
     renderer.refresh();
   });
 
   return () => {
-    panelGrids.forEach((g) => g.destroy());
+    panelGrids.forEach(g => g.destroy());
     renderer.kill();
   };
 }

@@ -1,12 +1,17 @@
-import { createGrid } from 'ag-grid-community';
-import { store } from '../data/store';
-import type { Person, Persona } from '../data/types';
-import { listCol, longText } from '../shared/grid';
-import { personOptions, q } from '../shared/dom';
+/**
+ * @license SPDX-FileCopyrightText: © 2026 Zenme Pty Ltd <info@zenme.com.au>
+ * @license SPDX-License-Identifier: MIT
+ */
+
+import { createGrid } from "ag-grid-community";
+import { store } from "../data/store";
+import type { Person, Persona } from "../data/types";
+import { listCol, longText } from "../shared/grid";
+import { personOptions, q } from "../shared/dom";
 
 interface Row {
-  owner: Person;
-  persona: Persona;
+  owner: Person
+  persona: Persona
 }
 
 export function render(root: HTMLElement): () => void {
@@ -21,28 +26,28 @@ export function render(root: HTMLElement): () => void {
     </div>
     <div class="fill"></div>`;
 
-  const rows: Row[] = store.people.flatMap((owner) => owner.personas.personas.map((persona) => ({ owner, persona })));
+  const rows: Row[] = store.people.flatMap(owner => owner.personas.personas.map(persona => ({ owner, persona })));
 
-  const api = createGrid<Row>(q(root, '.fill'), {
+  const api = createGrid<Row>(q(root, ".fill"), {
     rowData: rows,
-    rowSelection: { mode: 'multiRow' },
+    rowSelection: { mode: "multiRow" },
     defaultColDef: { editable: true, filter: true, minWidth: 160, flex: 1 },
     columnDefs: [
-      { headerName: 'Identity', valueGetter: (p) => p.data!.owner.identity.name, editable: false, pinned: 'left' },
-      { field: 'persona.persona', headerName: 'Persona', pinned: 'left' },
-      { field: 'persona.connection_goal', headerName: 'Connection goal', ...longText },
-      { field: 'persona.motivation', headerName: 'Motivation', ...longText },
-      listCol('persona.contributions', 'Contributions'),
-      listCol('persona.expectations', 'Expectations'),
-      listCol('persona.important_interests_and_values', 'Interests & values'),
-      { field: 'persona.communication_style', headerName: 'Communication style', ...longText },
-      listCol('persona.boundaries', 'Boundaries'),
-      { field: 'persona.initial_disclosure', headerName: 'Initial disclosure', ...longText },
+      { headerName: "Identity", valueGetter: p => p.data!.owner.identity.name, editable: false, pinned: "left" },
+      { field: "persona.persona", headerName: "Persona", pinned: "left" },
+      { field: "persona.connection_goal", headerName: "Connection goal", ...longText },
+      { field: "persona.motivation", headerName: "Motivation", ...longText },
+      listCol("persona.contributions", "Contributions"),
+      listCol("persona.expectations", "Expectations"),
+      listCol("persona.important_interests_and_values", "Interests & values"),
+      { field: "persona.communication_style", headerName: "Communication style", ...longText },
+      listCol("persona.boundaries", "Boundaries"),
+      { field: "persona.initial_disclosure", headerName: "Initial disclosure", ...longText },
     ],
     onCellValueChanged: (e) => {
       const { owner } = e.data;
-      if (e.colDef.field === 'persona.persona') {
-        const props = owner.properties.personas.find((g) => g.persona === e.oldValue);
+      if (e.colDef.field === "persona.persona") {
+        const props = owner.properties.personas.find(g => g.persona === e.oldValue);
         if (props) {
           props.persona = e.newValue;
           store.touch(owner.properties);
@@ -52,29 +57,29 @@ export function render(root: HTMLElement): () => void {
     },
   });
 
-  q<HTMLInputElement>(root, '.search').addEventListener('input', (e) =>
-    api.setGridOption('quickFilterText', (e.target as HTMLInputElement).value),
+  q<HTMLInputElement>(root, ".search").addEventListener("input", e =>
+    api.setGridOption("quickFilterText", (e.target as HTMLInputElement).value),
   );
 
-  q(root, '.add').addEventListener('click', () => {
-    const owner = store.person(q<HTMLSelectElement>(root, '.owner').value)!;
+  q(root, ".add").addEventListener("click", () => {
+    const owner = store.person(q<HTMLSelectElement>(root, ".owner").value)!;
     const persona: Persona = {
-      persona: 'new persona',
-      connection_goal: '',
-      motivation: '',
+      persona: "new persona",
+      connection_goal: "",
+      motivation: "",
       contributions: [],
       expectations: [],
       important_interests_and_values: [],
-      communication_style: '',
+      communication_style: "",
       boundaries: [],
-      initial_disclosure: '',
+      initial_disclosure: "",
     };
     owner.personas.personas.push(persona);
     store.touch(owner.personas);
     api.applyTransaction({ add: [{ owner, persona }] });
   });
 
-  q(root, '.delete').addEventListener('click', () => {
+  q(root, ".delete").addEventListener("click", () => {
     const selected = api.getSelectedRows();
     if (!selected.length || !confirm(`Delete ${selected.length} persona(s)? Preferences in properties files are kept.`)) return;
     for (const row of selected) {
