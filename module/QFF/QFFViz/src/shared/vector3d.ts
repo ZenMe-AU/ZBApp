@@ -17,7 +17,7 @@ export interface Vector3dPoint<Row extends { id: string }> {
   vector: number[]
   group: string
   color: string
-  shape: "triangle" | "circle"
+  shape: "triangle" | "circle" | "plus" | "minus"
   size: number
   selectedSize: number
   label: string
@@ -54,7 +54,7 @@ interface ECharts3DPoint {
 interface ECharts3DSeries {
   type: "scatter3D"
   name: string
-  symbol: "triangle" | "circle"
+  symbol: string
   symbolSize: (_value: unknown, params: { dataIndex: number }) => number
   tooltip: { extraCssText: string }
   data: ECharts3DPoint[]
@@ -92,6 +92,11 @@ function wrapHoverText(text: string): string {
   }
   return lines.map(esc).join("<br>");
 }
+
+const signSymbols = {
+  plus: "path://M4 0H6V4H10V6H6V10H4V6H0V4H4Z",
+  minus: "path://M0 4H10V6H0ZM0 0V10",
+};
 
 export function renderVector3d<Row extends { id: string }>(root: HTMLElement, options: Vector3dOptions<Row>): () => void {
   root.classList.add("vector-grid-page");
@@ -293,7 +298,8 @@ export function renderVector3d<Row extends { id: string }>(root: HTMLElement, op
         const index = new Map(data.points.map((point, i) => [point.row.id, i]));
         const groups = new Map<string, Vector3dPoint<Row>[]>();
         for (const point of visible) {
-          const key = JSON.stringify([point.group, point.color, point.shape]);
+          const sign = point.shape === "plus" || point.shape === "minus";
+          const key = JSON.stringify([point.group, point.color, point.shape, sign ? point.size : null]);
           const members = groups.get(key) ?? [];
           members.push(point);
           groups.set(key, members);
@@ -305,7 +311,7 @@ export function renderVector3d<Row extends { id: string }>(root: HTMLElement, op
           const size = (point: Vector3dPoint<Row>) => selectedIds.has(point.row.id) ? point.selectedSize : point.size;
           if (chart) {
             series.push({
-              type: "scatter3D", name: group, symbol: shape,
+              type: "scatter3D", name: group, symbol: shape === "plus" || shape === "minus" ? signSymbols[shape] : shape,
               tooltip: { extraCssText: `--graph-hover-color: ${color};` },
               symbolSize: (_value, params) => size(members[params.dataIndex]),
               data: members.map((point, i) => ({
@@ -320,22 +326,23 @@ export function renderVector3d<Row extends { id: string }>(root: HTMLElement, op
           }
           else {
             const triangle = shape === "triangle";
+            const text = triangle ? "▲" : shape === "plus" ? "+" : shape === "minus" ? "−" : undefined;
             traces.push({
               type: "scatter3d", name: group, showlegend: false,
-              mode: triangle ? "text+markers" : "markers",
+              mode: text ? "text+markers" : "markers",
               x: coords.map(point => point[0]), y: coords.map(point => point[1]), z: coords.map(point => point[2]),
-              // Plotly scatter3d has no triangle marker; camera-facing text preserves the shape.
-              text: triangle ? members.map(() => "▲") : undefined,
+              // Plotly scatter3d lacks triangle and minus markers; use camera-facing text.
+              text: text ? members.map(() => text) : undefined,
               textposition: "middle center",
-              textfont: { color, size: members.some(point => selectedIds.has(point.row.id)) ? 34 : 28 },
+              textfont: { color, size: triangle ? (members.some(point => selectedIds.has(point.row.id)) ? 34 : 28) : Math.max(1, members[0].size * 2) },
               customdata: members.map(point => [point.row.id, `${wrapHoverText(point.label)}${point.note ? `<br>${esc(point.note)}` : ""}`]),
               hovertemplate: "%{customdata[1]}<extra></extra>",
               hoverlabel: { bgcolor: color, font: { family: hoverStyle.fontFamily, size: parseFloat(hoverStyle.fontSize), color: hoverStyle.color } },
               marker: {
                 symbol: "circle",
                 size: members.map(size),
-                color: triangle ? "rgba(0,0,0,0)" : color,
-                line: { color: members.map(point => selectedIds.has(point.row.id) ? "#1f2933" : triangle ? "rgba(0,0,0,0)" : color), width: 2 },
+                color: text ? "rgba(0,0,0,0)" : color,
+                line: { color: members.map(point => selectedIds.has(point.row.id) ? "#1f2933" : text ? "rgba(0,0,0,0)" : color), width: 2 },
               },
             });
           }

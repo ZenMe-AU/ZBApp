@@ -77,6 +77,8 @@ UMAP preserves neighbourhoods imperfectly; apparent separation does not prove a 
 
 Modes -> 3DE uses the same controls and data with the ECharts GL renderer. Both pages use the reusable `src/shared/vector3d.ts` template; a dataset adapter supplies unique row IDs, valid nonzero vectors of matching dimensions, marker and hover details, filter fields, grid columns, warnings, and an optional refresh subscription. The template projects all supplied points before filtering. Shared hover font and background settings are in `src/styles.css` under `.vector-grid-page`.
 
+The template supports `triangle`, `circle`, `plus`, and `minus` marker shapes. A future preferences adapter can choose plus for positive affinity, minus for negative affinity, and circle for neutral affinity; the template does not calculate affinity.
+
 Run the template regression check from the repository root with `node --test module/QFF/QFFViz/tests/vector3d.test.ts`; it starts a temporary local server and uses the repository's Playwright browser.
 
 ## Modes -> Heatmap: full-dimensional alignment
