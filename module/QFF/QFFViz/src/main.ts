@@ -75,7 +75,7 @@ const pages: Page[] = [
   { id: 'pair-venn', group: 'Sets', title: 'Relationship pair', render: pairVenn.render,
     info: 'Checks whether the topics two people declared as shared in their relation are actually backed by both people’s preferences, and lets you edit the relation.' },
   { id: 'modes-edit', group: 'Modes', title: 'Edit', render: modesEdit.render,
-    info: 'Edit modes and weighted submodes, compare their scores for a keyword, refresh embeddings online, and recalculate mode averages offline.' },
+    info: "Edit modes and weighted submodes, refresh embeddings online, and recalculate mode averages offline." },
   { id: 'mode-3d', group: 'Modes', title: '3D', render: modeVectors.render3d,
     info: 'Inspect modes and submodes in 3D with UMAP/PCA/t-SNE and control mode/submode visibility.' },
   { id: 'mode-3d-echarts', group: 'Modes', title: '3DE', render: modeVectors.render3dE,

@@ -71,7 +71,6 @@
 .mode-submodes .weight-col { width: 76px; }
 .mode-submodes .contribution-col { width: 96px; }
 .mode-submodes .embedding-col { width: 110px; }
-.mode-submodes .score-col { width: 72px; }
 .mode-submodes .delete-col { width: 65px; }
 .mode-submodes input[type="number"] { width: 100%; }
 .mode-editor table.mini th, .mode-editor table.mini td { padding: 3px 4px; overflow-wrap: anywhere; }

@@ -47,9 +47,7 @@
 
 Open **Modes -> Edit** to expand a mode and edit its definition, submode texts, definitions, and weights. Contribution percentages show each weight's share of the total. Uncheck Enabled to set a weight to zero; re-enable to restore its previous weight within the current editing session. Add or delete submodes as needed.
 
-The info button contains editing and scoring guidance. The complete content area scrolls together; text fields grow to fit their contents in the compact table.
-
-Select a **Test keyword** to compare raw cosine scores against individual submodes, the saved mode vector, and a preview average using current weights. Preview scores do not save changes. Numeric vectors remain hidden.
+The info button contains editing guidance. The complete content area scrolls together; text fields grow to fit their contents in the compact table. Numeric vectors remain hidden.
 
 Use the top bar's **Save** to save all pending mode and identity-file edits, including edits from other pages. Mode drafts survive menu navigation. **Reload** discards all pending edits after confirmation, and closing the browser warns about unsaved changes. Concurrent mode-file changes require reloading instead of silently overwriting them.
 
@@ -94,7 +92,7 @@ The table sorts weakest sibling alignment first. Scores for missing references a
 
 ### Evaluating alternative wording
 
-For a suspect `attend` submode of Visit, add `attend gallery`, `attend venue`, or more descriptive alternatives in **Edit** as separate submodes at **weight zero**. Save and refresh embeddings, then compare their sibling cosines, rival gaps and **Test keyword** scores. Weight-zero candidates do not change the parent average. Keep representative topic-only and activity-led test keywords across all modes: a candidate that fits one example better may over-specialise or blur another mode.
+For a suspect `attend` submode of Visit, add `attend gallery`, `attend venue`, or more descriptive alternatives in **Edit** as separate submodes at **weight zero**. Save and refresh embeddings, then compare their sibling cosines and rival gaps. Weight-zero candidates do not change the parent average.
 
 Other useful analyses beyond 3D:
 
