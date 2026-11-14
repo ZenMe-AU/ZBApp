@@ -21,7 +21,7 @@ export interface KeywordVec {
 export function keywordVectors(people: Person[]): KeywordVec[] {
   const map = new Map<string, KeywordVec>();
   for (const p of people) {
-    for (const pref of p.properties.personas.flatMap(g => g.preferences)) {
+    for (const pref of p.properties.preferences) {
       if (!hasVector(pref.embedding)) continue;
       const key = normalize(pref.keyword);
       const entry = map.get(key) ?? { key, text: pref.keyword, vec: pref.embedding, kinds: new Set(), owners: new Set() };

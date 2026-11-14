@@ -24,22 +24,20 @@ interface Occurrence {
 function occurrences(topic: string): Occurrence[] {
   const out: Occurrence[] = [];
   for (const p of store.people) {
-    for (const g of p.properties.personas) {
-      for (const pref of g.preferences.filter(x => normalize(x.keyword) === topic)) {
-        out.push({
-          person: p.identity.name,
-          where: `${g.persona} (${pref.kind} ${pref.affinity})`,
-          text: pref.keyword,
-          apply: (next) => {
-            if (next) {
-              pref.keyword = next;
-              pref.embedding = null;
-            }
-            else g.preferences.splice(g.preferences.indexOf(pref), 1);
-            store.touch(p.properties);
-          },
-        });
-      }
+    for (const pref of p.properties.preferences.filter(x => normalize(x.keyword) === topic)) {
+      out.push({
+        person: p.identity.name,
+        where: `${pref.personas.map(m => `${m.persona} (${m.affinity})`).join(", ")} · ${pref.kind}`,
+        text: pref.keyword,
+        apply: (next) => {
+          if (next) {
+            pref.keyword = next;
+            pref.embedding = null;
+          }
+          else p.properties.preferences.splice(p.properties.preferences.indexOf(pref), 1);
+          store.touch(p.properties);
+        },
+      });
     }
     for (const r of p.relations.relations) {
       for (const key of ["topics_shared", "topics_private"] as const) {

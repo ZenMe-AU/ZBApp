@@ -5,6 +5,7 @@
 
 import { createGrid } from "ag-grid-community";
 import { store } from "../data/store";
+import { personaGroups, renamePersona } from "../data/preferences";
 import type { Person, Persona } from "../data/types";
 import { listCol, longText } from "../shared/grid";
 import { personOptions, q } from "../shared/dom";
@@ -34,7 +35,20 @@ export function render(root: HTMLElement): () => void {
     defaultColDef: { editable: true, filter: true, minWidth: 160, flex: 1 },
     columnDefs: [
       { headerName: "Identity", valueGetter: p => p.data!.owner.identity.name, editable: false, pinned: "left" },
-      { field: "persona.persona", headerName: "Persona", pinned: "left" },
+      {
+        field: "persona.persona", headerName: "Persona", pinned: "left",
+        valueSetter: (params) => {
+          const next = String(params.newValue ?? "");
+          const error = renamePersona(params.data.owner, params.data.persona.persona, next);
+          if (error) {
+            alert(error);
+            return false;
+          }
+          params.data.persona.persona = next;
+          store.touch(params.data.owner.properties);
+          return true;
+        },
+      },
       { field: "persona.connection_goal", headerName: "Connection goal", ...longText },
       { field: "persona.motivation", headerName: "Motivation", ...longText },
       listCol("persona.contributions", "Contributions"),
@@ -46,13 +60,6 @@ export function render(root: HTMLElement): () => void {
     ],
     onCellValueChanged: (e) => {
       const { owner } = e.data;
-      if (e.colDef.field === "persona.persona") {
-        const props = owner.properties.personas.find(g => g.persona === e.oldValue);
-        if (props) {
-          props.persona = e.newValue;
-          store.touch(owner.properties);
-        }
-      }
       store.touch(owner.personas);
     },
   });
@@ -63,8 +70,12 @@ export function render(root: HTMLElement): () => void {
 
   q(root, ".add").addEventListener("click", () => {
     const owner = store.person(q<HTMLSelectElement>(root, ".owner").value)!;
+    const names = new Set(personaGroups(owner).map(group => group.persona));
+    let name = "new persona";
+    let suffix = 2;
+    while (names.has(name)) name = `new persona ${suffix++}`;
     const persona: Persona = {
-      persona: "new persona",
+      persona: name,
       connection_goal: "",
       motivation: "",
       contributions: [],

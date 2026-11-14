@@ -22,11 +22,11 @@ export type SetSource = keyof typeof setSources;
 export const normalize = (s: string): string => s.trim().toLowerCase();
 
 export function itemsFor(person: Person, source: SetSource): string[] {
-  const prefs = person.properties.personas.flatMap(g => g.preferences);
+  const prefs = person.properties.preferences;
   let items: string[];
   switch (source) {
-    case "positive": items = prefs.filter(p => p.affinity > 0).map(p => p.keyword); break;
-    case "negative": items = prefs.filter(p => p.affinity < 0).map(p => p.keyword); break;
+    case "positive": items = prefs.filter(p => p.personas.some(m => m.affinity > 0)).map(p => p.keyword); break;
+    case "negative": items = prefs.filter(p => p.personas.some(m => m.affinity < 0)).map(p => p.keyword); break;
     case "interests": items = prefs.filter(p => p.kind === "interest").map(p => p.keyword); break;
     case "wants": items = prefs.filter(p => p.kind === "want").map(p => p.keyword); break;
     case "values": items = prefs.filter(p => p.kind === "value").map(p => p.keyword); break;

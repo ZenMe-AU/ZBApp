@@ -49,14 +49,14 @@ const meanAffinity = (p: Point) => p.uses.reduce((s, u) => s + u.affinity, 0) / 
 function buildPoints(): Point[] {
   const map = new Map<string, Point>();
   for (const person of store.people) {
-    for (const g of person.properties.personas) {
-      for (const pref of g.preferences) {
-        if (!pref.embedding?.length) continue;
-        const key = normalize(pref.keyword);
-        const point = map.get(key) ?? { key, text: pref.keyword, vec: pref.embedding, uses: [] };
-        point.uses.push({ person: person.identity.name, persona: g.persona, kind: pref.kind, affinity: pref.affinity });
-        map.set(key, point);
+    for (const pref of person.properties.preferences) {
+      if (!pref.embedding?.length) continue;
+      const key = normalize(pref.keyword);
+      const point = map.get(key) ?? { key, text: pref.keyword, vec: pref.embedding, uses: [] };
+      for (const membership of pref.personas) {
+        point.uses.push({ person: person.identity.name, persona: membership.persona, kind: pref.kind, affinity: membership.affinity });
       }
+      map.set(key, point);
     }
   }
   return [...map.values()];

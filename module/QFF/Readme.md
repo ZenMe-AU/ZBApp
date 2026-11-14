@@ -168,7 +168,7 @@ Each identity's directory contains four JSON files, prefixed with its `identity_
 
 - `XX-identity.json`: biographical details.
 - `XX-personas.json`: persona narratives under entries in `personas`, covering goals, contributions, expectations, interests, communication, boundaries, and initial disclosure.
-- `XX-properties.json`: the corresponding three personas' signed preferences (kinds `interest`, `want`, `value`, `boundary`), concept embeddings, model metadata, and kind vectors.
+- `XX-properties.json`: preferences shared across personas, their per-persona affinities (kinds `interest`, `want`, `value`, `boundary`), concept embeddings, model metadata, and kind vectors.
 - `XX-relations.json`: known contacts referenced by their identity IDs, with `topics_shared` and `topics_private` lists and `source: "simulation"`.
 
 Initials are readable fixture identifiers used consistently across files and references. Production identifiers remain opaque. Concept and kind embeddings are generated with Azure AI Foundry `text-embedding-3-small`; see [persona_preference_embedding_model.md](persona_preference_embedding_model.md).

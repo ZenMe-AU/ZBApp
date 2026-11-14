@@ -66,16 +66,14 @@ export async function loadModes(): Promise<ModeVectors> {
 export function modeKeywords(allKinds: boolean): ModeKeyword[] {
   const map = new Map<string, ModeKeyword>();
   for (const p of store.people) {
-    for (const g of p.properties.personas) {
-      for (const pref of g.preferences) {
-        if (!hasVector(pref.embedding) || (!allKinds && pref.kind !== "interest")) continue;
-        const key = normalize(pref.keyword);
-        const entry = map.get(key) ?? { key, text: pref.keyword, vec: pref.embedding, kinds: [], owners: [], personas: [], label: labelOf(pref.keyword) };
-        if (!entry.kinds.includes(pref.kind)) entry.kinds.push(pref.kind);
-        if (!entry.owners.includes(p.identity.name)) entry.owners.push(p.identity.name);
-        entry.personas.push(`${p.identity.name}: ${g.persona}`);
-        map.set(key, entry);
-      }
+    for (const pref of p.properties.preferences) {
+      if (!hasVector(pref.embedding) || (!allKinds && pref.kind !== "interest")) continue;
+      const key = normalize(pref.keyword);
+      const entry = map.get(key) ?? { key, text: pref.keyword, vec: pref.embedding, kinds: [], owners: [], personas: [], label: labelOf(pref.keyword) };
+      if (!entry.kinds.includes(pref.kind)) entry.kinds.push(pref.kind);
+      if (!entry.owners.includes(p.identity.name)) entry.owners.push(p.identity.name);
+      for (const membership of pref.personas) entry.personas.push(`${p.identity.name}: ${membership.persona}`);
+      map.set(key, entry);
     }
   }
   return [...map.values()].sort((a, b) => a.text.localeCompare(b.text));

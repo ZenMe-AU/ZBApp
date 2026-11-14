@@ -32,9 +32,9 @@ test("cache-only refresh migrates inputs and averages automatically; dry run cha
   const preferencesFile = path.join(personDir, "T-properties.json");
   const properties = {
     embedding_model: { name: "test", version: "1", dimensions: 2 },
-    personas: [
-      { persona: "first", preferences: [{ keyword: "shared", definition: "First meaning", kind: "interest", embedding: [9, 9] }] },
-      { persona: "second", preferences: [{ keyword: "shared", definition: "Second meaning", kind: "interest", embedding: [0, 1] }] },
+    preferences: [
+      { keyword: "shared", definition: "First meaning", kind: "interest", embedding: [9, 9], personas: [{ persona: "first", affinity: 0.5 }, { persona: "second", affinity: -0.5 }] },
+      { keyword: "shared", definition: "Second meaning", kind: "interest", embedding: [0, 1], personas: [{ persona: "first", affinity: 0.8 }] },
     ],
     kind_vectors: { interest: [1, 1] },
   };
@@ -93,8 +93,9 @@ test("cache-only refresh migrates inputs and averages automatically; dry run cha
   assert.match(result.stdout, /0 to embed/);
   assert.match(result.stdout, /2 mode averages calculated offline/);
   const savedPreferences = JSON.parse(await readFile(preferencesFile, "utf8"));
-  assert.deepEqual(savedPreferences.personas[0].preferences[0].embedding, [1, 0]);
-  assert.deepEqual(savedPreferences.personas[1].preferences[0].embedding, [0, 1]);
+  assert.deepEqual(savedPreferences.preferences[0].embedding, [1, 0]);
+  assert.deepEqual(savedPreferences.preferences[1].embedding, [0, 1]);
+  assert.deepEqual(savedPreferences.preferences[0].personas.map((m: { affinity: number }) => m.affinity), [0.5, -0.5]);
   const saved = JSON.parse(await readFile(file, "utf8"));
   assert.deepEqual(saved.modes.visit.vector, [0.25, 0.75]);
   assert.deepEqual(saved.modes.spectate.vector, [0, 1]);
@@ -128,15 +129,23 @@ test("cache-only refresh migrates inputs and averages automatically; dry run cha
   saved.modes.visit.submodes[0].definition = "Visit a venue.";
   await writeFile(file, JSON.stringify(saved));
 
-  savedPreferences.personas[0].preferences[0].definition = "Changed meaning";
+  savedPreferences.preferences[0].definition = "Changed meaning";
   await writeFile(preferencesFile, JSON.stringify(savedPreferences));
   const status = spawnSync(process.execPath, [
     "--input-type=module", "-e",
     "import {embeddingStatus} from './src/server/embeddings.ts'; console.log(JSON.stringify(await embeddingStatus()));",
   ], { cwd: viz, encoding: "utf8" });
   assert.equal(status.status, 0, status.stderr);
-  assert.deepEqual(JSON.parse(status.stdout).stale.map((item: { persona: string }) => item.persona), ["first"]);
-  savedPreferences.personas[0].preferences[0].definition = "  ";
+  assert.deepEqual(JSON.parse(status.stdout).stale.map((item: { persona: string }) => item.persona), ["first", "second"]);
+  const clear = spawnSync(process.execPath, [
+    "--input-type=module", "-e",
+    "import {clearStale} from './src/server/embeddings.ts'; await clearStale();",
+  ], { cwd: viz, encoding: "utf8" });
+  assert.equal(clear.status, 0, clear.stderr);
+  const cleared = JSON.parse(await readFile(preferencesFile, "utf8"));
+  assert.equal(cleared.preferences[0].embedding, null);
+  assert.deepEqual(cleared.preferences[1].embedding, [0, 1]);
+  savedPreferences.preferences[0].definition = "  ";
   await writeFile(preferencesFile, JSON.stringify(savedPreferences));
   result = run(true);
   assert.notEqual(result.status, 0);

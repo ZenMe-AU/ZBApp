@@ -5,22 +5,23 @@
 
 import { createGrid, type GridApi } from "ag-grid-community";
 import { store } from "../data/store";
-import type { Person, Preference, PropertiesPersona } from "../data/types";
+import type { Person } from "../data/types";
+import { personaGroups, type PersonaGroup, type PreferenceUse } from "../data/preferences";
 import { heat } from "../shared/colors";
 import { esc, personOptions, q } from "../shared/dom";
 import { cosine, hasVector, modelSummary } from "../shared/vectors";
 
 interface PairSignal {
-  a: Preference
-  b: Preference
+  a: PreferenceUse
+  b: PreferenceUse
   concept: number
   kind: number
   raw: number
 }
 
 interface PersonaMatch {
-  a: PropertiesPersona
-  b: PropertiesPersona
+  a: PersonaGroup
+  b: PersonaGroup
   score: number | null
   retained: PairSignal[]
   discarded: number
@@ -29,7 +30,7 @@ interface PersonaMatch {
 const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
 
 /** Demonstration scoring from matching.md, with tunable cut-offs. */
-function matchPersonas(pa: Person, a: PropertiesPersona, pb: Person, b: PropertiesPersona, conceptCut: number, kindCut: number): PersonaMatch {
+function matchPersonas(pa: Person, a: PersonaGroup, pb: Person, b: PersonaGroup, conceptCut: number, kindCut: number): PersonaMatch {
   const kindSim = (ka: string, kb: string) => {
     const va = pa.properties.kind_vectors?.[ka];
     const vb = pb.properties.kind_vectors?.[kb];
@@ -39,17 +40,17 @@ function matchPersonas(pa: Person, a: PropertiesPersona, pb: Person, b: Properti
   let discarded = 0;
   for (const x of a.preferences) {
     for (const y of b.preferences) {
-      if (!hasVector(x.embedding) || !hasVector(y.embedding)) continue;
-      const concept = cosine(x.embedding, y.embedding);
-      const kind = kindSim(x.kind, y.kind);
+      if (!hasVector(x.pref.embedding) || !hasVector(y.pref.embedding)) continue;
+      const concept = cosine(x.pref.embedding, y.pref.embedding);
+      const kind = kindSim(x.pref.kind, y.pref.kind);
       if (concept < conceptCut || kind < kindCut) continue;
-      const raw = concept * kind * x.affinity * y.affinity;
+      const raw = concept * kind * x.membership.affinity * y.membership.affinity;
       if (raw > 0) retained.push({ a: x, b: y, concept, kind, raw });
       else discarded++;
     }
   }
-  const side = (pick: (s: PairSignal) => Preference) => {
-    const byPref = new Map<Preference, number[]>();
+  const side = (pick: (s: PairSignal) => PreferenceUse) => {
+    const byPref = new Map<PreferenceUse, number[]>();
     retained.forEach(s => byPref.set(pick(s), [...(byPref.get(pick(s)) ?? []), s.raw]));
     return [...byPref.values()].map(mean);
   };
@@ -88,8 +89,8 @@ export function render(root: HTMLElement): () => void {
         domLayout: "autoHeight",
         defaultColDef: { flex: 1, wrapText: true, autoHeight: true, sortable: true },
         columnDefs: [
-          { headerName: nameA, valueGetter: p => `${p.data!.a.keyword} (${p.data!.a.kind} ${p.data!.a.affinity})`, flex: 2 },
-          { headerName: nameB, valueGetter: p => `${p.data!.b.keyword} (${p.data!.b.kind} ${p.data!.b.affinity})`, flex: 2 },
+          { headerName: nameA, valueGetter: p => `${p.data!.a.pref.keyword} (${p.data!.a.pref.kind} ${p.data!.a.membership.affinity})`, flex: 2 },
+          { headerName: nameB, valueGetter: p => `${p.data!.b.pref.keyword} (${p.data!.b.pref.kind} ${p.data!.b.membership.affinity})`, flex: 2 },
           { field: "concept", maxWidth: 85, valueFormatter: p => p.value.toFixed(2) },
           { field: "kind", maxWidth: 70, valueFormatter: p => p.value.toFixed(2) },
           { field: "raw", maxWidth: 80, valueFormatter: p => p.value.toFixed(3), cellStyle: p => heat(p.value) },
@@ -107,19 +108,20 @@ export function render(root: HTMLElement): () => void {
     q(root, ".cc-val").textContent = cc.toFixed(2);
     q(root, ".kc-val").textContent = kc.toFixed(2);
 
-    const matches = pa.properties.personas.map(a => pb.properties.personas.map(b => matchPersonas(pa, a, pb, b, cc, kc)));
+    const groupsA = personaGroups(pa), groupsB = personaGroups(pb);
+    const matches = groupsA.map(a => groupsB.map(b => matchPersonas(pa, a, pb, b, cc, kc)));
     const flat = matches.flat();
     q(root, ".summary").textContent = `${flat.filter(m => m.score !== null).length} of ${flat.length} persona pairs match; ${flat.reduce((s, m) => s + m.retained.length, 0)} retained pair signals, ${flat.reduce((s, m) => s + m.discarded, 0)} opposite-sign pairs discarded.`;
 
     const kinds = [...new Set([...Object.keys(pa.properties.kind_vectors ?? {}), ...Object.keys(pb.properties.kind_vectors ?? {})])];
     grids = [
       createGrid<{ persona: string, row: PersonaMatch[] }>(q(root, ".matrix"), {
-        rowData: pa.properties.personas.map((a, i) => ({ persona: a.persona, row: matches[i] })),
+        rowData: groupsA.map((a, i) => ({ persona: a.persona, row: matches[i] })),
         domLayout: "autoHeight",
         defaultColDef: { flex: 1, wrapHeaderText: true, autoHeaderHeight: true },
         columnDefs: [
           { field: "persona", headerName: `${pa.identity.name} \\ ${pb.identity.name}`, flex: 2, wrapText: true, autoHeight: true },
-          ...pb.properties.personas.map((b, j) => ({
+          ...groupsB.map((b, j) => ({
             headerName: b.persona,
             valueGetter: (p: { data?: { row: PersonaMatch[] } }) => p.data!.row[j].score,
             valueFormatter: (p: { value: number | null }) => (p.value === null ? "—" : p.value.toFixed(3)),
@@ -127,7 +129,7 @@ export function render(root: HTMLElement): () => void {
           })),
         ],
         onCellClicked: (e) => {
-          const j = pb.properties.personas.findIndex(b => b.persona === e.colDef.headerName);
+          const j = groupsB.findIndex(b => b.persona === e.colDef.headerName);
           if (j >= 0) showDetail(e.data!.row[j], pa.identity.name, pb.identity.name);
         },
       }),

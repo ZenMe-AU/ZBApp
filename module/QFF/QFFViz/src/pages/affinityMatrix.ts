@@ -5,6 +5,7 @@
 
 import { createGrid, themeQuartz, type ColGroupDef } from "ag-grid-community";
 import { store } from "../data/store";
+import { personaGroups, removePreferenceUse } from "../data/preferences";
 import { preferenceKinds, type PreferenceKind } from "../data/types";
 import { heat, kindColor } from "../shared/colors";
 import { q } from "../shared/dom";
@@ -32,22 +33,29 @@ export function render(root: HTMLElement): () => void {
 
   const rowMap = new Map<string, Row & { count: number }>();
   for (const person of store.people) {
-    for (const pref of person.properties.personas.flatMap(g => g.preferences)) {
+    for (const pref of person.properties.preferences) {
       const key = `${pref.kind}|${normalize(pref.keyword)}`;
       const row = rowMap.get(key) ?? { norm: normalize(pref.keyword), keyword: pref.keyword, kind: pref.kind, count: 0 };
-      row.count++;
+      row.count += pref.personas.length;
       rowMap.set(key, row);
     }
   }
   const rows = [...rowMap.values()].sort((a, b) => b.count - a.count || a.norm.localeCompare(b.norm));
 
-  const findPref = (personId: string, groupIndex: number, row: Row) =>
-    store.person(personId)!.properties.personas[groupIndex].preferences.find(p => p.kind === row.kind && normalize(p.keyword) === row.norm);
+  const findPref = (personId: string, persona: string, row: Row) => {
+    const person = store.person(personId)!;
+    for (const pref of person.properties.preferences) {
+      if (pref.kind !== row.kind || normalize(pref.keyword) !== row.norm) continue;
+      const membership = pref.personas.find(m => m.persona === persona);
+      if (membership) return { pref, membership };
+    }
+    return undefined;
+  };
 
   const personGroups: ColGroupDef<Row>[] = store.people.map(person => ({
     headerName: trim(person.identity.name),
     headerTooltip: person.identity.name,
-    children: person.properties.personas.map((group, i) => ({
+    children: personaGroups(person).map((group, i) => ({
       colId: `${person.id}|${i}`,
       headerName: trim(group.persona),
       headerTooltip: `${person.identity.name}: ${group.persona}`,
@@ -59,14 +67,21 @@ export function render(root: HTMLElement): () => void {
       cellDataType: "number",
       cellEditorParams: { min: -1, max: 1, step: 0.1 },
       cellStyle: p => heat(p.value),
-      valueGetter: p => findPref(person.id, i, p.data!)?.affinity ?? null,
+      valueGetter: p => findPref(person.id, group.persona, p.data!)?.membership.affinity ?? null,
       valueSetter: (p) => {
         const value = p.newValue as number | null;
-        const pref = findPref(person.id, i, p.data);
-        const list = person.properties.personas[i].preferences;
-        if (pref && value == null) list.splice(list.indexOf(pref), 1);
-        else if (pref) pref.affinity = value!;
-        else if (value != null) list.push(store.newPreference(person, p.data.keyword, p.data.kind, value));
+        const use = findPref(person.id, group.persona, p.data);
+        if (use && value == null) removePreferenceUse(person, use);
+        else if (use && value != null) use.membership.affinity = value;
+        else if (value != null) {
+          const candidates = person.properties.preferences.filter(pref => pref.kind === p.data.kind && normalize(pref.keyword) === p.data.norm);
+          if (candidates.length > 1) {
+            alert("More than one preference has this keyword and kind. Use Preferences → Edit to select the intended preference.");
+            return false;
+          }
+          if (candidates.length) candidates[0].personas.push({ persona: group.persona, affinity: value });
+          else person.properties.preferences.push(store.newPreference(person, p.data.keyword, p.data.kind, group.persona, value));
+        }
         return true;
       },
     })),

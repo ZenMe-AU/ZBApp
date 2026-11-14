@@ -5,7 +5,8 @@
 
 import { createGrid, type GridApi } from "ag-grid-community";
 import { store } from "../data/store";
-import { preferenceKinds, type Person, type Persona, type Preference, type Relation } from "../data/types";
+import { personaGroups, renamePersona, type PreferenceUse } from "../data/preferences";
+import { preferenceKinds, type Person, type Persona, type Relation } from "../data/types";
 import { heat, personColor } from "../shared/colors";
 import { esc, q } from "../shared/dom";
 import { kvGrid, listCol, longText, splitLines } from "../shared/grid";
@@ -47,8 +48,11 @@ function personasTransposed(el: HTMLElement, owner: Person): GridApi {
             return true;
           }
           if (field === "persona") {
-            const props = owner.properties.personas.find(g => g.persona === persona.persona);
-            if (props) props.persona = String(p.newValue);
+            const error = renamePersona(owner, persona.persona, String(p.newValue ?? ""));
+            if (error) {
+              alert(error);
+              return false;
+            }
             store.touch(owner.properties);
           }
           rec[field] = String(p.newValue ?? "");
@@ -61,8 +65,8 @@ function personasTransposed(el: HTMLElement, owner: Person): GridApi {
 }
 
 function preferencesGrid(el: HTMLElement, owner: Person): GridApi {
-  const rows = owner.properties.personas.flatMap(g => g.preferences.map(pref => ({ persona: g.persona, pref })));
-  return createGrid<{ persona: string, pref: Preference }>(el, {
+  const rows = personaGroups(owner).flatMap(g => g.preferences.map(use => ({ persona: g.persona, ...use })));
+  return createGrid<{ persona: string } & PreferenceUse>(el, {
     rowData: rows,
     domLayout: "autoHeight",
     defaultColDef: { flex: 1, filter: true },
@@ -70,11 +74,12 @@ function preferencesGrid(el: HTMLElement, owner: Person): GridApi {
       { field: "persona" },
       { field: "pref.keyword", headerName: "Keyword", editable: true, flex: 2 },
       { field: "pref.kind", headerName: "Kind", editable: true, cellEditor: "agSelectCellEditor", cellEditorParams: { values: preferenceKinds } },
-      { field: "pref.affinity", headerName: "Affinity", editable: true, cellDataType: "number", cellStyle: p => heat(p.value) },
+      { field: "membership.affinity", headerName: "Affinity", editable: true, cellDataType: "number", cellStyle: p => heat(p.value) },
     ],
     onCellValueChanged: (e) => {
       // The stored vector belongs to the old wording.
       if (e.colDef.field === "pref.keyword") e.data.pref.embedding = null;
+      e.api.refreshCells({ force: true });
       store.touch(owner.properties);
     },
   });

@@ -35,6 +35,7 @@ import * as modeComparison from "./pages/modeComparison";
 import * as modesEdit from "./pages/modesEdit";
 import * as modeVectors from "./pages/modeVectors";
 import * as modesHeatmap from "./pages/modesHeatmap";
+import * as preferencesEdit from "./pages/preferencesEdit";
 import { changeValue } from "./shared/changes";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -99,6 +100,8 @@ const pages: Page[] = [
     info: "Interactive 3D view of the keyword embeddings with PCA/UMAP projections and several colour schemes." },
   { id: "match-preview", group: "Embeddings", title: "Match preview", render: matchPreview.render,
     info: "Runs the matching.md scoring between two identities with adjustable concept and kind cut-offs, showing persona-pair scores and the evidence behind them. Developer view only: it reveals both sides’ preferences, which real match files must never do." },
+  { id: "preferences-edit", group: "Preferences", title: "Edit", render: preferencesEdit.render,
+    info: "Edit an identity's preferences grouped by persona." },
   { id: "mode-heatmap", group: "Preferences", title: "Keyword × mode", render: modeHeatmap.render,
     info: "How strongly each interest keyword points at each interest mode (participate, spectate, visit, …), with raw, relative and standardised scores." },
   { id: "contrast-axes", group: "Preferences", title: "Contrast axes", render: contrastAxes.render,
@@ -118,7 +121,7 @@ function refreshStale(): void {
   let count = 0;
   for (const p of store.people) {
     const used = new Set<string>();
-    for (const pref of p.properties.personas.flatMap(g => g.preferences)) {
+    for (const pref of p.properties.preferences) {
       used.add(pref.kind);
       if (!pref.embedding?.length) count++;
     }

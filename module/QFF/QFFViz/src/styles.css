@@ -76,6 +76,18 @@
 .mode-editor table.mini th, .mode-editor table.mini td { padding: 3px 4px; overflow-wrap: anywhere; }
 .mode-editor button, .mode-editor input { padding: 3px 5px; }
 .mode-error, .vector-error { color: #b42318; }
+#page.preferences-edit-page { overflow: auto; padding: 8px 10px; gap: 6px; }
+.preferences-edit-page > * { flex-shrink: 0; }
+.preferences-edit-page .toolbar { gap: 6px; }
+.preferences-edit-page .message { margin: 0; }
+.preferences-edit-page .identity-search { width: 220px; }
+.preferences-edit-page .mode-editor select, .preferences-edit-page .mode-editor input { max-width: 100%; }
+.preferences-edit-page .kind-col { width: 115px; }
+.preferences-edit-page .affinity-col { width: 90px; }
+.preferences-edit-page .embedding-col { width: 110px; }
+.preferences-edit-page .delete-col { width: 65px; }
+.preferences-edit-page .add-preference { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.preferences-edit-page .add-preference input { min-width: 140px; }
 html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; font-size: 14px; color: #1f2933; }
 body {
   display: grid;

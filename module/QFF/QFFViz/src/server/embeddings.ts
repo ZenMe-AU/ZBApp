@@ -22,11 +22,12 @@ interface Preference {
   definition?: string
   kind: string
   embedding: number[] | null
+  personas: { persona: string, affinity: number }[]
 }
 
 interface PropertiesFile {
   embedding_model: { name: string, version: string, dimensions: number }
-  personas: { persona: string, preferences: Preference[] }[]
+  preferences: Preference[]
   kind_vectors?: Record<string, number[]>
 }
 
@@ -144,11 +145,9 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
   const texts = new Set<string>();
   const missingKinds = new Set<string>();
   for (const f of files) {
-    for (const g of (f.content as PropertiesFile).personas) {
-      for (const p of g.preferences) {
-        texts.add(preferenceText(p, f.path, g.persona));
-        if (!kinds[p.kind]) missingKinds.add(p.kind);
-      }
+    for (const p of (f.content as PropertiesFile).preferences) {
+      texts.add(preferenceText(p, f.path, p.personas.map(m => m.persona).join(", ")));
+      if (!kinds[p.kind]) missingKinds.add(p.kind);
     }
   }
   if (missingKinds.size) throw new Error(`No description in embedding-kinds.json for kind(s): ${[...missingKinds].join(", ")}`);
@@ -202,11 +201,9 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
   for (const f of files) {
     const content = f.content as PropertiesFile;
     const used = new Set<string>();
-    for (const g of content.personas) {
-      for (const p of g.preferences) {
-        p.embedding = cache[cacheKey(preferenceText(p, f.path, g.persona))];
-        used.add(p.kind);
-      }
+    for (const p of content.preferences) {
+      p.embedding = cache[cacheKey(preferenceText(p, f.path, p.personas.map(m => m.persona).join(", ")))];
+      used.add(p.kind);
     }
     content.embedding_model = { name: config.deployment, version: "1", dimensions: options.dimensions };
     content.kind_vectors = Object.fromEntries([...used].sort().map(k => [k, cache[cacheKey(kindText(k))]]));
@@ -236,6 +233,7 @@ export async function runEmbeddings(options: EmbedOptions, log: (line: string) =
 
 export interface StaleItem {
   path: string
+  index: number
   persona: string
   keyword: string
   reason: string
@@ -275,15 +273,15 @@ export async function embeddingStatus(): Promise<EmbeddingStatus> {
     const content = f.content as PropertiesFile;
     dims = content.embedding_model.dimensions;
     const used = new Set<string>();
-    for (const g of content.personas) {
-      for (const p of g.preferences) {
-        used.add(p.kind);
-        const reason = typeof p.definition !== "string" || !p.definition.trim()
-          ? "missing definition"
-          : check(p.embedding, content.embedding_model.name, dims, p.definition.trim());
-        if (reason) status.stale.push({ path: f.path, persona: g.persona, keyword: p.keyword, reason });
+    content.preferences.forEach((p, index) => {
+      used.add(p.kind);
+      const reason = typeof p.definition !== "string" || !p.definition.trim()
+        ? "missing definition"
+        : check(p.embedding, content.embedding_model.name, dims, p.definition.trim());
+      if (reason) for (const membership of p.personas) {
+        status.stale.push({ path: f.path, index, persona: membership.persona, keyword: p.keyword, reason });
       }
-    }
+    });
     for (const kind of used) {
       const kindText = (k: string) => describe(k, kinds[k]);
       const reason = kinds[kind]
@@ -319,16 +317,14 @@ export async function clearStale(): Promise<number> {
   for (const f of files) {
     const content = f.content as PropertiesFile;
     let changed = false;
-    for (const g of content.personas) {
-      for (const p of g.preferences) {
-        const hit = status.stale.some(s => s.path === f.path && s.persona === g.persona && s.keyword === p.keyword && s.reason !== unverified);
-        if (hit && p.embedding !== null) {
-          p.embedding = null;
-          changed = true;
-          cleared++;
-        }
+    content.preferences.forEach((p, index) => {
+      const hit = status.stale.some(s => s.path === f.path && s.index === index && s.reason !== unverified);
+      if (hit && p.embedding !== null) {
+        p.embedding = null;
+        changed = true;
+        cleared++;
       }
-    }
+    });
     for (const s of status.staleKinds.filter(k => k.path === f.path && k.reason !== unverified)) {
       if (content.kind_vectors?.[s.kind]) {
         delete content.kind_vectors[s.kind];

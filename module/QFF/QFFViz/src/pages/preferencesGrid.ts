@@ -5,14 +5,14 @@
 
 import { createGrid } from "ag-grid-community";
 import { store } from "../data/store";
-import { preferenceKinds, type Person, type Preference, type PropertiesPersona } from "../data/types";
+import { preferenceKinds, type Person } from "../data/types";
+import { personaGroups, removePreferenceUse, type PreferenceUse } from "../data/preferences";
 import { heat, kindColor } from "../shared/colors";
 import { esc, personOptions, q } from "../shared/dom";
 
-interface Row {
+interface Row extends PreferenceUse {
   owner: Person
-  group: PropertiesPersona
-  pref: Preference
+  persona: string
 }
 
 function sparkline(values: number[] | null): HTMLElement {
@@ -50,14 +50,14 @@ export function render(root: HTMLElement): () => void {
   const personaSelect = q<HTMLSelectElement>(root, ".persona");
   const fillPersonas = () => {
     const owner = store.person(ownerSelect.value)!;
-    const names = new Set([...owner.personas.personas.map(p => p.persona), ...owner.properties.personas.map(g => g.persona)]);
+    const names = personaGroups(owner).map(g => g.persona);
     personaSelect.innerHTML = [...names].map(n => `<option>${esc(n)}</option>`).join("");
   };
   ownerSelect.addEventListener("change", fillPersonas);
   fillPersonas();
 
   const rows: Row[] = store.people.flatMap(owner =>
-    owner.properties.personas.flatMap(group => group.preferences.map(pref => ({ owner, group, pref }))),
+    personaGroups(owner).flatMap(group => group.preferences.map(use => ({ owner, persona: group.persona, ...use }))),
   );
 
   const api = createGrid<Row>(q(root, ".fill"), {
@@ -66,7 +66,7 @@ export function render(root: HTMLElement): () => void {
     defaultColDef: { filter: true, flex: 1, minWidth: 110 },
     columnDefs: [
       { headerName: "Identity", valueGetter: p => p.data!.owner.identity.name },
-      { headerName: "Persona", field: "group.persona", minWidth: 180 },
+      { headerName: "Persona", field: "persona", minWidth: 180 },
       { headerName: "Keyword", field: "pref.keyword", editable: true, flex: 2, minWidth: 220 },
       {
         headerName: "Kind",
@@ -79,7 +79,7 @@ export function render(root: HTMLElement): () => void {
       },
       {
         headerName: "Affinity",
-        field: "pref.affinity",
+        field: "membership.affinity",
         editable: true,
         cellDataType: "number",
         cellEditorParams: { min: -1, max: 1, step: 0.1 },
@@ -92,8 +92,8 @@ export function render(root: HTMLElement): () => void {
       // The stored vector belongs to the old wording.
       if (e.colDef.field === "pref.keyword") {
         e.data.pref.embedding = null;
-        api.refreshCells({ rowNodes: [e.node], force: true });
       }
+      api.refreshCells({ force: true });
       store.touch(e.data.owner.properties);
     },
   });
@@ -106,22 +106,18 @@ export function render(root: HTMLElement): () => void {
     const owner = store.person(ownerSelect.value)!;
     const keyword = q<HTMLInputElement>(root, ".keyword").value.trim();
     if (!keyword) return;
-    let group = owner.properties.personas.find(g => g.persona === personaSelect.value);
-    if (!group) {
-      group = { persona: personaSelect.value, preferences: [] };
-      owner.properties.personas.push(group);
-    }
-    const pref = store.newPreference(owner, keyword, "interest", 0.5);
-    group.preferences.push(pref);
+    if (!personaSelect.value) return alert("Select a persona first.");
+    const pref = store.newPreference(owner, keyword, "interest", personaSelect.value, 0.5);
+    owner.properties.preferences.push(pref);
     store.touch(owner.properties);
-    api.applyTransaction({ add: [{ owner, group, pref }] });
+    api.applyTransaction({ add: [{ owner, persona: personaSelect.value, pref, membership: pref.personas[0] }] });
   });
 
   q(root, ".delete").addEventListener("click", () => {
     const selected = api.getSelectedRows();
     if (!selected.length || !confirm(`Delete ${selected.length} preference(s)?`)) return;
     for (const row of selected) {
-      row.group.preferences.splice(row.group.preferences.indexOf(row.pref), 1);
+      removePreferenceUse(row.owner, row);
       store.touch(row.owner.properties);
     }
     api.applyTransaction({ remove: selected });

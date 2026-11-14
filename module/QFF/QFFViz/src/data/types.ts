@@ -37,21 +37,22 @@ export interface PersonasFile {
 
 export interface Preference {
   keyword: string
+  definition?: string
   kind: PreferenceKind
-  affinity: number
-  /** null (or absent) when the keyword changed and the vector has not been regenerated yet. */
+  personas: PreferencePersona[]
+  /** null (or absent) when the keyword or definition changed and the vector has not been regenerated yet. */
   embedding: number[] | null
 }
 
-export interface PropertiesPersona {
+export interface PreferencePersona {
   persona: string
-  preferences: Preference[]
+  affinity: number
 }
 
 export interface PropertiesFile {
   identity_id: string
   embedding_model: { name: string, version: string, dimensions: number }
-  personas: PropertiesPersona[]
+  preferences: Preference[]
   kind_vectors?: Record<string, number[]>
 }
 

@@ -42,7 +42,7 @@ export function render(root: HTMLElement): () => void {
     domLayout: "autoHeight",
     defaultColDef: { flex: 1 },
     rowData: store.people.map((p) => {
-      const prefs = p.properties.personas.flatMap(g => g.preferences);
+      const prefs = p.properties.preferences;
       return {
         identity: p.identity.name,
         model: p.properties.embedding_model.name,

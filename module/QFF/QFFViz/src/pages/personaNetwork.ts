@@ -9,16 +9,16 @@ import { random } from "graphology-layout";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import { createGrid, type GridApi } from "ag-grid-community";
 import { store } from "../data/store";
-import { preferenceKinds, type Person, type Preference, type PreferenceKind } from "../data/types";
+import { preferenceKinds, type Person, type PreferenceKind } from "../data/types";
+import { personaGroups, type PreferenceUse } from "../data/preferences";
 import { heat, kindColor, personColor } from "../shared/colors";
 import { esc, q } from "../shared/dom";
 import { kvGrid } from "../shared/grid";
 import { normalize } from "../shared/sets";
 
-interface PrefRow {
+interface PrefRow extends PreferenceUse {
   owner: Person
   persona: string
-  pref: Preference
   edge: string
 }
 
@@ -42,10 +42,10 @@ export function render(root: HTMLElement): () => void {
     const min = Number(q<HTMLInputElement>(root, ".min").value);
     const sharedOnly = q<HTMLInputElement>(root, ".shared").checked;
     rows = store.people.flatMap(owner =>
-      owner.properties.personas.flatMap((g, gi) =>
+      personaGroups(owner).flatMap((g, gi) =>
         g.preferences
-          .filter(pref => kinds.has(pref.kind) && Math.abs(pref.affinity) >= min)
-          .map(pref => ({ owner, persona: g.persona, pref, edge: `${owner.id}|${gi}|${normalize(pref.keyword)}|${pref.kind}` })),
+          .filter(use => kinds.has(use.pref.kind) && Math.abs(use.membership.affinity) >= min)
+          .map(use => ({ owner, persona: g.persona, ...use, edge: `${owner.id}|${gi}|${normalize(use.pref.keyword)}|${use.pref.kind}` })),
       ),
     );
     const usage = new Map<string, Set<string>>();
@@ -55,7 +55,7 @@ export function render(root: HTMLElement): () => void {
     graph.clear();
     store.people.forEach((p, i) => {
       graph.addNode(`p:${p.id}`, { label: p.identity.name, size: 16, color: personColor(i), x: 0, y: 0 });
-      p.properties.personas.forEach((g, gi) => {
+      personaGroups(p).forEach((g, gi) => {
         graph.addNode(`g:${p.id}|${gi}`, { label: g.persona, size: 8, color: personColor(i), x: 0, y: 0 });
         graph.addEdge(`p:${p.id}`, `g:${p.id}|${gi}`, { color: "#bbb", size: 2 });
       });
@@ -66,7 +66,7 @@ export function render(root: HTMLElement): () => void {
       graph.setNodeAttribute(kw, "size", 2 + usage.get(normalize(r.pref.keyword))!.size * 2);
       const gi = r.edge.split("|")[1];
       if (!graph.hasEdge(r.edge)) {
-        graph.addEdgeWithKey(r.edge, `g:${r.owner.id}|${gi}`, kw, { color: kindColor[r.pref.kind], size: 0.5 + Math.abs(r.pref.affinity) * 3 });
+        graph.addEdgeWithKey(r.edge, `g:${r.owner.id}|${gi}`, kw, { color: kindColor[r.pref.kind], size: 0.5 + Math.abs(r.membership.affinity) * 3 });
       }
     }
     random.assign(graph);
@@ -89,12 +89,15 @@ export function render(root: HTMLElement): () => void {
         { headerName: "Identity", valueGetter: p => p.data!.owner.identity.name },
         { field: "persona", flex: 2, wrapText: true, autoHeight: true },
         { field: "pref.kind", headerName: "Kind", editable: true, cellEditor: "agSelectCellEditor", cellEditorParams: { values: preferenceKinds } },
-        { field: "pref.affinity", headerName: "Affinity", editable: true, cellDataType: "number", cellStyle: p => heat(p.value) },
+        { field: "membership.affinity", headerName: "Affinity", editable: true, cellDataType: "number", cellStyle: p => heat(p.value) },
       ],
       onCellValueChanged: (e) => {
         store.touch(e.data.owner.properties);
-        if (graph.hasEdge(e.data.edge)) {
-          graph.mergeEdgeAttributes(e.data.edge, { color: kindColor[e.data.pref.kind], size: 0.5 + Math.abs(e.data.pref.affinity) * 3 });
+        e.api.refreshCells({ force: true });
+        for (const row of rows.filter(row => row.pref === e.data.pref)) {
+          if (graph.hasEdge(row.edge)) {
+            graph.mergeEdgeAttributes(row.edge, { color: kindColor[row.pref.kind], size: 0.5 + Math.abs(row.membership.affinity) * 3 });
+          }
         }
       },
     });
@@ -104,7 +107,7 @@ export function render(root: HTMLElement): () => void {
     grid?.destroy();
     const [id, gi] = node.slice(2).split("|");
     const owner = store.person(id)!;
-    const name = owner.properties.personas[Number(gi)].persona;
+    const name = personaGroups(owner)[Number(gi)].persona;
     const persona = owner.personas.personas.find(p => p.persona === name);
     panel.innerHTML = `<h3>${esc(owner.identity.name)}: ${esc(name)}</h3><div class="g"></div>`;
     if (!persona) {

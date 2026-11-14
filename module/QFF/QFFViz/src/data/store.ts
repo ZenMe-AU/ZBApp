@@ -193,8 +193,8 @@ export class Store extends EventTarget {
     return this.person(id)?.identity.name ?? id;
   }
 
-  newPreference(_person: Person, keyword: string, kind: PreferenceKind, affinity: number): Preference {
-    return { keyword, kind, affinity, embedding: null };
+  newPreference(_person: Person, keyword: string, kind: PreferenceKind, persona: string, affinity: number): Preference {
+    return { keyword, kind, personas: [{ persona, affinity }], embedding: null };
   }
 }
 

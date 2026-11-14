@@ -5,6 +5,7 @@
 
 import { modeIssue, parseInterestModes, submodeIssue, type InterestModesFile } from "../../../interest-modes";
 import { esc, openInfo, q } from "../shared/dom";
+import { refreshEmbeddings } from "../shared/embeddingRefresh";
 import { store } from "../data/store";
 
 const disabledWeights = new WeakMap<object, number>();
@@ -208,21 +209,8 @@ export function render(root: HTMLElement): () => void {
     if (!state || !confirm("Refresh embeddings and calculate mode averages? Uncached texts require internet/Azure. Existing preference and kind embeddings are also verified.")) return;
     const dimensions = state.data.embedding_model.dimensions;
     void action(async () => {
-      await request("/api/embeddings", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dimensions, force: false, dryRun: false }),
-      });
-      while (true) {
-        const job = await request<{ status: string, log: string[] }>("/api/embeddings");
-        if (!disposed) report(job.log.at(-1) ?? "Refreshing embeddings...");
-        if (job.status === "failed") throw new Error(job.log.at(-1) ?? "Embedding refresh failed.");
-        if (job.status === "succeeded") {
-          await store.refreshAfterEmbeddings();
-          if (!disposed) report("Embeddings refreshed and mode averages recalculated offline.");
-          return;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+      await refreshEmbeddings(dimensions, (text) => { if (!disposed) report(text); });
+      if (!disposed) report("Embeddings refreshed and mode averages recalculated offline.");
     });
   });
   const modesChanged = () => {

@@ -9,7 +9,8 @@ import { circular } from "graphology-layout";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import { createGrid, type GridApi } from "ag-grid-community";
 import { store } from "../data/store";
-import type { Person, PropertiesPersona } from "../data/types";
+import type { Person } from "../data/types";
+import { personaGroups, type PersonaGroup } from "../data/preferences";
 import { heat, personColor } from "../shared/colors";
 import { esc, q } from "../shared/dom";
 import { kvGrid } from "../shared/grid";
@@ -18,14 +19,14 @@ import { cosine } from "../shared/vectors";
 interface Node {
   key: string
   owner: Person
-  group: PropertiesPersona
+  group: PersonaGroup
   vec: number[]
 }
 
 /** Affinity-weighted centroid of the persona's preference embeddings. */
-function centroid(group: PropertiesPersona): number[] {
+function centroid(group: PersonaGroup): number[] {
   const out: number[] = [];
-  for (const p of group.preferences) p.embedding?.forEach((v, i) => (out[i] = (out[i] ?? 0) + v * p.affinity));
+  for (const use of group.preferences) use.pref.embedding?.forEach((v, i) => (out[i] = (out[i] ?? 0) + v * use.membership.affinity));
   return out;
 }
 
@@ -38,7 +39,7 @@ export function render(root: HTMLElement): () => void {
 
   const panel = q(root, ".panel");
   const nodes: Node[] = store.people.flatMap(owner =>
-    owner.properties.personas.map((group, gi) => ({ key: `${owner.id}|${gi}`, owner, group, vec: centroid(group) })),
+    personaGroups(owner).map((group, gi) => ({ key: `${owner.id}|${gi}`, owner, group, vec: centroid(group) })),
   );
   const graph = new Graph({ type: "undirected" });
   nodes.forEach(n =>
@@ -79,8 +80,8 @@ export function render(root: HTMLElement): () => void {
     const b = byKey(graph.target(edge));
     const pairs = a.group.preferences.flatMap(pa =>
       b.group.preferences
-        .filter(pb => Math.sign(pa.affinity) === Math.sign(pb.affinity))
-        .map(pb => ({ a: pa.keyword, b: pb.keyword, score: pa.affinity * pb.affinity * cosine(pa.embedding, pb.embedding) })),
+        .filter(pb => Math.sign(pa.membership.affinity) === Math.sign(pb.membership.affinity))
+        .map(pb => ({ a: pa.pref.keyword, b: pb.pref.keyword, score: pa.membership.affinity * pb.membership.affinity * cosine(pa.pref.embedding, pb.pref.embedding) })),
     );
     pairs.sort((x, y) => y.score - x.score);
     panel.innerHTML = `<h3>${esc(a.owner.identity.name)}: ${esc(a.group.persona)}<br/>↔ ${esc(b.owner.identity.name)}: ${esc(b.group.persona)}</h3>
