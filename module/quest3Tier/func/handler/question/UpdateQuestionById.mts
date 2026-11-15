@@ -4,7 +4,9 @@
  */
 
 import { z } from "zod";
-import { commandResponses } from "./commonSchema.mjs";
+import { apiResponses } from "../commonSchema.mjs";
+
+export const params = z.object({ id: z.uuid() });
 
 export const body = z
   .object({
@@ -14,4 +16,4 @@ export const body = z
   })
   .meta({ id: "QuestionBody" });
 
-export const responses = commandResponses;
+export const responses = apiResponses([200, 400, 401, 403, 500], z.object({ id: z.uuid() }));

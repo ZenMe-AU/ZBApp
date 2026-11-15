@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { apiResponses } from "./commonSchema.mjs";
+import { apiResponses } from "../commonSchema.mjs";
 
 const question = z
   .object({
@@ -17,6 +17,4 @@ const question = z
   })
   .meta({ id: "Question" });
 
-export const params = z.object({ questionId: z.uuid() });
-
-export const responses = apiResponses([200, 401, 403, 500], z.object({ detail: question.nullable() }));
+export const responses = apiResponses([200, 401, 403, 500], z.object({ list: z.array(question) }));

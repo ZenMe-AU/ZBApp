@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { body } from "../handler/AddAnswer.mjs";
+import { body, AddAnswer } from "../handler/answer/AddAnswer.mjs";
 
 const repository = vi.hoisted(() => ({
   insertFollowUpCmd: vi.fn(async () => ({ id: "command" })),
@@ -19,8 +19,7 @@ const repository = vi.hoisted(() => ({
 }));
 
 vi.mock("../repository/getRepository.mjs", () => ({ getRepository: () => repository }));
-import followupHandler from "../handler/followupHandler.mjs";
-import answerHandler from "../handler/answerHandler.mjs";
+import { SendFollowUpCmd } from "../handler/followup/SendFollowUpCmd.mjs";
 
 describe("multiple option answers", () => {
   it("accepts single options and non-empty option lists", () => {
@@ -31,7 +30,7 @@ describe("multiple option answers", () => {
   });
 
   it("matches every selected option in follow-up filters", async () => {
-    await followupHandler.SendFollowUpCmd({
+    await SendFollowUpCmd({
       userData: { profileId: "sender" },
       correlationId: "correlation",
       clientParams: { newQuestionId: "follow-up", question: [{ questionId: "question", option: ["Sushi"] }] },
@@ -40,7 +39,7 @@ describe("multiple option answers", () => {
   });
 
   it("forwards multiple selections from the answer handler to the repository", async () => {
-    const result = await answerHandler.AddAnswer({
+    const result = await AddAnswer({
       params: { questionId: "question" },
       userData: { profileId: "respondent" },
       clientParams: { option: ["Pizza", "Sushi"], duration: 10 },

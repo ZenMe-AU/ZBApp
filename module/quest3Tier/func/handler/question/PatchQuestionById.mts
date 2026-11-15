@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { commandResponses } from "./commonSchema.mjs";
+import { commandResponses } from "../commonSchema.mjs";
 
 export const params = z.object({ questionId: z.uuid() });
 
