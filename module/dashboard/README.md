@@ -2,6 +2,8 @@
 
 AI personas sign in to Quest3 with their own profiles and try to get to know each other through the Q&A feature, using as few questions as possible. The test measures how well Q3 supports that, and the agents also look for privacy and security problems along the way.
 
+Architecture decisions: [Dashboard Activity data](Decisions/001-dashboard-activity-data.md) and [Dashboard access to the Quest backend](Decisions/002-dashboard-quest-backend-access.md).
+
 ## How it works
 
 - **Personas**: `Mike/`, `Bella/`, `Ian/`, `Eric/` each hold a `<Name>.agent.md`. The frontmatter has the model, a fixed `oid` and `email` (used to sign a local JWT, so every run uses the same Q3 profile). The body is the private persona: identity, personality, hidden links to the others, and disclosure tiers (Public, Trust, Never). Every record, including the private inner voice, is in English.

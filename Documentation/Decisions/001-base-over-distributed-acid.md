@@ -53,8 +53,6 @@ The internal Activity store is an append-oriented, point-in-time event log, not 
 - A committed Quest action must not be rolled back because Activity ingestion failed.
 - Activity ingestion is retried or reconciled using the event ID and correlation ID.
 - Duplicate delivery is expected and deduplicated by stable identifiers.
-- The Dashboard builds human-readable text from structured events at presentation time.
-- Current Question and Answer state continues to come from the Quest APIs.
 
 ## Consequences
 
@@ -78,6 +76,5 @@ This decision records the target behavior; it does not claim that every current 
 
 - Q3 follow-up processing can leave filters or shares committed when a sibling operation fails and currently has no durable compensation worker.
 - Question sharing beyond one Azure Table transaction can commit earlier batches before a later batch fails.
-- Historical Agent Lab runs remain as plain-text `.chat.md` files and are read only as a compatibility fallback; new runs use structured Activity events.
 
 Address these gaps when the affected flow is changed. Do not add a generic saga framework in advance.

@@ -65,13 +65,15 @@ export function toQ3Request(method, url, body) {
     requestUrl.pathname = "/questionCmd/createQuestion";
     body = { ...body, optionList: body?.option ?? null };
     delete body.option;
-  } else if (["PUT", "PATCH"].includes(method) && questionDetail) {
+  }
+  else if (["PUT", "PATCH"].includes(method) && questionDetail) {
     requestUrl.pathname = "/questionCmd/updateQuestion/" + questionDetail[1];
     if (!Array.isArray(body) && body?.option !== undefined) {
       body = { ...body, optionList: body.option };
       delete body.option;
     }
-  } else if (method === "POST" && answerCreate) requestUrl.pathname = `/questionCmd/createAnswer/${answerCreate[1]}`;
+  }
+  else if (method === "POST" && answerCreate) requestUrl.pathname = `/questionCmd/createAnswer/${answerCreate[1]}`;
   else if (method === "POST" && path === "/sendFollowUpCmd") requestUrl.pathname = "/questionCmd/sendFollowUp";
 
   return { url: requestUrl, body };
@@ -83,13 +85,14 @@ async function call(agent, method, url, body?, correlationId = newCorrelationId(
   const hasBody = body !== undefined && method !== "GET";
   const res = await fetch(url, {
     method,
-    headers: { authorization: `Bearer ${agent.token}`, "X-Correlation-Id": correlationId, ...(hasBody && { "Content-Type": "application/json" }) },
+    headers: { "authorization": `Bearer ${agent.token}`, "X-Correlation-Id": correlationId, ...(hasBody && { "Content-Type": "application/json" }) },
     body: hasBody ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
   try {
     return { status: res.status, response: JSON.parse(text), correlationId: res.headers.get("X-Correlation-Id") ?? correlationId };
-  } catch {
+  }
+  catch {
     return { status: res.status, response: text, correlationId: res.headers.get("X-Correlation-Id") ?? correlationId };
   }
 }
@@ -111,17 +114,19 @@ async function snapshot(agent) {
   let rawFriends = [];
   try {
     rawFriends = await list(agent, "/profile/me/friends");
-  } catch (err: unknown) {
+  }
+  catch (err: unknown) {
     console.error(`[ERROR] ${agent.name} failed to fetch friends: ${err instanceof Error ? err.message : String(err)}`);
   }
   // Only the id and label reach the prompt; the friend record also carries internal IDs the LLM never needs.
-  const profiles = participantFriends(rawFriends, agent.shareableIds).map((profile) => ({ id: profile.id, name: agent.labelsById?.[profile.id] ?? "unknown" }));
-  const names = Object.fromEntries(profiles.map((p) => [p.id, p.name]));
+  const profiles = participantFriends(rawFriends, agent.shareableIds).map(profile => ({ id: profile.id, name: agent.labelsById?.[profile.id] ?? "unknown" }));
+  const names = Object.fromEntries(profiles.map(p => [p.id, p.name]));
 
   let questions = [];
   try {
     questions = await list(agent, "/questions");
-  } catch (err: unknown) {
+  }
+  catch (err: unknown) {
     console.error(`[ERROR] ${agent.name} failed to fetch questions: ${err instanceof Error ? err.message : String(err)}`);
   }
 
@@ -130,7 +135,8 @@ async function snapshot(agent) {
     q.ownerName = agent.realNamesById?.[q.profileId];
     try {
       q.answers = await list(agent, `/question/${q.id}/answers`);
-    } catch (err: unknown) {
+    }
+    catch (err: unknown) {
       console.error(`[ERROR] ${agent.name} failed to fetch answers for [q:${q.id}]: ${err instanceof Error ? err.message : String(err)}`);
       q.answers = [];
     }
@@ -144,19 +150,19 @@ async function snapshot(agent) {
 }
 
 // Empty entries would name people the agent has never met on Q3.
-const knownMemory = (agent) => Object.fromEntries(Object.entries(agent.memory).filter(([, md]) => md));
+const knownMemory = agent => Object.fromEntries(Object.entries(agent.memory).filter(([, md]) => md));
 
 // What the LLM sees of a question: only what a person reads in the app, which keeps every step's prompt small.
 // The API returns only relationship-authorized answers; its profileId becomes the evidence author.
 const view = (questions, names, digested = new Set()) =>
-  questions.map((q) => ({
+  questions.map(q => ({
     id: q.id,
     owner: q.isOwner ? "you" : (names[q.profileId] ?? "unknown"),
     title: q.title,
     text: q.questionText,
     options: q.optionList ?? [],
     needsAnswer: needsAnswer(q),
-    answers: q.answers.map((a) => ({
+    answers: q.answers.map(a => ({
       id: a.id,
       ...(a.author && { by: a.author }),
       option: a.optionAnswerList?.join(", ") ?? a.answerText,
@@ -164,12 +170,12 @@ const view = (questions, names, digested = new Set()) =>
     })),
   }));
 
-const digest = (agent, questions) => questions.forEach((q) => q.answers.forEach((a) => agent.digested.add(a.id)));
+const digest = (agent, questions) => questions.forEach(q => q.answers.forEach(a => agent.digested.add(a.id)));
 
 async function observe(agent) {
   const { questions: visibleQuestions, profiles } = await snapshot(agent);
   const questions = visibleQuestions;
-  const names = Object.fromEntries(profiles.map((p) => [p.id, p.name]));
+  const names = Object.fromEntries(profiles.map(p => [p.id, p.name]));
 
   // News = what appeared since this agent last looked, so it can react like a person reading notifications.
   const news = [];
@@ -197,7 +203,7 @@ async function observe(agent) {
     news: news.slice(-15),
     profiles,
     questions: view(questions, names, agent.digested),
-    unanswered: questions.filter(needsAnswer).map((q) => ({ id: q.id, title: q.title, owner: names[q.profileId] ?? "unknown" })),
+    unanswered: questions.filter(needsAnswer).map(q => ({ id: q.id, title: q.title, owner: names[q.profileId] ?? "unknown" })),
     coverage: learningCoverage(agent, questions),
     memory: Object.fromEntries(Object.entries(knownMemory(agent)).map(([name, value]) => [agent.labelsByName?.[name] ?? name, promptMemory(value)])),
     recent: agent.recent.slice(-RECENT_STEPS),
@@ -224,9 +230,10 @@ async function think(agent, state, sandbox) {
       agent.model,
       STEP_SCHEMA,
       sandbox,
-      FAST
+      FAST,
     );
-  } catch (err) {
+  }
+  catch (err) {
     return { note: "", action: { method: "NONE" }, findings: [], error: err.message };
   }
 }
@@ -234,7 +241,7 @@ async function think(agent, state, sandbox) {
 async function reflect(agent, others, say) {
   const { questions } = await snapshot(agent);
   agent.memory = factMemory(agent.name, others, questions);
-  others.forEach((name) => agent.updated.add(name));
+  others.forEach(name => agent.updated.add(name));
   await writeMemory(agent.memoryDirectory, agent.name, agent.memory);
   digest(agent, questions);
   await say(agentActivity(agent, {
@@ -249,16 +256,16 @@ async function act(agent, { method, path: p, body }, state) {
   const baseUrl = new URL(QUESTION_URL);
   const url = URL.canParse(p, baseUrl) ? new URL(p, baseUrl) : null;
   const kind = url && writeKind(method, url.pathname);
-  const questions = state.questions.map((question) => ({ ...question, ownerOnline: question.owner === "you" || agent.online.includes(question.owner) }));
-  const reason =
-    url?.origin !== baseUrl.origin
+  const questions = state.questions.map(question => ({ ...question, ownerOnline: question.owner === "you" || agent.online.includes(question.owner) }));
+  const reason
+    = url?.origin !== baseUrl.origin
       ? "origin"
       : kind && agent.used[kind] >= LIMITS[kind]
         ? `limit:${kind}`
         : (offlineActionReason(url?.pathname ?? "", body, questions, agent.shareableIds) ?? invalidAction(method, url?.pathname ?? "", body));
   if (reason) return { method, path: p, body, status: "INVALID", reason, response: undefined, correlationId };
   const answerMatch = url?.pathname.match(/^\/question\/([^/]+)\/answer\/?$/);
-  const question = answerMatch ? state.questions.find((item) => item.id === answerMatch[1]) : undefined;
+  const question = answerMatch ? state.questions.find(item => item.id === answerMatch[1]) : undefined;
   // const answerBody =
   //   answerMatch && question && body && body.recipientProfileId === undefined && question.askers?.length === 1
   //     ? { ...body, recipientProfileId: question.askers[0].id }
@@ -289,14 +296,14 @@ function eventForResult(agent, r, titles, names) {
     return { ...base, eventType: "question.created", kind: "question", questionId, aggregateType: "question", aggregateId: questionId, eventData: { title: r.body?.title ?? null, questionText: r.body?.questionText ?? null, options: r.body?.option ?? [] } };
   }
   if (root === "question" && sub === "share")
-    return { ...base, eventType: "question.shared", kind: "share", questionId: id, aggregateType: "question", aggregateId: id, eventData: { title: titles[id] ?? null, recipients: (r.body?.receiverIds ?? []).map((pid) => names[pid] ?? pid) } };
+    return { ...base, eventType: "question.shared", kind: "share", questionId: id, aggregateType: "question", aggregateId: id, eventData: { title: titles[id] ?? null, recipients: (r.body?.receiverIds ?? []).map(pid => names[pid] ?? pid) } };
   if (root === "question" && sub === "answer")
     return { ...base, eventType: "answer.sent", kind: "answer", questionId: id, answerId: r.response?.return?.id ?? null, aggregateType: "question", aggregateId: id, eventData: { questionTitle: titles[id] ?? null, answer: r.body?.option ?? r.body?.answer ?? null } };
   if (root === "question" && !sub)
     return { ...base, eventType: "question.updated", kind: "edit", questionId: id, aggregateType: "question", aggregateId: id, eventData: { title: titles[id] ?? null, changes: r.body ?? {} } };
   if (r.path === "/sendFollowUpCmd") {
     const filters = (r.body?.question ?? [])
-      .map((filter) => `${titles[filter.questionId] ?? filter.questionId} = ${(filter.option ?? []).join(" or ")}`)
+      .map(filter => `${titles[filter.questionId] ?? filter.questionId} = ${(filter.option ?? []).join(" or ")}`)
       .join("; ");
     return { ...base, eventType: "followup.sent", kind: "followup", questionId: r.body?.newQuestionId ?? null, aggregateType: "question", aggregateId: r.body?.newQuestionId ?? null, eventData: { filters } };
   }
@@ -329,7 +336,7 @@ async function runAgent(agent, agents, others, sandbox, log, say, liveChat: Awai
     if (!receivedChat && agent.waiting && !state.news.length) {
       // Nothing new since the agent chose to wait: check back later like a person would, without an LLM call.
       agent.idle++;
-      if (agents.every((a) => a.done || a.idle >= IDLE_POLLS)) break;
+      if (agents.every(a => a.done || a.idle >= IDLE_POLLS)) break;
       await sleep(POLL_MS);
       continue;
     }
@@ -338,7 +345,7 @@ async function runAgent(agent, agents, others, sandbox, log, say, liveChat: Awai
     const step = ++agent.steps;
     const result = out.action.method === "NONE" ? null : await act(agent, out.action, state);
     agent.waiting = !result;
-    agent.findings.push(...out.findings.map((text) => ({ turn: step, text })));
+    agent.findings.push(...out.findings.map(text => ({ turn: step, text })));
     agent.recent.push({
       step,
       note: out.note,
@@ -350,8 +357,8 @@ async function runAgent(agent, agents, others, sandbox, log, say, liveChat: Awai
     if (out.error) log.push({ turn: step, agent: agent.name, error: out.error });
     if (result) log.push({ turn: step, agent: agent.name, ...result });
 
-    const titles = Object.fromEntries(state.questions.map((q) => [q.id, q.title ?? q.text]));
-    const names = agent.realNamesById ?? Object.fromEntries(state.profiles.map((p) => [p.id, p.name]));
+    const titles = Object.fromEntries(state.questions.map(q => [q.id, q.title ?? q.text]));
+    const names = agent.realNamesById ?? Object.fromEntries(state.profiles.map(p => [p.id, p.name]));
     if (out.error) await say(agentActivity(agent, { eventType: "llm.failed", kind: "error", source: "llm", severity: "error", eventData: { message: out.error } }));
     if (out.note) await say(agentActivity(agent, { eventType: "agent.thought", kind: "note", eventData: { text: clip(out.note) } }));
     if (result) await say(eventForResult(agent, result, titles, names));
@@ -384,7 +391,7 @@ export async function replyToDashboard(agent, context, sandbox: string, say): Pr
     agent.model,
     { type: "object", properties: { answer: { type: "string" } }, required: ["answer"], additionalProperties: false },
     sandbox,
-    FAST
+    FAST,
   );
   if (typeof result.answer !== "string" || !result.answer.trim()) throw new Error("Agent returned no dashboard reply");
   agent.dashboardChat.push({ role: "assistant", content: result.answer });
@@ -416,15 +423,15 @@ export async function runAgentChat() {
         actors.slice(index + 1).map(async (friend) => {
           const result = await call(actor, "PUT", new URL(`/profile/me/friends/${friend.profileId}`, QUESTION_URL));
           if (result.status >= 400) throw new Error(`Could not connect ${actor.name} and ${friend.name} (${result.status})`);
-        })
-      )
+        }),
+      ),
     );
     if (human) {
       const contacts = await list(agents[0], "/profile/me/friends");
-      const profile = contacts.find((contact) => contact.id === human.profileId);
+      const profile = contacts.find(contact => contact.id === human.profileId);
       if (profile?.name) human.name = profile.name;
     }
-    const realNamesById = Object.fromEntries(actors.map((actor) => [actor.profileId, actor.name]));
+    const realNamesById = Object.fromEntries(actors.map(actor => [actor.profileId, actor.name]));
     const participants = human ? [...aiParticipants, human.name] : aiParticipants;
     const runName = `${new Date().toISOString().replaceAll(":", "-")}_${participants.join("-")}`;
     const runId = `${runName}.chat.md`;
@@ -438,38 +445,39 @@ export async function runAgentChat() {
     };
     await say({ eventType: "run.started", kind: "start", source: "system", actorType: "system", aggregateType: "run", aggregateId: runId, eventData: { participants } });
     await say({ eventType: "run.context_loaded", kind: "system", source: "system", actorType: "system", aggregateType: "run", aggregateId: runId, eventData: { text: "Continuing with retained Q3 data and saved memory; per-run session state starts fresh." } });
-    await say({ eventType: "run.network_ready", kind: "system", source: "system", actorType: "system", aggregateType: "run", aggregateId: runId, eventData: { participants: actors.map((actor) => actor.name) } });
+    await say({ eventType: "run.network_ready", kind: "system", source: "system", actorType: "system", aggregateType: "run", aggregateId: runId, eventData: { participants: actors.map(actor => actor.name) } });
 
     const participantIds = new Set(Object.keys(realNamesById));
     for (const agent of agents) {
       let rawContacts = [];
       try {
         rawContacts = await list(agent, "/profile/me/friends");
-      } catch (err: unknown) {
+      }
+      catch (err: unknown) {
         console.error(`[ERROR] ${agent.name} failed to reach friends list: ${err instanceof Error ? err.message : String(err)}`);
         throw err;
       }
-      const contacts = participantFriends(rawContacts, participantIds).filter((contact) => contact.id !== agent.profileId);
+      const contacts = participantFriends(rawContacts, participantIds).filter(contact => contact.id !== agent.profileId);
       if (contacts.length !== actors.length - 1) throw new Error(`${agent.name} cannot reach every current participant through /profile/me/friends`);
       agent.realNamesById = realNamesById;
-      agent.shareableIds = new Set(contacts.map((contact) => contact.id));
-      agent.labelsById = Object.fromEntries(actors.filter((actor) => actor !== agent).map((actor, index) => [actor.profileId, `Person ${index + 1}`]));
-      agent.labelsByName = Object.fromEntries(actors.map((actor) => [actor.name, actor === agent ? "you" : agent.labelsById[actor.profileId]]));
-      agent.online = actors.filter((actor) => actor !== agent).map((actor) => agent.labelsById[actor.profileId]);
+      agent.shareableIds = new Set(contacts.map(contact => contact.id));
+      agent.labelsById = Object.fromEntries(actors.filter(actor => actor !== agent).map((actor, index) => [actor.profileId, `Person ${index + 1}`]));
+      agent.labelsByName = Object.fromEntries(actors.map(actor => [actor.name, actor === agent ? "you" : agent.labelsById[actor.profileId]]));
+      agent.online = actors.filter(actor => actor !== agent).map(actor => agent.labelsById[actor.profileId]);
     }
     const sandbox = await mkdtemp(path.join(os.tmpdir(), "q3-agent-"));
     const log = [];
 
-    const othersOf = (agent) => participants.filter((n) => n !== agent.name);
+    const othersOf = agent => participants.filter(n => n !== agent.name);
     liveChat = await startLiveChat(
       chatPath,
-      agents.map((agent) => agent.name)
+      agents.map(agent => agent.name),
     );
-    await Promise.all(agents.map((agent) => runAgent(agent, agents, othersOf(agent), sandbox, log, say, liveChat)));
+    await Promise.all(agents.map(agent => runAgent(agent, agents, othersOf(agent), sandbox, log, say, liveChat)));
     await liveChat.close();
     liveChat = undefined;
     await say({ eventType: "run.reflecting", kind: "system", source: "system", actorType: "system", aggregateType: "run", aggregateId: runId, eventData: { text: "Everyone is done. Final memory update..." } });
-    await Promise.all(agents.map((agent) => reflect(agent, othersOf(agent), say)));
+    await Promise.all(agents.map(agent => reflect(agent, othersOf(agent), say)));
     await say({ eventType: "run.grading", kind: "system", source: "system", actorType: "system", aggregateType: "run", aggregateId: runId, eventData: { text: "Judge is grading..." } });
 
     // Every question is visible to its owner, so the union over participants covers everything they touched.
@@ -480,12 +488,13 @@ export async function runAgentChat() {
       let visible = [];
       try {
         visible = await list(agent, "/questions");
-      } catch (err: unknown) {
+      }
+      catch (err: unknown) {
         console.error(`[ERROR] Failed to list questions for ${agent.name}: ${err instanceof Error ? err.message : String(err)}`);
         await say(agentActivity(agent, { eventType: "api.failed", kind: "error", severity: "error", httpMethod: "GET", apiPath: "/questions", eventData: { message: err instanceof Error ? err.message : String(err) } }));
       }
       const current = visible;
-      if ("steps" in agent) agent.seenOthers = current.filter((question) => !question.isOwner).length;
+      if ("steps" in agent) agent.seenOthers = current.filter(question => !question.isOwner).length;
       for (const q of current) {
         questions.set(q.id, q);
         readers.set(q.id, agent);
@@ -496,18 +505,19 @@ export async function runAgentChat() {
       const reader = readers.get(q.id) ?? agents[0];
       try {
         q.answers = await list(reader, `/question/${q.id}/answers`);
-      } catch (err: unknown) {
+      }
+      catch (err: unknown) {
         console.error(`[ERROR] Failed to list answers for [q:${q.id}] (${reader.name}): ${err instanceof Error ? err.message : String(err)}`);
         await say(agentActivity(reader, { eventType: "api.failed", kind: "error", severity: "error", httpMethod: "GET", apiPath: `/question/${q.id}/answers`, questionId: q.id, aggregateType: "question", aggregateId: q.id, eventData: { message: err instanceof Error ? err.message : String(err) } }));
         q.answers = [];
       }
     }
-    const judgement = await judge(agents, [...questions.values()], names, log, sandbox).catch((err) => ({ error: err.message }));
+    const judgement = await judge(agents, [...questions.values()], names, log, sandbox).catch(err => ({ error: err.message }));
 
     const reportPath = path.join(RUNS_DIR, `${runName}.md`);
     await writeFile(
       reportPath,
-      report(participants, agents, log, [...questions.values()], names, judgement, Object.fromEntries(actors.map((actor) => [actor.name, actor.profileId])))
+      report(participants, agents, log, [...questions.values()], names, judgement, Object.fromEntries(actors.map(actor => [actor.name, actor.profileId]))),
     );
     await say({ eventType: "run.completed", kind: "system", source: "system", actorType: "system", aggregateType: "run", aggregateId: runId, eventData: { report: path.basename(reportPath) } });
 
@@ -518,20 +528,22 @@ export async function runAgentChat() {
         assert.ok(agent.updated.has(other), `${agent.name} did not update memory of ${other} this run`);
       }
     }
-  } finally {
+  }
+  finally {
     try {
       await liveChat?.close();
-    } finally {
+    }
+    finally {
       await rm(LOCK_PATH, { force: true });
     }
   }
 }
 
-const isMain =
-  Boolean(process.argv[1]) &&
-  (fileURLToPath(import.meta.url) === path.resolve(process.argv[1]) ||
-    process.argv[1].endsWith("agentChat.run.mjs") ||
-    process.argv[1].endsWith("agentChat.run.mts"));
+const isMain
+  = Boolean(process.argv[1])
+    && (fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
+      || process.argv[1].endsWith("agentChat.run.mjs")
+      || process.argv[1].endsWith("agentChat.run.mts"));
 
 if (isMain) {
   runAgentChat().catch((error) => {

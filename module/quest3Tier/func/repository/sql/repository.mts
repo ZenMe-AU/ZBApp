@@ -43,7 +43,7 @@ import cmdName from "../../enum/cmdName.mjs";
 import { v4 as uuidv4 } from "uuid";
 import { Op } from "@sequelize/core";
 
-let models: Record<string, any> | null = null;
+let models: Record<string, unknown> | null = null;
 
 // TODO: add code to capture the authenticated user to enforce row level rbac at query time.
 export async function initRepository(config: DbConfig) {
@@ -127,7 +127,7 @@ async function addAnswerByQuestionId(
   duration: number,
   answer: string | null = null,
   option: string | string[] | null = null,
-  when: string | null = null
+  when: string | null = null,
 ): Promise<AnswerRecord> {
   try {
     const options = option === null ? null : Array.isArray(option) ? option : [option];
@@ -140,7 +140,8 @@ async function addAnswerByQuestionId(
       duration: duration,
     });
     return normalizeAnswer(created);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to add answer for questionId: ${questionId}; ${err.message}`, { cause: err });
   }
@@ -157,7 +158,8 @@ async function getAnswerById(questionId: string, answerId: string): Promise<Answ
     const answer = await models.QuestionAnswer.findOne({ where: { id: answerId, questionId: questionId } });
     if (!answer) return null;
     return normalizeAnswer(answer);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to retrieve answer for questionId ${questionId} and answerId ${answerId}: ${err.message}`, { cause: err });
   }
@@ -202,13 +204,14 @@ async function getAnswerListByQuestionId(questionId: string): Promise<AnswerReco
       {
         replacements: { questionId },
         type: models.QuestionAnswer.sequelize.QueryTypes.SELECT,
-      }
+      },
     );
-    return answers.map((answer) => ({
+    return answers.map(answer => ({
       ...normalizeAnswer(answer),
       answerCount: Number(answer.answerCount),
     }));
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to retrieve answers for questionId: ${questionId}; ${err.message}`, { cause: err });
   }
@@ -252,7 +255,8 @@ async function getEventByCorrelationId(name: "FollowUpCmd" | "QuestionShareCmd",
         ? { ...common, followUpId: record.followUpId }
         : { ...common, questionShareId: record.questionShareId };
     });
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to get event by correlationId: ${correlationId}; ${err.message}`, { cause: err });
   }
@@ -274,7 +278,8 @@ async function insertFollowUpCmd(senderId: string, cmdData: RepositoryJsonObject
       correlationId: correlationId,
     });
     return { id: command.id };
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to insert follow-up command; ${err.message}`, { cause: err });
   }
@@ -301,7 +306,7 @@ async function insertFollowUpFilter(senderId: string, cmdData: FollowUpFilterInp
         };
       });
       const filters = await models.FollowUpFilter.bulkCreate(filterDataAry);
-      return filters.map((filter) => ({
+      return filters.map(filter => ({
         id: filter.id,
         order: filter.order,
         senderProfileId: filter.senderProfileId,
@@ -310,7 +315,8 @@ async function insertFollowUpFilter(senderId: string, cmdData: FollowUpFilterInp
         newQuestionId: filter.newQuestionId,
       }));
     }
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
   }
   return [];
@@ -325,7 +331,8 @@ async function updateFollowUpCmdStatus(id: string): Promise<CommandRecord> {
   try {
     await models.FollowUpCmd.update({ status: 1 }, { where: { id: id }, individualHooks: true });
     return { id };
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to update follow-up command status; ${err.message}`, { cause: err });
   }
@@ -350,12 +357,13 @@ async function shareQuestion(newQuestionId: string, senderId: string, receiverId
       };
     });
     const shares = await models.QuestionShare.bulkCreate(addData);
-    return shares.map((share) => ({
+    return shares.map(share => ({
       questionId: share.questionId,
       senderProfileId: share.senderProfileId,
       receiverProfileId: share.receiverProfileId,
     }));
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to share question from senderId ${senderId} to receiversIds ${receiverIds.join(", ")}; ${err.message}`, { cause: err });
   }
@@ -364,7 +372,7 @@ async function shareQuestion(newQuestionId: string, senderId: string, receiverId
 async function insertQuestionShareCmd(
   senderId: string,
   cmdData: RepositoryJsonObject,
-  correlationId: string
+  correlationId: string,
 ): Promise<CommandRecord> {
   try {
     const command = await models.QuestionShareCmd.create({
@@ -374,7 +382,8 @@ async function insertQuestionShareCmd(
       correlationId: correlationId,
     });
     return { id: command.id };
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to insert question share command; ${err.message}`, { cause: err });
   }
@@ -389,7 +398,8 @@ async function updateQuestionShareCmdStatus(id: string): Promise<CommandRecord> 
   try {
     await models.QuestionShareCmd.update({ status: 1 }, { where: { id: id }, individualHooks: true });
     return { id };
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to update question share command status; ${err.message}`, { cause: err });
   }
@@ -408,7 +418,7 @@ async function create(
   profileId: string,
   title: string | null = null,
   question: string | null = null,
-  optionList: string[] | null = null
+  optionList: string[] | null = null,
 ): Promise<QuestionRecord> {
   try {
     const created = await models.Question.create({
@@ -418,7 +428,8 @@ async function create(
       optionList,
     });
     return toQuestionRecord(created);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to create question for profileId: ${profileId}; ${err.message}`, { cause: err });
   }
@@ -437,7 +448,7 @@ async function updateById(
   questionId: string,
   title: string | null = null,
   questionText: string | null = null,
-  optionList: string[] | null = null
+  optionList: string[] | null = null,
 ): Promise<{ id: string }> {
   try {
     await models.Question.update(
@@ -451,10 +462,11 @@ async function updateById(
           id: questionId,
         },
         individualHooks: true,
-      }
+      },
     );
     return { id: questionId };
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to update question for questionId: ${questionId}; ${err.message}`, { cause: err });
   }
@@ -496,9 +508,10 @@ async function getCombinationListByUser(profileId: string): Promise<QuestionList
           ...toQuestionRecord(question),
           latestAnswer: answer ? normalizeAnswer(answer) : null,
         };
-      })
+      }),
     );
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to retrieve questions for profileId: ${profileId}; ${err.message}`, { cause: err });
   }
@@ -516,7 +529,8 @@ async function patchById(questionId: string, action: QuestionPatchOperation[], p
   try {
     await models.QuestionAction.create({ questionId, profileId, action });
     return { id: questionId };
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to patch question by ID: ${questionId}; ${err.message}`, { cause: err });
   }
@@ -531,7 +545,8 @@ async function findProfileByExternalId(externalId: string): Promise<ProfileRecor
       ],
     });
     return profile ? { id: profile.internal_id, externalId: profile.external_id } : null;
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Function failed: ${err.message}`, { cause: err });
   }
@@ -541,7 +556,8 @@ async function createProfile(externalId: string): Promise<ProfileRecord> {
   try {
     const profile = await models.Profile.create({ external_id: externalId });
     return { id: profile.internal_id, externalId: profile.external_id };
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Function failed: ${err.message}`, { cause: err });
   }
@@ -646,7 +662,8 @@ async function getSharedQuestionListByProfileId(profileId: string): Promise<Ques
       ],
     });
     return questions.map(toQuestionRecord);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     throw new Error(`Failed to retrieve shared questions for profileId: ${profileId}; ${err.message}`, { cause: err });
   }
@@ -659,7 +676,8 @@ export async function getById(questionId: string): Promise<QuestionRecord | null
       return null;
     }
     return toQuestionRecord(question);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(`Failed to retrieve question for questionId: ${questionId}; ${message}`, { cause: err });
