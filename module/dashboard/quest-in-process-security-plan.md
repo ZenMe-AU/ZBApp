@@ -12,7 +12,7 @@ For local development, the local user is deemed to have full Dashboard access. K
 
 Hosting will use restrictive scaling and automatic shutdown to protect against runaway costs. Hosting configuration, scaling, shutdown and cost management are handled independently and are outside this implementation plan.
 
-Hosting example: Linux P0v4, one instance, four hours/day may cost less than AUD 30/month if paid plan capacity is provisioned only for those hours. This is an illustrative estimate, not a quote; database, storage and LLM costs are separate. Merely stopping the Dashboard app after four hours does not achieve four-hour/day plan billing.
+Hosting example: Linux B1, one instance, four hours/day may cost less than AUD 30/month if paid plan capacity is provisioned only for those hours. This is an illustrative estimate, not a quote; database, storage and LLM costs are separate. Merely stopping the Dashboard app after four hours does not achieve four-hour/day plan billing.
 
 This plan is based on the Q3 workspace currently imported by the Dashboard, not an assumption that all Quest variants share its implementation. It records an investigation and proposed work; it does not claim the changes have been implemented.
 
