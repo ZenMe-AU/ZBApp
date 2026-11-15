@@ -43,7 +43,7 @@ import cmdName from "../../enum/cmdName.mjs";
 import { v4 as uuidv4 } from "uuid";
 import { Op } from "@sequelize/core";
 
-let models: Record<string, unknown> | null = null;
+let models: Record<string, any> | null = null;
 
 // TODO: add code to capture the authenticated user to enforce row level rbac at query time.
 export async function initRepository(config: DbConfig) {
