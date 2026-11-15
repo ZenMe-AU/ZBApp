@@ -48,6 +48,20 @@ test("keeps ordinary questions scoped to the selected run", async () => {
   expect(activity.listRuns).not.toHaveBeenCalled();
 });
 
+test("uses an explicit all-runs scope without relying on prompt wording", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "referee-context-"));
+  const activity = {
+    listRuns: vi.fn(async () => [{ name: "run-1" }, { name: "run-2" }]),
+    listByRun: vi.fn(async (runId) => [{ id: runId }]),
+  };
+  const build = createRefereeContextBuilder({ dashboardDir: root, repositoryDir: root, activity });
+
+  const context = await build({ runId: "run-1", question: "Review this", scope: "all-runs" });
+
+  expect(context.scope).toBe("all-runs");
+  expect(context.activity).toHaveLength(2);
+});
+
 test("allows only explicit read API paths", () => {
   expect(isAllowedRefereeApiPath("/questionQry/getQuestions")).toBe(true);
   expect(isAllowedRefereeApiPath("/question/q-1/answers")).toBe(true);

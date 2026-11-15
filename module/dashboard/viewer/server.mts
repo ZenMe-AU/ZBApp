@@ -168,16 +168,21 @@ const spawnPnpm = (args: string[], cwd: string, env = CHILD_ENV) =>
 const isRunName = (name) => typeof name === "string" && path.basename(name) === name && name.endsWith(".chat.md");
 
 async function listRuns() {
+  const hasReport = (name: string) => stat(path.join(RUNS_DIR, name.replace(/\.chat\.md$/, ".md"))).then(() => true, () => false);
   const entries = await readdir(RUNS_DIR, { withFileTypes: true }).catch(() => []);
   const runs = await Promise.all(
     entries
       .filter((entry) => entry.isFile() && isRunName(entry.name))
-      .map(async (entry) => ({ name: entry.name, mtime: (await stat(path.join(RUNS_DIR, entry.name))).mtimeMs }))
+      .map(async (entry) => ({
+        name: entry.name,
+        mtime: (await stat(path.join(RUNS_DIR, entry.name))).mtimeMs,
+        completed: await hasReport(entry.name),
+      }))
   );
   const combined = new Map(runs.map((run) => [run.name, run]));
   for (const run of await activityRepository.listRuns()) {
     const current = combined.get(run.name);
-    if (!current || run.mtime > current.mtime) combined.set(run.name, run);
+    if (!current || run.mtime > current.mtime) combined.set(run.name, { ...run, completed: current?.completed ?? await hasReport(run.name) });
   }
   return [...combined.values()].sort((a, b) => b.mtime - a.mtime);
 }
@@ -410,7 +415,8 @@ async function handle(request, response) {
       if (!isRunName(run) || !runs.some((item) => item.name === run)) return sendJson(response, 404, { error: "Run not found" });
       if (!message || message.length > 1000) return sendJson(response, 400, { error: "Message must be 1-1000 characters" });
       refereeChatPending = true;
-      const context = await buildRefereeContext({ runId: run, question: message, apiRequests: NAMES.map((actor) => ({ actor, path: "/questions" })) });
+      const scope = body.scope === "all-runs" ? "all-runs" : "selected-run";
+      const context = await buildRefereeContext({ runId: run, question: message, scope, apiRequests: NAMES.map((actor) => ({ actor, path: "/questions" })) });
       const env = { ...CHILD_ENV, ...(await localSettings()) };
       const result = await answerRefereeChat({ message, history: body.history, context, model: chatModel(env, env.REFEREE_MODEL ?? env.JUDGE_MODEL), env });
       return sendJson(response, 200, result);

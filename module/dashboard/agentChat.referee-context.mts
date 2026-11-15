@@ -111,10 +111,11 @@ async function searchRepository(repositoryDir: string, question: string) {
 }
 
 export function createRefereeContextBuilder({ dashboardDir, repositoryDir, activity, readApi }: RefereeContextOptions) {
-  return async function buildRefereeContext({ runId, question, apiRequests = [] }: { runId: string; question: string; apiRequests?: ApiRequest[] }) {
+  return async function buildRefereeContext({ runId, question, scope, apiRequests = [] }: { runId: string; question: string; scope?: "selected-run" | "all-runs"; apiRequests?: ApiRequest[] }) {
+    const resolvedScope = scope ?? (ALL_HISTORY.test(question) ? "all-runs" : "selected-run");
     const selectedEvents = await activity.listByRun(runId);
     const activityRuns = [{ runId, events: redact(selectedEvents) }];
-    if (ALL_HISTORY.test(question)) {
+    if (resolvedScope === "all-runs") {
       for (const run of await activity.listRuns()) {
         if (run.name !== runId) activityRuns.push({ runId: run.name, events: redact(await activity.listByRun(run.name)) });
       }
@@ -130,7 +131,7 @@ export function createRefereeContextBuilder({ dashboardDir, repositoryDir, activ
     }
 
     return {
-      scope: ALL_HISTORY.test(question) ? "all-runs" : "selected-run",
+      scope: resolvedScope,
       selectedRunId: runId,
       activity: activityRuns,
       memories: await readMemories(dashboardDir),

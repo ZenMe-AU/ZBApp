@@ -29,6 +29,8 @@ export const elements = typeof document === "undefined" ? null : {
   chatInput: select<HTMLInputElement>("#chat-input"),
   chatMessages: select<HTMLElement>("#chat-messages"),
   chatPanel: select<HTMLElement>("#chat-panel"),
+  chatRunLabel: select<HTMLElement>("#chat-run-label"),
+  chatRunSelect: select<HTMLSelectElement>("#chat-run-select"),
   chatSend: select<HTMLButtonElement>("#chat-send"),
   refereeEvidence: select<HTMLDetailsElement>("#referee-evidence"),
   refereeEvidenceSummary: select<HTMLElement>("#referee-evidence-summary"),
