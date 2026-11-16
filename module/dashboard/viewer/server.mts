@@ -55,7 +55,7 @@ type RunState = {
   exitCode?: number;
 };
 const state: { runProcess?: ChildProcess; azuriteProcess?: ChildProcess; run: RunState } = { run: { status: "idle" } };
-const tableRepositoryState: { value?: Promise<{ listFriends(profileId: string): Promise<unknown[]> }> } = {};
+const tableRepositoryState: { value?: Promise<ReturnType<typeof initRepository>> } = {};
 const pendingHuman: { profileId?: string; name?: string } = {};
 const registeredHuman: { profileId?: string; name?: string } = {};
 const HUMAN_STATE_PATH = path.join(RUNS_DIR, ".human.json");
@@ -182,18 +182,30 @@ async function listRuns() {
   return [...combined.values()].sort((a, b) => b.mtime - a.mtime);
 }
 
-async function getTableRepository() {
+async function getTableRepository(loadSettings = localSettings, initialize = initRepository) {
   if (!tableRepositoryState.value) {
     tableRepositoryState.value = (async () => {
-      const settings = await localSettings();
-      return initRepository({
+      const settings = await loadSettings();
+      const storage = {
         AzureWebJobsStorage: process.env.AzureWebJobsStorage ?? settings.AzureWebJobsStorage,
         AzureWebJobsStorage__tableServiceUri: process.env.AzureWebJobsStorage__tableServiceUri ?? settings.AzureWebJobsStorage__tableServiceUri,
         AzureWebJobsStorage__clientId: process.env.AzureWebJobsStorage__clientId ?? settings.AzureWebJobsStorage__clientId,
-      });
+      };
+      if (![storage.AzureWebJobsStorage, storage.AzureWebJobsStorage__tableServiceUri]
+        .some((value) => typeof value === "string" && value.trim())) {
+        throw new Error("Dashboard Quest storage is not configured: set AzureWebJobsStorage or AzureWebJobsStorage__tableServiceUri.");
+      }
+      return initialize(storage);
     })();
   }
   return tableRepositoryState.value;
+}
+
+async function resolveQuestProfileId(externalId: string): Promise<string> {
+  const repository = await getTableRepository();
+  const profile = await repository.findProfileByExternalId(externalId);
+  if (!profile) throw new Error(`Quest profile not found for external ID: ${externalId}`);
+  return profile.id;
 }
 
 async function getRunNetwork(run: string) {
@@ -613,6 +625,52 @@ async function handle(request, response) {
 }
 
 async function selfCheck() {
+  const storageKeys = ["AzureWebJobsStorage", "AzureWebJobsStorage__tableServiceUri", "AzureWebJobsStorage__clientId"];
+  const savedStorage = storageKeys.map((key) => process.env[key]);
+  try {
+    for (const key of storageKeys) delete process.env[key];
+    await assert.rejects(() => getTableRepository(async () => ({})), /Quest storage is not configured/);
+    tableRepositoryState.value = undefined;
+    const settings = { AzureWebJobsStorage: "UseDevelopmentStorage=true" };
+    let initializations = 0;
+    const initialize = (storage) => {
+      initializations++;
+      assert.deepEqual(storage, { ...settings, AzureWebJobsStorage__tableServiceUri: undefined, AzureWebJobsStorage__clientId: undefined });
+      return initRepository(storage);
+    };
+    const [repository, concurrent] = await Promise.all([
+      getTableRepository(async () => settings, initialize),
+      getTableRepository(async () => { throw new Error("Settings loaded twice"); }, initialize),
+    ]);
+    assert.equal(repository, concurrent);
+    assert.equal(await getTableRepository(), repository);
+    assert.equal(initializations, 1);
+    const findProfile = repository.findProfileByExternalId;
+    try {
+      repository.findProfileByExternalId = async (externalId) => {
+        assert.equal(externalId, "external-test-id");
+        return { id: "internal-test-id", externalId };
+      };
+      assert.equal(await resolveQuestProfileId("external-test-id"), "internal-test-id");
+      repository.findProfileByExternalId = async () => null;
+      await assert.rejects(() => resolveQuestProfileId("missing"), /Quest profile not found/);
+      repository.findProfileByExternalId = async () => { throw new Error("Storage unavailable"); };
+      await assert.rejects(() => resolveQuestProfileId("external-test-id"), /Storage unavailable/);
+    } finally {
+      repository.findProfileByExternalId = findProfile;
+    }
+    tableRepositoryState.value = undefined;
+    await assert.rejects(() => getTableRepository(async () => settings, () => {
+      throw new Error("Initialization failed");
+    }), /Initialization failed/);
+    await assert.rejects(() => getTableRepository(), /Initialization failed/);
+  } finally {
+    tableRepositoryState.value = undefined;
+    storageKeys.forEach((key, index) => {
+      if (savedStorage[index] === undefined) delete process.env[key];
+      else process.env[key] = savedStorage[index];
+    });
+  }
   const child = spawnPnpm(["--version"], REPO_DIR);
   await new Promise<void>((resolve, reject) => {
     child.once("error", reject);
@@ -789,6 +847,7 @@ if (process.argv.includes("--check")) {
   await selfCheck();
 } else {
   if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) throw new Error("AGENT_VIEW_PORT must be a valid port");
+  await getTableRepository();
   const server = createServer((request, response) =>
     handle(request, response).catch((error) => {
       console.error(error);
