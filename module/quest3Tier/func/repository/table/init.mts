@@ -10,9 +10,15 @@ import { TableClient } from "@azure/data-tables";
 import { DefaultAzureCredential } from "@azure/identity";
 
 export interface TableStorageSettings {
+  // Dashboard reads use provisioned tables and canonical profiles without migration writes.
+  allowReadSideEffects?: boolean;
   AzureWebJobsStorage?: string;
   AzureWebJobsStorage__tableServiceUri?: string;
   AzureWebJobsStorage__clientId?: string;
+}
+
+export function allowReadSideEffects(): boolean {
+  return settings?.allowReadSideEffects !== false;
 }
 
 const clients = new Map<string, TableClient>();
@@ -52,7 +58,7 @@ export async function getTableClient(tableName: string): Promise<TableClient> {
     client = buildClient(tableName);
     clients.set(tableName, client);
   }
-  if (!ensuredTables.has(tableName)) {
+  if (allowReadSideEffects() && !ensuredTables.has(tableName)) {
     await client.createTable(); // TODO: RBAC non compliance, app code must not change infrastructure. Move this to a migration script that is run by a separate admin account.
     ensuredTables.add(tableName);
   }

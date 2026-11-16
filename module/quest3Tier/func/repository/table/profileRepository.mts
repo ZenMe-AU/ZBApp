@@ -8,7 +8,7 @@
 
 import { createHash, randomUUID } from "crypto";
 import { odata } from "@azure/data-tables";
-import { getTableClient, isNotFoundError } from "./init.mjs";
+import { allowReadSideEffects, getTableClient, isNotFoundError } from "./init.mjs";
 
 export const PROFILES_TABLE = "Profiles";
 export const PROFILE_BY_INTERNAL_ID_TABLE = "ProfileByInternalId";
@@ -119,7 +119,9 @@ function detailsFrom(entity: ProfileEntity | null): ProfileDetails {
 async function getProfileEntity(partitionKey: string): Promise<ProfileEntity | null> {
   const client = await getTableClient(PROFILES_TABLE);
   try {
-    return await client.getEntity<ProfileEntity>(partitionKey, PROFILE_ROW_KEY);
+    const entity = await client.getEntity<ProfileEntity>(partitionKey, PROFILE_ROW_KEY);
+    if (!allowReadSideEffects() && (!entity.internal_id || entity.external_id !== partitionKey)) return null;
+    return entity;
   } catch (err) {
     if (isNotFoundError(err)) return null;
     throw err;
@@ -135,6 +137,7 @@ async function getProfileEntityByInternalId(internalId: string): Promise<Profile
     if (!isNotFoundError(err)) throw err;
   }
 
+  if (!allowReadSideEffects()) return null;
   const legacy = await getProfileEntity(internalId);
   if (!legacy) return null;
   const profile = await migrateLegacyProfile(toProfileRecord(legacy));
@@ -225,6 +228,7 @@ export async function getProfileByInternalId(internalId: string): Promise<Profil
 export async function findProfileByExternalId(externalId: string): Promise<ProfileRecord | null> {
   const profile = await getProfileEntity(externalId);
   if (profile) return toProfileRecord(profile);
+  if (!allowReadSideEffects()) return null;
   const legacy = await findLegacyProfileByExternalId(externalId);
   return legacy ? migrateLegacyProfile(legacy) : null;
 }

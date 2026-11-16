@@ -13,11 +13,11 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { initRepository } from "quest3Tier/dist/repository/table/repository.mjs";
+import { toExternalProfileId } from "quest3Tier/dist/handler/profileId.mjs";
 import { NAMES } from "../agentChat.config.mjs";
 import { createRefereeContextBuilder } from "../agentChat.referee-context.mjs";
 import { sendLiveChat } from "../agentChat.live.mjs";
 import { createActivityRepository } from "../activity/activity-repository.mjs";
-import * as authDev from "../service/authDev.mjs";
 import { answerResults } from "./results-chat.mjs";
 import { answerRefereeChat } from "./referee-chat.mjs";
 
@@ -91,68 +91,53 @@ async function getAgentOids(): Promise<Record<string, string>> {
   })));
 }
 
-async function getAgentIdentity(name: string) {
+async function getQuestionsForAgent(name: string, externalId = toExternalProfileId) {
   if (!AGENT_NAMES.has(name)) throw new Error("Unknown agent");
-  const text = await readFile(path.join(DASHBOARD_DIR, name, `${name}.agent.md`), "utf8");
-  const frontmatter = text.replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---(?:\n|$)/)?.[1];
-  const oid = frontmatter?.match(/^oid:\s*(\S+)\s*$/m)?.[1];
-  const email = frontmatter?.match(/^email:\s*(\S+)\s*$/m)?.[1];
-  if (!oid || !email) throw new Error(`Missing identity for ${name}`);
-  return { oid, email };
+  const profileId = await resolveQuestProfileId((await getAgentOids())[name]);
+  const repository = await getTableRepository();
+  const list = await repository.getCombinationListByUser(profileId);
+  if (!Array.isArray(list)) throw new Error("Quest repository returned an invalid question list");
+  return Promise.all(list.map(async (question) => ({
+    ...question,
+    profileId: await externalId(question.profileId),
+    latestAnswer: question.latestAnswer && {
+      ...question.latestAnswer,
+      profileId: await externalId(question.latestAnswer.profileId),
+    },
+    isOwner: question.profileId === profileId,
+  })));
 }
 
-async function getQuestionsForAgent(name: string, request = fetch) {
-  const { oid, email } = await getAgentIdentity(name);
-  const settings = await localSettings();
-  const questionUrl = settings.QUESTION_URL ?? process.env.QUESTION_URL ?? "http://127.0.0.1:7073";
-  const token = authDev.generateToken({ oid, name, preferred_username: email });
-  const response = await request(new URL("/questionQry/getQuestions", questionUrl), {
-    headers: { authorization: `Bearer ${token}` },
-  });
-  const text = await response.text();
-  let body: unknown;
-  try {
-    body = JSON.parse(text);
-  } catch {
-    body = text;
-  }
-  if (!response.ok) throw new Error(`Question API returned ${response.status}`);
-  const list = (body as { return?: { list?: unknown[] } })?.return?.list;
-  if (!Array.isArray(list)) throw new Error("Question API returned an invalid list");
-  return list;
-}
-
-async function getAnswersForAgent(name: string, questionId: string, request = fetch) {
+async function getAnswersForAgent(name: string, questionId: string, externalId = toExternalProfileId) {
   if (!AGENT_NAMES.has(name)) throw new Error("Unknown agent");
-  const questions = await getQuestionsForAgent(name, request);
+  const questions = await getQuestionsForAgent(name, externalId);
   if (!questions.some((question) => question && typeof question === "object" && "id" in question && question.id === questionId)) return undefined;
-  const { oid, email } = await getAgentIdentity(name);
-  const settings = await localSettings();
-  const questionUrl = settings.QUESTION_URL ?? process.env.QUESTION_URL ?? "http://127.0.0.1:7073";
-  const token = authDev.generateToken({ oid, name, preferred_username: email });
-  const response = await request(new URL(`/questionQry/getAnswers/${encodeURIComponent(questionId)}`, questionUrl), {
-    headers: { authorization: `Bearer ${token}` },
-  });
-  const body = await response.json();
-  if (!response.ok) throw new Error(`Answer API returned ${response.status}`);
-  const list = body?.return?.list;
-  if (!Array.isArray(list)) throw new Error("Answer API returned an invalid list");
+  const repository = await getTableRepository();
+  const list = await repository.getAnswerListByQuestionId(questionId);
+  if (!Array.isArray(list)) throw new Error("Quest repository returned an invalid answer list");
   if (list.some((answer) => !answer || typeof answer !== "object" || answer.questionId !== questionId)) {
-    throw new Error("Answer API returned data for a different question");
+    throw new Error("Quest repository returned data for a different question");
   }
-  const namesByProfileId = Object.fromEntries(Object.entries(await getAgentOids()).map(([agent, profileId]) => [profileId, agent]));
-  if (registeredHuman.profileId) namesByProfileId[registeredHuman.profileId] = registeredHuman.name ?? "Participant";
+  const participants = Object.entries(await getAgentOids());
+  if (registeredHuman.profileId) participants.push([registeredHuman.name ?? "Participant", registeredHuman.profileId]);
+  const namesByProfileId = new Map<string, string>();
+  for (const [name, oid] of participants) {
+    const profile = await repository.findProfileByExternalId(oid);
+    if (profile) namesByProfileId.set(profile.id, name);
+  }
   return list.map((answer) => ({
     ...answer,
-    answeredBy: typeof answer.profileId === "string" ? namesByProfileId[answer.profileId] ?? "Unknown participant" : "Unknown participant",
+    answeredBy: namesByProfileId.get(answer.profileId) ?? "Unknown participant",
+    isEdited: (answer.answerCount ?? 0) > 1,
+    answerCount: undefined,
     profileId: undefined,
   }));
 }
 
-async function readRefereeApi(actor: string, apiPath: string) {
-  if (apiPath === "/questions") return getQuestionsForAgent(actor);
+async function readRefereeApi(actor: string, apiPath: string, externalId = toExternalProfileId) {
+  if (apiPath === "/questions") return getQuestionsForAgent(actor, externalId);
   const answers = apiPath.match(/^\/question\/([A-Za-z0-9-]+)\/answers$/);
-  if (answers) return getAnswersForAgent(actor, answers[1]);
+  if (answers) return getAnswersForAgent(actor, answers[1], externalId);
   throw new Error(`Referee API path is not implemented: ${apiPath}`);
 }
 
@@ -187,6 +172,7 @@ async function getTableRepository(loadSettings = localSettings, initialize = ini
     tableRepositoryState.value = (async () => {
       const settings = await loadSettings();
       const storage = {
+        allowReadSideEffects: false,
         AzureWebJobsStorage: process.env.AzureWebJobsStorage ?? settings.AzureWebJobsStorage,
         AzureWebJobsStorage__tableServiceUri: process.env.AzureWebJobsStorage__tableServiceUri ?? settings.AzureWebJobsStorage__tableServiceUri,
         AzureWebJobsStorage__clientId: process.env.AzureWebJobsStorage__clientId ?? settings.AzureWebJobsStorage__clientId,
@@ -208,13 +194,20 @@ async function resolveQuestProfileId(externalId: string): Promise<string> {
   return profile.id;
 }
 
-async function getRunNetwork(run: string) {
+async function getRunNetwork(run: string, externalId = toExternalProfileId, readReport: (file: string, encoding: "utf8") => Promise<string> = readFile) {
   const { parseReport } = await import("./viewer-data.mjs");
-  const text = await readFile(path.join(RUNS_DIR, run.replace(/\.chat\.md$/, ".md")), "utf8").catch(() => "");
+  const text = await readReport(path.join(RUNS_DIR, run.replace(/\.chat\.md$/, ".md")), "utf8").catch(() => "");
   const profileIds = parseReport(text).profileIds;
   if (!Object.keys(profileIds).length) return {};
   const repository = await getTableRepository();
-  const networks = await Promise.all(Object.entries(profileIds).map(async ([name, profileId]) => [name, await repository.listFriends(profileId)]));
+  const networks = await Promise.all(Object.entries(profileIds).map(async ([name, profileId]) => {
+    const friends = await repository.listFriends(await resolveQuestProfileId(profileId));
+    return [name, await Promise.all(friends.map(async (friend) => ({
+      ...friend,
+      id: await externalId(friend.id),
+      path: await Promise.all(friend.path.map(externalId)),
+    })))];
+  }));
   return Object.fromEntries(networks);
 }
 
@@ -616,7 +609,12 @@ async function handle(request, response) {
     const run = url.searchParams.get("run");
     const runs = await listRuns();
     if (!isRunName(run) || !runs.some((item) => item.name === run)) return sendJson(response, 404, { error: "Run not found" });
-    return sendJson(response, 200, { networks: await getRunNetwork(run) });
+    try {
+      return sendJson(response, 200, { networks: await getRunNetwork(run) });
+    } catch (error) {
+      console.error("Could not load network:", error);
+      return sendJson(response, 502, { error: error instanceof Error ? error.message : String(error) });
+    }
   }
   const staticFile = STATIC_FILES[url.pathname];
   if (!staticFile) return sendJson(response, 404, { error: "Not found" });
@@ -635,7 +633,7 @@ async function selfCheck() {
     let initializations = 0;
     const initialize = (storage) => {
       initializations++;
-      assert.deepEqual(storage, { ...settings, AzureWebJobsStorage__tableServiceUri: undefined, AzureWebJobsStorage__clientId: undefined });
+      assert.deepEqual(storage, { ...settings, allowReadSideEffects: false, AzureWebJobsStorage__tableServiceUri: undefined, AzureWebJobsStorage__clientId: undefined });
       return initRepository(storage);
     };
     const [repository, concurrent] = await Promise.all([
@@ -694,33 +692,68 @@ async function selfCheck() {
   assert.equal(isQuestUiOrigin({ headers: { origin: "http://localhost:5186" } }), true);
   assert.equal(isQuestUiOrigin({ headers: { origin: "https://example.com" } }), false);
   const agentOids = await getAgentOids();
-  const requestedUrls: string[] = [];
-  const allowedRequest = (async (url, options) => {
-    requestedUrls.push(String(url));
-    assert.match(options.headers.authorization, /^Bearer /);
-    if (String(url).includes("/getQuestions")) {
-      return { ok: true, text: async () => JSON.stringify({ return: { list: [{ id: "q-1" }] } }) };
-    }
-    return {
-      ok: true,
-      json: async () => ({ return: { list: [{ id: "a-1", questionId: "q-1", profileId: agentOids.Mike, answerText: "Yes" }] } }),
+  const repository = await getTableRepository();
+  const originalRepository = { ...repository };
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => { throw new Error("Viewer must not call Quest HTTP"); };
+    repository.findProfileByExternalId = async (oid) => {
+      const name = Object.keys(agentOids).find((name) => agentOids[name] === oid);
+      return name ? { id: `internal-${name}`, externalId: oid } : null;
     };
-  }) as typeof fetch;
-  const allowedAnswers = await getAnswersForAgent("Mike", "q-1", allowedRequest);
-  assert.deepEqual(requestedUrls.map((url) => new URL(url).pathname), ["/questionQry/getQuestions", "/questionQry/getAnswers/q-1"]);
-  assert.equal(allowedAnswers?.[0].answeredBy, "Mike");
-  assert.equal(allowedAnswers?.[0].profileId, undefined);
-  let answerApiCalled = false;
-  const inaccessibleRequest = (async (url) => {
-    if (!String(url).includes("/getQuestions")) answerApiCalled = true;
-    return { ok: true, text: async () => JSON.stringify({ return: { list: [] } }) };
-  }) as typeof fetch;
-  assert.equal(await getAnswersForAgent("Mike", "not-visible", inaccessibleRequest), undefined);
-  assert.equal(answerApiCalled, false);
-  const mismatchedRequest = (async (url) => String(url).includes("/getQuestions")
-    ? { ok: true, text: async () => JSON.stringify({ return: { list: [{ id: "q-1" }] } }) }
-    : { ok: true, json: async () => ({ return: { list: [{ id: "a-2", questionId: "q-2" }] } }) }) as typeof fetch;
-  await assert.rejects(() => getAnswersForAgent("Mike", "q-1", mismatchedRequest), /different question/);
+    const externalId = async (id: string) => {
+      const oid = agentOids[id.replace("internal-", "")];
+      if (!oid) throw new Error("Current Quest profile not found");
+      return oid;
+    };
+    const answer = { id: "a-1", questionId: "q-1", profileId: "internal-Mike", answerText: "Yes",
+      optionAnswerList: null, when: null, duration: 1, createdAt: "2026-11-16T00:00:00Z", answerCount: 2 };
+    repository.getCombinationListByUser = async (id) => {
+      assert.equal(id, "internal-Mike");
+      return [
+        { id: "q-1", profileId: id, title: "Owned", questionText: "Question?", optionList: null, createdAt: answer.createdAt, latestAnswer: answer },
+        { id: "q-2", profileId: "internal-Bella", title: "Shared", questionText: "Question?", optionList: null, createdAt: answer.createdAt, latestAnswer: null },
+      ];
+    };
+    let answerReads = 0;
+    repository.getAnswerListByQuestionId = async () => {
+      answerReads++;
+      return [answer, { ...answer, id: "a-2", profileId: "unknown-author", answerCount: 1 }];
+    };
+    const questions = await readRefereeApi("Mike", "/questions", externalId);
+    assert.equal(questions[0].profileId, agentOids.Mike);
+    assert.equal(questions[0].latestAnswer.profileId, agentOids.Mike);
+    assert.equal(questions[0].isOwner, true);
+    assert.equal(questions[1].profileId, agentOids.Bella);
+    assert.equal(questions[1].isOwner, false);
+    const answers = await readRefereeApi("Mike", "/question/q-1/answers", externalId);
+    assert.equal(answers[0].answeredBy, "Mike");
+    assert.equal(answers[0].isEdited, true);
+    assert.equal(answers[0].profileId, undefined);
+    assert.equal(answers[0].answerCount, undefined);
+    assert.equal(answers[1].answeredBy, "Unknown participant");
+    assert.equal(answers[1].isEdited, false);
+    assert.equal(await getAnswersForAgent("Mike", "unrelated", externalId), undefined);
+    assert.equal(answerReads, 1);
+    repository.getAnswerListByQuestionId = async () => [{ ...answer, questionId: "wrong" }];
+    await assert.rejects(() => getAnswersForAgent("Mike", "q-1", externalId), /different question/);
+    repository.listFriends = async (id) => {
+      assert.equal(id, "internal-Mike");
+      return [{ id: "internal-Bella", name: "Bella", degree: 1, path: [id, "internal-Bella"] }];
+    };
+    const report = async () => `## Participant profiles\n\n| Participant | Profile ID |\n|---|---|\n| Mike | ${agentOids.Mike} |\n\n## Metrics\n`;
+    const network = await getRunNetwork("historical.chat.md", externalId, report);
+    assert.deepEqual(network.Mike, [{ id: agentOids.Bella, name: "Bella", degree: 1, path: [agentOids.Mike, agentOids.Bella] }]);
+    assert.deepEqual(await getRunNetwork("empty.chat.md", externalId, async () => ""), {});
+    repository.findProfileByExternalId = async () => null;
+    await assert.rejects(() => getQuestionsForAgent("Mike", externalId), /Quest profile not found/);
+    await assert.rejects(() => getRunNetwork("historical.chat.md", externalId, report), /Quest profile not found/);
+    repository.findProfileByExternalId = async () => { throw new Error("Storage unavailable"); };
+    await assert.rejects(() => getQuestionsForAgent("Mike", externalId), /Storage unavailable/);
+  } finally {
+    Object.assign(repository, originalRepository);
+    globalThis.fetch = originalFetch;
+  }
   assert.equal(chatModel({ LLM_PROVIDER: "claude", CLAUDE_MODEL: "claude-haiku", LLM_MODEL: "local-path" }), "claude-haiku");
   assert.equal(chatModel({ LLM_PROVIDER: "openai", OPENAI_MODEL: "gpt-test" }), "gpt-test");
   assert.deepEqual(parseLine('[03:44:11] Mike answered "A useful question": A useful answer'), {

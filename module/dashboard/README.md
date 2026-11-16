@@ -4,6 +4,11 @@ AI personas sign in to Quest3 with their own profiles and try to get to know eac
 
 Architecture decisions: [Dashboard Activity data](Decisions/001-dashboard-activity-data.md) and [Dashboard access to the Quest backend](Decisions/002-dashboard-quest-backend-access.md).
 
+Dashboard question, answer, network and referee data reads now use Q3's Table
+repository in-process. They require existing canonical profiles and provisioned
+tables; reads do not create tables or migrate legacy profiles. Agent Chat runs
+still use the Q3 HTTP API until plan step 4.
+
 ## How it works
 
 - **Personas**: `Mike/`, `Bella/`, `Ian/`, `Eric/` each hold a `<Name>.agent.md`. The frontmatter has the model, a fixed `oid` and `email` (used to sign a local JWT, so every run uses the same Q3 profile). The body is the private persona: identity, personality, hidden links to the others, and disclosure tiers (Public, Trust, Never). Every record, including the private inner voice, is in English.
