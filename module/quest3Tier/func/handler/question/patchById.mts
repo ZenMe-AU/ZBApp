@@ -4,6 +4,7 @@
  */
 
 import { getRepository } from "../../repository/getRepository.mjs";
+import { requireQuestionOwner } from "../questionAccess.mjs";
 
 type PatchQuestionByIdRequest = {
   params: { questionId: string };
@@ -74,6 +75,7 @@ export async function PatchQuestionById(request: PatchQuestionByIdRequest, conte
   const repository = getRepository();
   const profileId = request.userData.profileId;
   const { questionId } = request.params;
+  await requireQuestionOwner(questionId, profileId);
   if (!Array.isArray(request.clientParams)) {
     const { title = null, questionText, optionList = null } = request.clientParams as { title?: string | null; questionText: string; optionList?: string[] | null };
     const question = await repository.updateById(questionId, title, questionText, optionList);

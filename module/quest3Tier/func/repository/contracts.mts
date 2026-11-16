@@ -111,6 +111,8 @@ export interface FollowUpFilterInput extends RepositoryJsonObject {
 }
 
 export interface QuestRepository {
+  canAccessQuestion(questionId: string, profileId: string): Promise<boolean>;
+  findAnswerById(answerId: string): Promise<AnswerRecord | null>;
   findProfileByExternalId(externalId: string): Promise<ProfileRecord | null>;
   createProfile(externalId: string): Promise<ProfileRecord>;
   ensureProfile(externalId: string, details?: ProfileDetails): Promise<EnsureProfileResult>;

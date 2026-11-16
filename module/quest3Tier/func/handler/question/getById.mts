@@ -4,10 +4,12 @@
  */
 
 import { getRepository } from "../../repository/getRepository.mjs";
+import { requireQuestionAccess } from "../questionAccess.mjs";
 import type { QuestionRecord } from "../../repository/contracts.mjs";
 import { toExternalProfileId } from "../profileId.mjs";
 
 type RequestWithQuestionId = {
+  userData: { profileId: string };
   params: { questionId: string };
 };
 
@@ -47,6 +49,7 @@ type HandlerResponse = {
  */
 export async function GetQuestionById(request: RequestWithQuestionId, context: unknown): Promise<HandlerResponse> {
   const { questionId } = request.params;
+  await requireQuestionAccess(questionId, request.userData.profileId);
   let questionnaire: QuestionRecord | null = await getRepository().getById(questionId);
   if (!questionnaire) return { return: { detail: null } };
   return { return: { detail: { ...questionnaire, profileId: await toExternalProfileId(questionnaire.profileId) } } };

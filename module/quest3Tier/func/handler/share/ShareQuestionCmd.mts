@@ -5,6 +5,7 @@
 
 import { z } from "zod";
 import { getRepository } from "../../repository/getRepository.mjs";
+import { requireQuestionAccess } from "../questionAccess.mjs";
 import { commandHeaders, commandResponses } from "../commonSchema.mjs";
 
 const uuid = z.uuid().refine((value) => value[14] === "4" || value[14] === "5", "Invalid UUID version");
@@ -22,6 +23,7 @@ export async function ShareQuestionCmd(request, context) {
   const repository = getRepository();
   const { correlationId, clientParams: body } = request;
   const profileId = request.userData.profileId;
+  await requireQuestionAccess(body.newQuestionId, profileId);
   const cmd = await repository.insertQuestionShareCmd(profileId, body, correlationId);
   await repository.shareQuestion(body["newQuestionId"], profileId, body["receiverIds"]);
 

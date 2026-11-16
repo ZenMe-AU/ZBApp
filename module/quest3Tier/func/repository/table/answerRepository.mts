@@ -75,6 +75,15 @@ export async function getAnswerById(questionId: string, answerId: string): Promi
   }
   return null;
 }
+
+export async function findAnswerById(answerId: string): Promise<AnswerRecord | null> {
+  const client = await getTableClient(QUESTION_DATA_TABLE);
+  const results = client.listEntities<AnswerEntity>({
+    queryOptions: { filter: odata`RowKey ge ${"answer:"} and RowKey lt ${"answer;"} and id eq ${answerId}` },
+  });
+  for await (const entity of results) return toAnswerRecord(entity);
+  return null;
+}
 // TODO: The row level security is not implemented, it must be Intrinsic to the environment and enforced at all queries.
 export async function getAnswerListByQuestionId(questionId: string): Promise<AnswerListItem[]> {
   const client = await getTableClient(QUESTION_DATA_TABLE);

@@ -238,7 +238,12 @@ function testRepositoryContract(
     await expect(repository.getCombinationListByUser(owner.id)).resolves.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: question.id, latestAnswer: null })])
     );
+    await expect(repository.canAccessQuestion(question.id, owner.id)).resolves.toBe(true);
+    await expect(repository.canAccessQuestion(question.id, responder.id)).resolves.toBe(false);
+    await expect(repository.canAccessQuestion(randomUUID(), owner.id)).resolves.toBe(false);
     await expect(repository.shareQuestion(question.id, owner.id, [responder.id])).resolves.toHaveLength(1);
+    await expect(repository.canAccessQuestion(question.id, responder.id)).resolves.toBe(true);
+    await expect(repository.canAccessQuestion(question.id, receiver.id)).resolves.toBe(false);
     await verifyShare(question.id, owner.id, responder.id);
     await expect(repository.getSharedQuestionListByProfileId(responder.id)).resolves.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: question.id, profileId: owner.id })])
@@ -254,6 +259,11 @@ function testRepositoryContract(
     await expect(repository.getById(question.id)).resolves.toMatchObject({ title: "Patched Quest DB", optionList: ["yes", "no", "later"] });
 
     const answer = await repository.addAnswerByQuestionId(question.id, responder.id, 15, "yes", "yes", "during-work");
+    await expect(repository.findAnswerById(answer.id)).resolves.toMatchObject({
+      id: answer.id, questionId: question.id, profileId: responder.id,
+    });
+    await expect(repository.findAnswerById(randomUUID())).resolves.toBeNull();
+    await expect(repository.findAnswerById(question.id)).resolves.toBeNull();
     await expect(repository.getAnswerById(question.id, answer.id)).resolves.toMatchObject({
       id: answer.id,
       questionId: question.id,

@@ -24,5 +24,19 @@ The five command response schemas now declare
 `{ success: true, return: { messageId: "<uuid>" } }`, matching Q5Eg's acknowledgement
 contract. **Backend implementation is deferred:** existing handlers still return
 entity/action IDs or booleans, and no message IDs are fabricated or substituted.
-Answer lookup by `answerId` alone also still needs repository support. The existing
+Answer lookup by `answerId` alone uses `findAnswerById` on both repositories. The existing
 Q3 UI client uses older URLs and has not been migrated in this route-contract pass.
+
+## Question access
+
+Handlers use the authenticated internal profile ID and the backend-independent
+`QuestRepository` contract. Question detail, answer reads/writes, and sharing
+require ownership or receipt of a share. Patch and update require ownership.
+Failed permission checks return 403; storage
+errors propagate without allowing the operation.
+
+Answer detail resolves the stored question ID before checking access. Permitted
+callers retain the existing answer-list contents and external author ID contract;
+this change does not restore the historical owner/respondent-only answer filter.
+These are API boundary checks, not database row-level security. Internal repository
+callers must enforce their own actor scope, as required by the Dashboard plan.

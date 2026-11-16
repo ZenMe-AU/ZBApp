@@ -6,6 +6,7 @@
 import { randomUUID } from "crypto";
 import { odata } from "@azure/data-tables";
 import {
+  canAccessQuestion,
   createQuestion,
   getQuestionById,
   getQuestionListByProfileId,
@@ -14,7 +15,7 @@ import {
   shareQuestion,
   updateQuestionById,
 } from "./questionRepository.mjs";
-import { addAnswer, getAnswerById, getAnswerListByQuestionId } from "./answerRepository.mjs";
+import { addAnswer, findAnswerById as findTableAnswerById, getAnswerById, getAnswerListByQuestionId } from "./answerRepository.mjs";
 import {
   addFriend as addTableFriend,
   createProfile,
@@ -190,6 +191,11 @@ const repository = {
 
   async getById(questionId: string): Promise<QuestionRecord | null> {
     return getQuestionById(questionId);
+  },
+
+  canAccessQuestion,
+  async findAnswerById(answerId: string): Promise<AnswerRecord | null> {
+    return findTableAnswerById(answerId);
   },
 
   async create(

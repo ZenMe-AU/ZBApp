@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { apiResponses } from "../commonSchema.mjs";
 import { getRepository } from "../../repository/getRepository.mjs";
+import { requireQuestionAccess } from "../questionAccess.mjs";
 import { toExternalProfileId } from "../profileId.mjs";
 
 const answer = z
@@ -29,6 +30,7 @@ export const responses = apiResponses([200, 401, 403, 500], z.object({ list: z.a
 export async function GetAnswerListByQuestionId(request, context) {
   const repository = getRepository();
   const { questionId } = request.params;
+  await requireQuestionAccess(questionId, request.userData.profileId);
   const answers = await repository.getAnswerListByQuestionId(questionId);
   const processedAnswers = await Promise.all(
     answers.map(async (ans) => ({

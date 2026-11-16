@@ -4,8 +4,10 @@
  */
 
 import { getRepository } from "../../repository/getRepository.mjs";
+import { requireQuestionOwner } from "../questionAccess.mjs";
 
 type UpdateQuestionByIdRequest = {
+  userData: { profileId: string };
   params: { id: string };
   clientParams: {
     title?: string | null;
@@ -76,6 +78,7 @@ type UpdateQuestionByIdResponse = {
 export async function UpdateQuestionById(request: UpdateQuestionByIdRequest, context: unknown): Promise<UpdateQuestionByIdResponse> {
   const repository = getRepository();
   const { id: questionId } = request.params;
+  await requireQuestionOwner(questionId, request.userData.profileId);
   const { title = null, optionList = null, questionText } = request.clientParams;
   const question = await repository.updateById(questionId, title, questionText, optionList);
   return { return: { id: question.id } };

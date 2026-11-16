@@ -684,7 +684,23 @@ export async function getById(questionId: string): Promise<QuestionRecord | null
   }
 }
 
+async function canAccessQuestion(questionId: string, profileId: string): Promise<boolean> {
+  const question = await models.Question.findByPk(questionId);
+  if (!question) return false;
+  if (question.profileId === profileId) return true;
+  return Boolean(await models.QuestionShare.findOne({
+    where: { newQuestionId: questionId, receiverProfileId: profileId },
+  }));
+}
+
+async function findAnswerById(answerId: string): Promise<AnswerRecord | null> {
+  const answer = await models.QuestionAnswer.findByPk(answerId);
+  return answer ? normalizeAnswer(answer) : null;
+}
+
 const repository = {
+  canAccessQuestion,
+  findAnswerById,
   getSharedQuestionListByProfileId,
   findProfileByExternalId,
   createProfile,
