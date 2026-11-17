@@ -65,6 +65,28 @@ flowchart LR
   Operator -- Admin Platform --> AdminPortal
 ```
 
+### User-to-system interactions
+
+| User | System | Interaction Description |
+| --- | --- | --- |
+| Identity user | Identity UI | View and edit their own identity data. |
+| Identity user / match requester | Matching UI | Request a match and receive the result permitted for that requester. |
+| Data analyst | QFFViz | Analyze authorized identity and QFF data, and perform data cleansing or override editing. |
+| Data analyst / canonical modeler | QFF Modelling UI | Curate canonical concepts and mappings, and review or trigger modelling runs. |
+| QFF platform operator | Platform administration tooling | Administer the local development platform and its services. |
+
+### UI-to-system-component interactions
+
+| UI | System Component | Interaction Description |
+| --- | --- | --- |
+| Identity UI | Identity Repository API | Read and update the authenticated identity's source data. |
+| Matching UI | Matcher service | Submit a match request and receive its authorized result. |
+| QFFViz | Identity Repository API | Read and cleanse identity data within the analyst's authorization. |
+| QFFViz | QFF Repository API | Analyze QFF-owned data and save analyst-approved overrides. |
+| QFF Modelling UI | Identity Repository API | Read identity preferences as modelling inputs within analyst authorization. |
+| QFF Modelling UI | QFF Repository API | Read and update canonical concepts, mappings, and modelling run records. |
+| QFF Modelling UI | Semantic derivation service | Trigger and review semantic derivation runs. |
+
 Each identity user is restricted to their own identity repository through the Identity view/edit UI. The data analyst has explicit authorization to access private data across all identity repositories; QFFViz accesses them through Identity Repository API and also connects to QFF Repository API. The canonical modeler uses the Modelling UI, and match requesters use an authorized requesting UI. Operators administer the APIs and repositories under their operational role.
 
 ## Score terminology
