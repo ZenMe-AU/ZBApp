@@ -1,4 +1,4 @@
-# First-take plan: canonical preference ontology
+# Implementation plan: canonical preference ontology
 
 ## Purpose and status
 
@@ -25,16 +25,15 @@ flowchart LR
   subgraph People["Users and stakeholders"]
     IdentityUser["Identity user<br/>(one per identity)"]
     Analyst["Data analyst<br/>(authorized for private data across identities)"]
-    Modeler["Canonical modeler"]
-    Requester["Match requester"]
     Operator["QFF platform operator"]
   end
 
   subgraph UIs["User interfaces"]
-    IdentityUI["Identity view/edit UI<br/>(own identity only)"]
+    AdminPortal["VSCode"]
+    IdentityUI["Identity UI<br/>(view/edit own identity only)"]
     QFFViz["QFFViz<br/>(analytics)"]
     ModelingUI["QFF Modelling UI"]
-    RequestUI["Requesting UI<br/>(QFFViz or another client)"]
+    RequestUI["Matching UI"]
   end
 
   subgraph Services["Backend and repository APIs"]
@@ -49,22 +48,21 @@ flowchart LR
     QFFStore["QFF Repository<br/>(LanceDB; QFF-owned data)"]
   end
 
-  IdentityUser --> IdentityUI --> IdentityAPI --> IdentityStores
-  Analyst --> QFFViz
+  IdentityUser -- Edit Identity --> IdentityUI --> IdentityAPI --> IdentityStores
+  Analyst -- Analyze and Edit --> QFFViz
   QFFViz --> IdentityAPI
   QFFViz --> QFFAPI
-  Modeler --> ModelingUI
+  Analyst -- Canonical modelling --> ModelingUI
   ModelingUI --> IdentityAPI
   ModelingUI --> QFFAPI
   ModelingUI --> Derivation
-  Requester --> RequestUI --> Matcher
+  IdentityUser -- Match request --> RequestUI --> Matcher
   Matcher --> IdentityAPI
   Matcher --> QFFAPI
   Derivation --> IdentityAPI
   Derivation --> QFFAPI
   QFFAPI --> QFFStore
-  Operator --> IdentityAPI
-  Operator --> QFFAPI
+  Operator -- Admin Platform --> AdminPortal
 ```
 
 Each identity user is restricted to their own identity repository through the Identity view/edit UI. The data analyst has explicit authorization to access private data across all identity repositories; QFFViz accesses them through Identity Repository API and also connects to QFF Repository API. The canonical modeler uses the Modelling UI, and match requesters use an authorized requesting UI. Operators administer the APIs and repositories under their operational role.
