@@ -190,6 +190,7 @@ Production hosting, authorization implementation details, retention, backup, and
 - Implement the QFF Repository function app and initial LanceDB dataset. Store only QFF-owned canonical state, aggregates/references, vector records, derivation runs and matcher transactions; link identity records by IDs.
 - Make the QFF Repository the active catalogue authority. Treat its development LanceDB dataset as disposable and rebuild it from tracked source and seed inputs; do not create backup or retention obligations for test data.
 - Use revision checks and atomic source-file replacement for Identity Repository development writes; serialize QFF Repository writes and reject unsafe concurrent access. Source changes/deletions set the general staleness indicator for later full recomputation.
+- Add focused tests for GUID assignment/stability, source-field preservation, removal of vector-only fields, revision handling, and repository boundaries. Test profile selection is a test feature, not production authorization.
 
 ### Phase 2 — Semantic derivation, Matcher, and repository API integration
 
@@ -223,6 +224,7 @@ Production hosting, authorization implementation details, retention, backup, and
 - Retain direct preference-to-preference matching as an evaluation baseline. Keep kind, signed affinity and ontology relationship as distinct signals.
 - Implement customer confirmation through the Identity UI and Identity Repository: accepting proposed wording creates a new preference linked to its inference; keep the prior preference independent and allow it to be marked superseded. Analyst overrides never imply customer consent.
 - Use idempotent request/run identifiers and bounded operations so retries do not duplicate logical transactions. Avoid live Azure embedding calls in routine tests by using fixtures/cached vectors.
+- Add focused derivation and Matcher tests for provenance, score terminology, privacy-safe responses, repository persistence, retries, and failure handling.
 
 ### Phase 3 — QFF Modelling UI MVP and API integration
 
@@ -233,7 +235,7 @@ Production hosting, authorization implementation details, retention, backup, and
 | QFF Modelling UI | Build a separate analyst SPA for model overview, concept editing, mapping review, derivation runs, and score distributions. |
 | Identity Repository and QFF Repository APIs | Expose only the analyst-authorized reads and edits needed by the UI; keep identity and QFF storage behind their respective APIs. Customer preference approvals remain in the Identity UI. |
 | Semantic derivation service | Expose bounded run submission and status/results for the UI; keep execution on the backend. |
-| QFFViz and Matching UI | Make no QFFViz changes; retain its analytics/cleansing role. Keep customer matching in the Matching UI; neither UI becomes the customer preference-approval surface. |
+| QFFViz and Matching UI | Keep QFFViz focused on analyst analytics/cleansing and analyst overrides through QFF Repository API. Keep customer matching in the Matching UI; neither UI becomes the customer preference-approval surface. |
 
 #### Requirements
 
@@ -243,6 +245,7 @@ Production hosting, authorization implementation details, retention, backup, and
 - Use AG Grid for tabular reporting/editing and Plotly for graphs. Keep each non-dashboard page focused on one primary visualization.
 - Verify all pages use authorized APIs, do not access identity files or LanceDB directly, and keep modeling execution out of browser code. Do not add customer preference approval to the analyst UI.
 - Verify analyst edits preserve version/provenance, do not impersonate customer consent, and display similarity/confidence without implying probability.
+- Keep QFFViz analyst overrides distinct from customer confirmation; customer preference approval remains in the Identity UI.
 
 #### Technical implementation notes
 
@@ -309,20 +312,6 @@ Production hosting, authorization implementation details, retention, backup, and
 - Keep the calibration procedure reproducible and versioned. Routine tests use fixtures and cached scores, not live embedding calls.
 - Treat approval of a calibration model as an analyst decision; it does not change source preferences or independently approve canonical concepts.
 
-## Coding-agent guidance (including Ponytail agents)
-
-- Implement only the current phase's smallest useful increment. Inspect contracts first, build a thin end-to-end slice, simulate it, validate it, and iterate; do not implement every service or UI page in one pass.
-- Treat identity JSON as source of truth behind Identity Repository. Treat QFF Repository as owner of QFF data and derived vectors. Never open those stores directly from QFFViz, Modelling UI, derivation or Matcher code.
-- Keep QFFViz focused on analyst analytics/cleansing; distinguish technical analyst overrides from customer confirmation.
-- Keep test profile selection/impersonation separate from production access controls; production resolves MSAL OID to internal profile ID and limits customers to their own data or de-identified aggregates.
-- Keep backend operations headless and serverless-compatible, API contracts explicit, QFF Repository writes serialized initially, and operations idempotent where retried. Add Pub/Sub and batching only in a later repository phase.
-- When source data changes, set the general staleness indicator; a full user-triggered update checks all derived records against embedding caches rather than propagating per-record stale states.
-- A customer-approved wording creates a new preference; preserve the previous preference and do not collapse contradictory or differently worded preferences.
-- Use AG Grid for tables/editing and Plotly for graphs. Prefer focused single-visualization pages, except the dashboard.
-- Add focused tests for IDs, schemas, API ownership, persistence, provenance, score language, privacy, retries and failure handling. Use simulated identities/cached embeddings; routine tests must not need live Azure calls.
-- Never label `embedding_similarity` or heuristic `confidence_score` as probability. Review and update calibrated probability in Phase 5, and expose it only after held-out validation and metadata requirements pass.
-- Keep changes surgical, document implemented decisions, and leave future-phase work as explicit follow-up rather than speculative abstractions.
-
 ## Decisions requiring follow-up
 
 Phase 0 decisions are recorded above. Production identity security, hosting, backup, retention, and log forwarding remain deployment work. Exact semantic-envelope wording, retrieval limits, heuristic weights, and review thresholds are left to Phase 2 design/simulation and must be versioned and evaluated on reviewed examples. Probability calibration gates are defined in Phase 5. Advanced time-series/context-aware analysis of changing or contradictory preferences is deferred until a sufficiently large longitudinal dataset is available.
@@ -330,3 +319,46 @@ Phase 0 decisions are recorded above. Production identity security, hosting, bac
 ## Recommended immediate milestone
 
 Proceed with Phase 1 repository foundations and GUID/vector migration using the recorded test-environment decisions. Use the rebuildable local dataset to design and simulate Phase 2 before building the services; build the Phase 3 MVP only after those service contracts are exercised. Add repository Pub/Sub/batching in a later phase, and begin Phase 5 calibration only when sufficient reviewed labels exist.
+
+## Application Architecture
+
+The following runtime components expand the business context diagram. Stakeholder roles are actors, not application components. Browser UIs call the APIs and services below; they do not read repository files, open LanceDB, or run semantic derivation themselves.
+
+### User interfaces and administration
+
+| Component | Purpose |
+| --- | --- |
+| Identity UI | Lets customers view and edit preferences and check/approve proposed wording. In testing, the user selects an internal profile ID and may impersonate profiles; in production, access is limited to the caller's profile. |
+| Matching UI | Lets a customer submit a match request and see only their own data or permitted de-identified aggregate information. |
+| QFFViz | Provides analyst analytics and data cleansing across identity and QFF data. It reads through both repository APIs and saves analyst-approved QFF overrides through QFF Repository API. |
+| QFF Modelling UI | Lets analysts curate canonical concepts, review mappings, inspect runs and scores, and trigger backend derivation. It does not confirm preferences on a customer's behalf. |
+| VS Code platform administration | Provides the QFF platform operator's local development and service-administration tooling. |
+
+### Backend services and repository APIs
+
+| Component | Purpose and ownership |
+| --- | --- |
+| Identity Repository API | The sole API for identity-owned source JSON. It reads/writes each identity repository and handles preference updates and customer approvals. Test requests may select an internal profile ID; production resolves the external MSAL `oid` through a separate lookup to the internal profile ID. |
+| QFF Repository API | The sole runtime API for QFF-owned data and the only component that opens LanceDB. It owns the active canonical model, derived mappings/vectors, run metadata, and match transactions. Writes begin serialized with one active writer; Pub/Sub and batching are later enhancements. |
+| Matcher service | A Node.js Azure Functions service that reads the minimum required identity and QFF data through their APIs, computes an explainable match, persists its transaction through QFF Repository API, and returns a requester-scoped response. |
+| Semantic derivation service | A headless backend that reads source preferences through Identity Repository API and writes semantic representations, vectors, mappings, provenance, and run status through QFF Repository API. |
+
+### Data repositories
+
+| Component | Purpose and ownership |
+| --- | --- |
+| Identity repositories × N | Isolated JSON source records, one per internal profile. These are the authoritative identity-owned preferences and are accessed at runtime only through Identity Repository API. |
+| QFF Repository (LanceDB) | QFF-owned canonical-model state, derived records and vectors, run data, and match transactions. It does not own or replace identity source preferences and is accessed at runtime only through QFF Repository API. |
+
+### Design-time assets
+
+`CanonicalModels/` contains schemas, migrations, and seed/import artifacts used to initialize or evolve the active model. It is not a second editable runtime catalogue; the active reviewed model is owned by QFF Repository.
+
+### Technical guidance
+
+- Implement only the current phase's smallest useful increment. Prefer a thin end-to-end slice, simulate and validate it, then expand; leave later-phase work deferred until its phase. It's ok to do multiple iterations in phase.
+- Preserve repository ownership boundaries: identity source JSON is accessed through Identity Repository API, and QFF data/LanceDB through QFF Repository API. No UI or service opens either store directly.
+- Keep backend operations headless and serverless-compatible. Use explicit, versioned API contracts and bounded, idempotent operations wherever retries are possible.
+- Treat test profile selection/impersonation and tracked development data as test-only; production identity resolution and customer access boundaries are separate requirements described above.
+- Add focused automated tests for behavior introduced in each phase. Use simulated identities and cached embedding fixtures so routine tests do not require live Azure calls.
+- Keep changes surgical, record design decisions in the appropriate component/phase documentation, and leave future work explicit rather than adding speculative abstractions.
