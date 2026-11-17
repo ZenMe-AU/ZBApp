@@ -46,6 +46,47 @@ beforeEach(() => {
 });
 
 describe("Dashboard agent operations", () => {
+  test("rejects missing credentials and credentials from another run before accessing the repository", async () => {
+    const otherRun = createAgentOperations({ Mike: externalId });
+    for (const authorization of [undefined, "", `Bearer ${otherRun.tokens.Mike}`]) {
+      await expect(operations.execute(authorization, { method: "GET", path: "/questions" }, "id")).rejects.toMatchObject({ status: 403 });
+    }
+    expect(repository.findProfileByExternalId).not.toHaveBeenCalled();
+    expect(repository.getCombinationListByUser).not.toHaveBeenCalled();
+  });
+
+  test("ignores forged identity fields when writing a question", async () => {
+    await call("POST", "/question", { ...questionBody, profileId: "bella" }, { userData: { profileId: "bella" }, actor: "Bella" });
+    expect(repository.create).toHaveBeenCalledWith("mike", "Work", questionBody.questionText, questionBody.option);
+  });
+
+  test("denies a pending question write when its run ends during profile lookup", async () => {
+    let resolveProfile;
+    repository.findProfileByExternalId.mockReturnValue(new Promise(resolve => { resolveProfile = resolve; }));
+    const pending = call("POST", "/question", questionBody);
+    operations.close();
+    resolveProfile({ id: "mike", externalId });
+    await expect(pending).rejects.toMatchObject({ status: 403 });
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  test("agent operations cannot read privileged Dashboard data or invoke arbitrary backend commands", async () => {
+    for (const path of ["/api/activity?scope=all", "/api/report", "/api/questions?person=Bella", "/local.settings.json", "/questionCmd/createQuestion"]) {
+      await expect(call("GET", path)).rejects.toMatchObject({ status: 400 });
+    }
+    expect(repository.getCombinationListByUser).not.toHaveBeenCalled();
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  test("enforces answer budgets independently for each agent", async () => {
+    const input = { method: "POST", path: `/question/${shared}/answer`, body: { option: "Remote", duration: 1 } };
+    for (let index = 0; index < LIMITS.answerWrites; index++) await call(input.method, input.path, input.body);
+    await expect(call(input.method, input.path, input.body)).rejects.toMatchObject({ status: 429 });
+    await operations.execute(`Bearer ${operations.tokens.Bella}`, input, "id");
+    expect(repository.addAnswerByQuestionId).toHaveBeenCalledTimes(LIMITS.answerWrites + 1);
+    expect(repository.addAnswerByQuestionId).toHaveBeenLastCalledWith(shared, "bella", 1, null, "Remote", null);
+  });
+
   test("binds identity to execution credentials and revokes them at run end", async () => {
     await expect(operations.execute("Bearer unknown", { method: "GET", path: "/questions", actor: "Mike" }, "id")).rejects.toMatchObject({ status: 403 });
     await call("GET", "/questions", undefined, { actor: "Bella", profileId: "bella" });
