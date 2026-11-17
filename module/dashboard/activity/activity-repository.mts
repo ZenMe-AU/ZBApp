@@ -51,7 +51,7 @@ const fromRow = (row: Record<string, unknown>): ActivityEvent => {
 };
 
 export function createActivityRepository(databasePath: string) {
-  const databasePromise = connect(databasePath);
+  const databasePromise = connect(databasePath, { readConsistencyInterval: 0 });
   let tablePromise: Promise<Table> | undefined;
   let writeQueue = Promise.resolve();
 

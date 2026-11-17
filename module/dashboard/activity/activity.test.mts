@@ -9,6 +9,7 @@ import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import { createActivityStore } from "./activity-store.mjs";
 import { activityAggregate } from "./activity-event.mjs";
+import { createActivityRepository } from "./activity-repository.mjs";
 
 const directories: string[] = [];
 
@@ -17,6 +18,25 @@ afterEach(async () => {
 });
 
 describe("Activity LanceDB store", () => {
+  test("an existing reader sees new runs and events written through another connection", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "activity-test-"));
+    directories.push(directory);
+    const databasePath = path.join(directory, "activity.lancedb");
+    const writer = createActivityStore(databasePath, path.join(directory, "spool.jsonl"));
+    await writer.record("old.chat.md", { eventType: "run.started", kind: "start", eventData: {} });
+    const reader = createActivityRepository(databasePath);
+    expect(await reader.listRuns()).toHaveLength(1);
+    await expect(reader.listByRun("new.chat.md")).resolves.toEqual([]);
+    await expect(reader.listByQuestion("question-new")).resolves.toEqual([]);
+
+    const event = await writer.record("new.chat.md", {
+      eventType: "question.created", kind: "question", questionId: "question-new", eventData: { title: "New" },
+    });
+    await expect(reader.listRuns()).resolves.toContainEqual({ name: "new.chat.md", mtime: Date.parse(event.occurredAt) });
+    await expect(reader.listByRun("new.chat.md")).resolves.toEqual([event]);
+    await expect(reader.listByQuestion("question-new")).resolves.toEqual([event]);
+  });
+
   test("stores structured events by run and deduplicates stable event IDs", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "activity-test-"));
     directories.push(directory);
