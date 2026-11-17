@@ -71,16 +71,17 @@ Use three terminals:
 # 1. Repo root: Azurite. Data goes to ./__azurite_db_table__.json, which is gitignored.
 node node_modules/azurite/dist/src/azurite.js --location . --tableHost 127.0.0.1 --tablePort 10002 --silent
 
-# 2. module/quest3Tier/func: the Q3 API on port 7073, with local JWT auth (builds first)
-AUTH_PROVIDER=Dev pnpm start
+# 2. Repo root: build Quest, then start Dashboard with its storage and LLM settings
+pnpm --dir module/quest3Tier/func run build
+pnpm --dir module/dashboard start
 
 # 3. Repo root: the agent run
-AGENT_RUN=1 pnpm vitest run module/quest3Tier/func/vitest/agents/agentChat.test.mts --disableConsoleIntercept
+AGENT_RUN=1 pnpm vitest run module/dashboard/agentChat.test.mts --disableConsoleIntercept
 ```
 
 Without `AGENT_RUN=1` the test is skipped, so normal test runs never call an LLM.
 
-Each agent run resets only records connected to its current participants. The reset configures its Table Storage client from `AzureWebJobsStorage`, loaded by the Q3 Vitest setup from `local.settings.json`, and refuses to run unless it uses local Azurite (`UseDevelopmentStorage=true`).
+Runs retain existing data. Dashboard launches Agent Chat with temporary per-agent execution credentials and invokes Quest in-process; the Quest HTTP host and local JWT signer are not needed. The opt-in test above starts and waits for a Dashboard run, using the running Dashboard's settings.
 
 To watch the conversation live, use the terminal, or open `runs/<time>_<participants>.chat.md`.
 

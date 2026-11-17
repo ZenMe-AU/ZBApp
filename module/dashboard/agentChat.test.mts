@@ -11,7 +11,8 @@ import { TableClient } from "@azure/data-tables";
 import { invalidAction, learningCoverage, needsAnswer, offlineActionReason, participantFriends, rules } from "./agentChat.config.mjs";
 import { factMemory, promptMemory } from "./agentChat.memory.mjs";
 import { assertLlmReady, getLlmProvider, getProviderInstance, llm, OpenvinoProvider } from "./agentChat.llm.mjs";
-import { list, receiveDashboardMessage, replyToDashboard, runAgentChat, toQ3Request } from "./agentChat.run.mjs";
+import { list, receiveDashboardMessage, replyToDashboard } from "./agentChat.run.mjs";
+import { setTimeout as delay } from "node:timers/promises";
 import { report } from "./agentChat.report.mjs";
 import { HUMAN_NAME, writeMemory } from "./agentChat.setup.mjs";
 import { belongsToExperiment, isLocalAzurite, resetExperiment } from "./agentChat.reset.mjs";
@@ -31,27 +32,21 @@ describe("Agent API lists", () => {
   });
 });
 
-describe("Q3 route adapter", () => {
-  test("maps Agent Lab question routes to the Q3 API contract", () => {
-    expect(toQ3Request("GET", "http://127.0.0.1:7073/questions", undefined).url.pathname).toBe("/questionQry/getQuestions");
-
-    const create = toQ3Request("POST", "http://127.0.0.1:7073/question", {
-      title: "Location",
-      questionText: "Where do you live?",
-      option: ["Brisbane", "Sydney", "Melbourne", "Elsewhere"],
-    });
-    expect(create.url.pathname).toBe("/questionCmd/createQuestion");
-    expect(create.body).toEqual({
-      title: "Location",
-      questionText: "Where do you live?",
-      optionList: ["Brisbane", "Sydney", "Melbourne", "Elsewhere"],
-    });
-
-    const answer = toQ3Request("POST", "http://127.0.0.1:7073/question/question-id/answer", { option: "Brisbane", duration: 3 });
-    expect(answer).toMatchObject({
-      url: expect.objectContaining({ pathname: "/questionCmd/createAnswer/question-id" }),
-      body: { option: "Brisbane", duration: 3 },
-    });
+describe("Dashboard agent transport", () => {
+  test("sends scoped operations and correlation IDs to Dashboard HTTP", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ return: { list: [] } })));
+    await list({ token: "execution-token" }, "/questions");
+    const [url, options] = vi.mocked(fetch).mock.calls[0];
+    expect(new URL(String(url)).pathname).toBe("/api/agent");
+    expect(new URL(String(url)).port).toBe("4178");
+    expect(options.method).toBe("POST");
+    expect(options.headers).toMatchObject({ authorization: "Bearer execution-token", "X-Correlation-Id": expect.any(String) });
+    expect(JSON.parse(String(options.body))).toEqual({ method: "GET", path: "/questions" });
+  });
+  test("requires execution credentials instead of signing Quest tokens", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(list({}, "/questions")).rejects.toThrow("Start Agent Chat from the Dashboard");
+    expect(fetch).not.toHaveBeenCalled();
   });
 });
 
@@ -442,5 +437,17 @@ describe("live dashboard conversation", () => {
 });
 
 describe.skipIf(!process.env.AGENT_RUN)("agent chat run", () => {
-  test("agents get to know each other through Q3", runAgentChat, 60 * 60 * 1000);
+  test("agents get to know each other through Dashboard", async () => {
+    const base = process.env.DASHBOARD_URL ?? `http://127.0.0.1:${process.env.AGENT_VIEW_PORT ?? 4178}`;
+    const response = await fetch(new URL("/api/run", base), { method: "POST", headers: { origin: new URL(base).origin } });
+    const started = await response.json();
+    expect(response.status, JSON.stringify(started)).toBe(202);
+    let state = started;
+    while (["starting", "running"].includes(state.status)) {
+      await delay(1000);
+      state = await (await fetch(new URL("/api/run", base))).json();
+      expect(state.startedAt).toBe(started.startedAt);
+    }
+    expect(state.status, JSON.stringify(state)).toBe("passed");
+  }, 60 * 60 * 1000);
 });

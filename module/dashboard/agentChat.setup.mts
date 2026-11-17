@@ -6,7 +6,6 @@
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import * as authDev from "./service/authDev.mjs";
 import { NAMES } from "./agentChat.config.mjs";
 
 const setupDir = path.dirname(fileURLToPath(import.meta.url));
@@ -101,11 +100,7 @@ export async function loadAgent(name) {
     name,
     persona,
     model: process.env.AGENT_MODEL ?? meta.model ?? "haiku",
-    token: authDev.generateToken({
-      oid: meta.oid,
-      name,
-      preferred_username: meta.email,
-    }),
+    token: JSON.parse(process.env.AGENT_EXECUTION_TOKENS ?? "{}")[name],
     memoryDirectory,
     memory,
     updated: new Set(),

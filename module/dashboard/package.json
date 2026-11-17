@@ -19,11 +19,9 @@
     "@azure/identity": "^4.4.1",
     "@lancedb/lancedb": "0.40.0",
     "ag-grid-community": "36.2.0",
-    "jsonwebtoken": "^9.0.2",
     "quest3Tier": "workspace:*"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "^20.19.23",
     "openvino-genai-node": "^2026.4.1",
     "typescript": "^6.0.3",

@@ -520,16 +520,10 @@ importers:
       ag-grid-community:
         specifier: 36.2.0
         version: 36.2.0
-      jsonwebtoken:
-        specifier: ^9.0.2
-        version: 9.0.3
       quest3Tier:
         specifier: workspace:*
         version: link:../quest3Tier/func
     devDependencies:
-      '@types/jsonwebtoken':
-        specifier: ^9.0.8
-        version: 9.0.10
       '@types/node':
         specifier: ^20.19.23
         version: 20.19.23

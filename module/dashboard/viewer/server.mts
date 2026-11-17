@@ -4,6 +4,7 @@
  */
 
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { createServer } from "node:http";
@@ -13,6 +14,8 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { initRepository } from "quest3Tier/dist/repository/table/repository.mjs";
+import questContainer from "quest3Tier/dist/di/diContainer.mjs";
+import { createAgentOperations } from "./agent-operations.mjs";
 import { toExternalProfileId } from "quest3Tier/dist/handler/profileId.mjs";
 import { NAMES } from "../agentChat.config.mjs";
 import { createRefereeContextBuilder } from "../agentChat.referee-context.mjs";
@@ -62,6 +65,7 @@ const HUMAN_STATE_PATH = path.join(RUNS_DIR, ".human.json");
 const activityRepository = createActivityRepository(process.env.ACTIVITY_DB_PATH ?? path.join(DASHBOARD_DIR, "activity.lancedb"));
 let resultsChatPending = false;
 let refereeChatPending = false;
+let agentOperations: ReturnType<typeof createAgentOperations> | undefined;
 
 async function loadRegisteredHuman() {
   const saved = JSON.parse(await readFile(HUMAN_STATE_PATH, "utf8").catch(() => "{}"));
@@ -365,7 +369,7 @@ async function ensureServices() {
     state.azuriteProcess.stderr?.pipe(process.stderr);
     if (!(await waitForPort(10002, HOST, 50))) throw new Error("Azurite Table did not start on port 10002");
   }
-  if (!(await portOpen(7073))) throw new Error("Q3 API is not running on port 7073. Start the Agent Start debug configuration first.");
+  await getTableRepository();
 }
 
 async function startRun(humanProfileId?: string, humanName = "Human") {
@@ -374,7 +378,11 @@ async function startRun(humanProfileId?: string, humanName = "Human") {
   state.run = { status: "starting", humanMode, ...(humanProfileId && { humanProfileId, humanName }), startedAt: new Date().toISOString() };
   console.log(`Starting agent run${humanMode ? " with a Q3 human participant" : ""}...`);
   await ensureServices();
-  const childEnv = { ...CHILD_ENV, ...(await localSettings()), AGENT_RUN: "1" };
+  questContainer.register("repository", await getTableRepository());
+  const operations = createAgentOperations(await getAgentOids());
+  agentOperations = operations;
+  const childEnv = { ...CHILD_ENV, ...(await localSettings()), AGENT_RUN: "1",
+    DASHBOARD_URL: `http://${HOST}:${PORT}`, AGENT_EXECUTION_TOKENS: JSON.stringify(operations.tokens) };
   if (humanMode) Object.assign(childEnv, { HUMAN_RUN: "1", HUMAN_PROFILE_ID: humanProfileId });
   const child = spawn(process.execPath, [RUN_SCRIPT], {
     cwd: DASHBOARD_DIR,
@@ -386,6 +394,7 @@ async function startRun(humanProfileId?: string, humanName = "Human") {
   child.stdout.pipe(process.stdout);
   child.stderr.pipe(process.stderr);
   const finish = (status, detail) => {
+    operations.close();
     if (state.runProcess !== child) return;
     state.runProcess = undefined;
     state.run = { ...state.run, status, finishedAt: new Date().toISOString(), ...detail };
@@ -404,6 +413,17 @@ async function waitForPendingHuman(timeoutMs = 2000) {
 
 async function handle(request, response) {
   const url = new URL(request.url, `http://${HOST}:${PORT}`);
+  if (request.method === "POST" && url.pathname === "/api/agent") {
+    const supplied = request.headers["x-correlation-id"];
+    const correlationId = typeof supplied === "string" && /^[\w-]{1,128}$/.test(supplied) ? supplied : randomUUID();
+    response.setHeader("X-Correlation-Id", correlationId);
+    try {
+      if (!agentOperations) return sendJson(response, 403, { message: "Active agent execution required" });
+      return sendJson(response, 200, await agentOperations.execute(request.headers.authorization, await readJson(request), correlationId));
+    } catch (error) {
+      return sendJson(response, error.status ?? (error.name === "ZodError" || error instanceof SyntaxError ? 400 : 500), { message: error.message });
+    }
+  }
   if (request.method === "POST" && url.pathname === "/api/referee-chat") {
     if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Same-origin request required" });
     if (refereeChatPending) return sendJson(response, 409, { error: "Referee is already answering a message" });

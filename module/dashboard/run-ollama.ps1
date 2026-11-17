@@ -124,7 +124,7 @@ try {
     if ($viewerRunning) {
         throw "A viewer is already running at $viewerUrl. Close its Node window first, then rerun this script to see its output here."
     }
-    Write-Host "Start the test from the viewer UI at $viewerUrl. The Q3 API must already be running."
+    Write-Host "Start the test from the viewer UI at $viewerUrl. Dashboard uses Quest in-process."
     Write-Host 'Viewer and test output will appear here. Press Ctrl+C to stop the viewer.'
     & node module/dashboard/dist/viewer/server.mjs
     if ($LASTEXITCODE -ne 0) {

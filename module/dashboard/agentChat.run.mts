@@ -3,16 +3,14 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-// Persona agents get to know each other only through the Q3 API.
-// Skipped unless AGENT_RUN=1. Needs the func host running with AUTH_PROVIDER=authLocal
-// and either a logged-in `claude` CLI or an OpenAI-compatible endpoint (LLM_BASE_URL). The LLM runs with no tools, so the
-// harness is its only way out: it signs every call with the agent's own token and
-// enforces the per-run limits before anything reaches the API.
+// Persona agents access Quest through the Dashboard's agent-scoped operations.
+// The Dashboard launches this harness with temporary execution credentials.
+// The LLM runs with no tools; the harness validates actions and enforces per-run limits.
 // Three agents join each run and act concurrently, one small step (one API call) at a time,
 // like people tapping through the app. Verified answer facts are written to memory every few steps
 // and once more at the end; a judge then grades the memories against the personas.
 // Run from the repo root:
-//   AGENT_RUN=1 pnpm vitest run module/quest3Tier/func/vitest/agents/agentChat.test.mts --disableConsoleIntercept
+//   AGENT_RUN=1 pnpm vitest run module/dashboard/agentChat.test.mts --disableConsoleIntercept
 // Watch the conversation live in the terminal, or in runs/<time>_<participants>.chat.md.
 
 import assert from "node:assert/strict";
@@ -46,47 +44,14 @@ const RECENT_STEPS = 8;
 const POLL_MS = 5 * 1000;
 // Human participation is optional after joining; agents must finish without waiting indefinitely.
 const IDLE_POLLS = 3;
-const QUESTION_URL = process.env.QUESTION_URL ?? "http://127.0.0.1:7073";
-
-export function toQ3Request(method, url, body) {
-  const requestUrl = new URL(url);
-  const path = requestUrl.pathname;
-  const answerList = path.match(/^\/question\/([^/]+)\/answers\/?$/);
-  const answerDetail = path.match(/^\/question\/[^/]+\/answer\/([^/]+)\/?$/);
-  const answerCreate = path.match(/^\/question\/([^/]+)\/answer\/?$/);
-  const questionDetail = path.match(/^\/question\/([^/]+)\/?$/);
-
-  if (method === "GET" && path === "/questions") requestUrl.pathname = "/questionQry/getQuestions";
-  else if (method === "GET" && path === "/sharedQuestions") requestUrl.pathname = "/questionQry/getSharedQuestions";
-  else if (method === "GET" && answerList) requestUrl.pathname = `/questionQry/getAnswers/${answerList[1]}`;
-  else if (method === "GET" && answerDetail) requestUrl.pathname = `/questionQry/getAnswer/${answerDetail[1]}`;
-  else if (method === "GET" && questionDetail) requestUrl.pathname = `/questionQry/getQuestion/${questionDetail[1]}`;
-  else if (method === "POST" && path === "/question") {
-    requestUrl.pathname = "/questionCmd/createQuestion";
-    body = { ...body, optionList: body?.option ?? null };
-    delete body.option;
-  }
-  else if (["PUT", "PATCH"].includes(method) && questionDetail) {
-    requestUrl.pathname = "/questionCmd/updateQuestion/" + questionDetail[1];
-    if (!Array.isArray(body) && body?.option !== undefined) {
-      body = { ...body, optionList: body.option };
-      delete body.option;
-    }
-  }
-  else if (method === "POST" && answerCreate) requestUrl.pathname = `/questionCmd/createAnswer/${answerCreate[1]}`;
-  else if (method === "POST" && path === "/sendFollowUpCmd") requestUrl.pathname = "/questionCmd/sendFollowUp";
-
-  return { url: requestUrl, body };
-}
+const DASHBOARD_URL = process.env.DASHBOARD_URL ?? "http://127.0.0.1:4178";
 
 async function call(agent, method, url, body?, correlationId = newCorrelationId()) {
-  ({ url, body } = toQ3Request(method, url, body));
-  // A JSON Content-Type with an empty body makes the handler wrapper 500, so only send it with a body.
-  const hasBody = body !== undefined && method !== "GET";
-  const res = await fetch(url, {
-    method,
-    headers: { "authorization": `Bearer ${agent.token}`, "X-Correlation-Id": correlationId, ...(hasBody && { "Content-Type": "application/json" }) },
-    body: hasBody ? JSON.stringify(body) : undefined,
+  if (!agent.token) throw new Error("Start Agent Chat from the Dashboard to obtain execution credentials");
+  const res = await fetch(new URL("/api/agent", DASHBOARD_URL), {
+    method: "POST",
+    headers: { "authorization": `Bearer ${agent.token}`, "X-Correlation-Id": correlationId, "Content-Type": "application/json" },
+    body: JSON.stringify({ method, path: url.pathname, body }),
   });
   const text = await res.text();
   try {
@@ -98,7 +63,7 @@ async function call(agent, method, url, body?, correlationId = newCorrelationId(
 }
 
 export async function list(agent, p) {
-  const result = await call(agent, "GET", new URL(p, QUESTION_URL));
+  const result = await call(agent, "GET", new URL(p, DASHBOARD_URL));
   if (result.status >= 400) {
     const detail = typeof result.response === "string" ? result.response : (result.response?.message ?? JSON.stringify(result.response));
     const errorMessage = `[ERROR] Status: ${result.status} on GET ${p} : ${detail}`;
@@ -253,7 +218,7 @@ async function reflect(agent, others, say) {
 
 async function act(agent, { method, path: p, body }, state) {
   const correlationId = newCorrelationId();
-  const baseUrl = new URL(QUESTION_URL);
+  const baseUrl = new URL(DASHBOARD_URL);
   const url = URL.canParse(p, baseUrl) ? new URL(p, baseUrl) : null;
   const kind = url && writeKind(method, url.pathname);
   const questions = state.questions.map(question => ({ ...question, ownerOnline: question.owner === "you" || agent.online.includes(question.owner) }));
@@ -414,14 +379,14 @@ export async function runAgentChat() {
     const human = humanMode ? { name: HUMAN_NAME, profileId: humanProfileId } : null;
     const actors = human ? [...agents, human] : agents;
     for (const actor of agents) {
-      const me = await call(actor, "GET", new URL("/profile/me", QUESTION_URL));
+      const me = await call(actor, "POST", new URL("/profile/me", DASHBOARD_URL));
       if (me.status >= 400) throw new Error(`Could not register ${actor.name} (${me.status})`);
       actor.profileId = me.response.return.id;
     }
     await Promise.all(
       actors.flatMap((actor, index) =>
         actors.slice(index + 1).map(async (friend) => {
-          const result = await call(actor, "PUT", new URL(`/profile/me/friends/${friend.profileId}`, QUESTION_URL));
+          const result = await call(actor, "PUT", new URL(`/profile/me/friends/${friend.profileId}`, DASHBOARD_URL));
           if (result.status >= 400) throw new Error(`Could not connect ${actor.name} and ${friend.name} (${result.status})`);
         }),
       ),
