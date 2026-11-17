@@ -16,6 +16,59 @@ This document turns [the evolutionary semantic ontology proposal](evolutionary-s
 - Only a customer's explicit selection promotes an inferred preference into that identity's source JSON. Analyst approval of a concept or mapping is not customer confirmation.
 - The current six identity fixtures are simulated, non-production data and may be updated by agents. Git-tracked stores and development security are not production controls.
 
+## Business context
+
+The diagram shows high-level stakeholder and component connectivity only; it is not a sequence of interactions or a list of transactions.
+
+```mermaid
+flowchart LR
+  subgraph People["Users and stakeholders"]
+    IdentityUser["Identity user<br/>(one per identity)"]
+    Analyst["Data analyst<br/>(authorized for private data across identities)"]
+    Modeler["Canonical modeler"]
+    Requester["Match requester"]
+    Operator["QFF platform operator"]
+  end
+
+  subgraph UIs["User interfaces"]
+    IdentityUI["Identity view/edit UI<br/>(own identity only)"]
+    QFFViz["QFFViz<br/>(analytics)"]
+    ModelingUI["QFF Modelling UI"]
+    RequestUI["Requesting UI<br/>(QFFViz or another client)"]
+  end
+
+  subgraph Services["Backend and repository APIs"]
+    IdentityAPI["Identity Repository API<br/>(TypeScript / Node.js Azure Functions)"]
+    QFFAPI["QFF Repository API<br/>(Azure Functions)"]
+    Matcher["Matcher service<br/>(Node.js Azure Functions)"]
+    Derivation["Semantic derivation service"]
+  end
+
+  subgraph Data["Repositories"]
+    IdentityStores["Identity repositories × N<br/>(isolated source JSON per identity)"]
+    QFFStore["QFF Repository<br/>(LanceDB; QFF-owned data)"]
+  end
+
+  IdentityUser --> IdentityUI --> IdentityAPI --> IdentityStores
+  Analyst --> QFFViz
+  QFFViz --> IdentityAPI
+  QFFViz --> QFFAPI
+  Modeler --> ModelingUI
+  ModelingUI --> IdentityAPI
+  ModelingUI --> QFFAPI
+  ModelingUI --> Derivation
+  Requester --> RequestUI --> Matcher
+  Matcher --> IdentityAPI
+  Matcher --> QFFAPI
+  Derivation --> IdentityAPI
+  Derivation --> QFFAPI
+  QFFAPI --> QFFStore
+  Operator --> IdentityAPI
+  Operator --> QFFAPI
+```
+
+Each identity user is restricted to their own identity repository through the Identity view/edit UI. The data analyst has explicit authorization to access private data across all identity repositories; QFFViz accesses them through Identity Repository API and also connects to QFF Repository API. The canonical modeler uses the Modelling UI, and match requesters use an authorized requesting UI. Operators administer the APIs and repositories under their operational role.
+
 ## Score terminology
 
 | Term | Contract |
@@ -38,6 +91,9 @@ The plan is deliberately incremental. QFF is currently in Phase 0 technical desi
 - Define data schemas and API contracts sufficient to implement Phase 1 without locking later phases into a premature scoring model.
 - Separate identity-owned source edits, analyst-owned model edits, derived inference, customer confirmation, and match transactions.
 - Define a small simulation/acceptance set that allows fast iteration on semantic mapping and privacy.
+- Ratify identity-user access to only their own source repository and the data analyst's explicit access to private data across identities through QFFViz and repository APIs.
+- Confirm ID, schema, API authorization/concurrency, evidence visibility, transaction retention, deletion propagation, and calibration contracts or record the unresolved question and a Phase 1-safe default.
+- Review the proposed concept/mapping lifecycle and confirm that no inferred result becomes explicit without customer selection and no heuristic score is represented as probability.
 
 #### Technical implementation notes
 
@@ -82,6 +138,8 @@ The following cannot be determined confidently from current files/requirements. 
 - Keep identity JSON as the authoritative source in the development version; make the Identity Repository API the interface used by all clients/services.
 - Establish persistent IDs and remove embeddings from identity-owned JSON without changing source preference meaning.
 - Establish QFF Repository ownership over QFF data only, including vectors, and ensure development state can be rebuilt/reviewed from Git.
+- Verify the migration preserves identity and preference source fields and stable IDs, removes vector-only identity fields, and rebuilds/restores the QFF-owned LanceDB dataset from tracked development inputs.
+- Verify repository boundaries: identity users cannot access another identity's source, while the explicitly authorized analyst can access all identity repositories through approved APIs; only QFF Repository accesses LanceDB at runtime.
 
 #### Technical implementation notes
 
@@ -101,6 +159,10 @@ The following cannot be determined confidently from current files/requirements. 
 - Generate semantic representations and mappings without modifying source preferences; persist all derived vectors/mappings in QFF Repository.
 - Move matcher execution to a separate Node.js Azure Functions app. It must persist each match transaction through QFF Repository and return the permitted result to its requester.
 - Provide explainable mapping/match paths, respect hand-authored controls, and keep source data private in per-requester outputs.
+- Simulation must cover paraphrases, specificity, broader concepts, unrelated meanings, exclusions, rejected/overridden candidates, signed affinities and incompatible model metadata; results must retain enough provenance to explain mappings.
+- Verify preference/kind vectors are rebuilt in LanceDB and keyed to the correct persistent IDs; source JSON remains unchanged except through authorized customer confirmation.
+- Verify matcher reads through both repositories, persists the QFF-owned transaction before returning, and never includes counterpart details or uniquely identifying inferred evidence in a requestor's result.
+- Verify embedding similarity and heuristic confidence remain distinct, versioned signals; no probability is exposed without held-out calibration evidence and metadata.
 
 #### Technical implementation notes
 
@@ -121,6 +183,8 @@ The following cannot be determined confidently from current files/requirements. 
 - Use a SPA/API boundary; invoke modelling/matcher execution through backend APIs and access identity/QFF-owned data through their respective repositories.
 - Provide only the minimum pages needed to inspect current model state, edit curated concepts, review mappings, trigger derivation, and understand heuristic score distributions.
 - Use AG Grid for tabular reporting/editing and Plotly for graphs. Keep each non-dashboard page focused on one primary visualization.
+- Verify all pages use authorized APIs, do not access identity files or LanceDB directly, and keep modeling execution out of browser code.
+- Verify analyst edits preserve version/provenance, do not impersonate customer consent, and display similarity/confidence without implying probability.
 
 #### Technical implementation notes
 
@@ -140,6 +204,9 @@ The following cannot be determined confidently from current files/requirements. 
 - Expand only after MVP evaluation confirms the service boundaries and analyst workflow.
 - Add review and discovery capabilities without autonomous publication or silent changes to human-approved model state.
 - Add calibration only when reviewed data and evaluation gates are sufficient.
+- Verify clusters only propose concepts, approved changes create new model versions, and remapping retains prior results and explains changes.
+- Add `probability` only when calibration is validated on held-out labelled data and its model, dataset, relationship type and taxonomy versions are recorded.
+- Before hosted production use, verify independently secured identity repositories, deletion propagation, QFF-only encrypted LanceDB access, and independent backup/retention behavior.
 
 #### Technical implementation notes
 
@@ -159,17 +226,6 @@ The following cannot be determined confidently from current files/requirements. 
 - Add focused tests for IDs, schemas, API ownership, persistence, provenance, score language, privacy, retries and failure handling. Use simulated identities/cached embeddings; routine tests must not need live Azure calls.
 - Never label `embedding_similarity` or heuristic `confidence_score` as probability. Add calibrated probability only after held-out validation and metadata requirements pass.
 - Keep changes surgical, document implemented decisions, and leave future-phase work as explicit follow-up rather than speculative abstractions.
-
-## Validation and release gates
-
-- Identity and preference IDs remain stable; Phase 1 removes vector-only identity fields without changing source preference content; Phase 2 rebuilds vectors keyed to the correct IDs.
-- Only Identity Repository accesses identity-owned JSON; only QFF Repository accesses LanceDB at runtime. Test stale-write rejection, serialized writes, retries, and rebuild/restore.
-- Curated model edits/overrides survive inference runs; rejected mappings are not silently restored; only customer selection creates explicit confirmed preferences.
-- Invalid references, stale/incompatible vectors, and missing model/score/catalogue provenance are rejected or marked unusable.
-- Synthetic evaluations cover paraphrases, specificity, hierarchy, unrelated concepts, exclusions, signed affinity and incompatible model metadata.
-- Matcher reads through both repositories, persists QFF-owned transactions and returns requester-scoped outputs without counterpart data leakage.
-- The Modelling UI uses repository/service APIs, AG Grid for data and Plotly for graphs; browser code cannot access data files or execute modeling jobs.
-- Do not describe similarity/heuristic scores as probability. Any future probability requires a versioned calibration model, labelled dataset, held-out evaluation and documented calibration performance.
 
 ## Decisions requiring follow-up
 
