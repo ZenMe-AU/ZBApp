@@ -4,13 +4,13 @@
  */
 
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { TableClient } from "@azure/data-tables";
 import { invalidAction, learningCoverage, needsAnswer, offlineActionReason, participantFriends, rules } from "./agentChat.config.mjs";
 import { factMemory, promptMemory } from "./agentChat.memory.mjs";
-import { assertLlmReady, getLlmProvider, getProviderInstance, llm, OpenvinoProvider } from "./agentChat.llm.mjs";
+import { assertLlmReady, getLlmProvider, getLlmModel, loadRuntimeSettings, getProviderInstance, llm, OpenvinoProvider, ClaudeProvider, OpenaiCompatibleProvider } from "./agentChat.llm.mjs";
 import { list, receiveDashboardMessage, replyToDashboard } from "./agentChat.run.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import { report } from "./agentChat.report.mjs";
@@ -303,6 +303,59 @@ describe("human participant", () => {
 });
 
 describe("LLM provider configuration", () => {
+  test("environment overrides file values while missing values are filled even when a provider is set", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "dashboard-settings-"));
+    const file = path.join(directory, "local.settings.json");
+    try {
+      await writeFile(file, JSON.stringify({ Values: { LLM_PROVIDER: "ollama", CLAUDE_MODEL: "sonnet", LLM_BASE_URL: "http://localhost:11434/v1" } }));
+      const env = loadRuntimeSettings({ LLM_PROVIDER: "claude", CLAUDE_MODEL: "haiku", LLM_BASE_URL: undefined }, file);
+      expect(env).toEqual({ LLM_PROVIDER: "claude", CLAUDE_MODEL: "haiku", LLM_BASE_URL: "http://localhost:11434/v1" });
+      expect(getLlmModel("AGENT", env, "persona-model")).toBe("haiku");
+      await writeFile(file, '{"secret":"do-not-expose", invalid');
+      expect(() => loadRuntimeSettings({}, file)).toThrow("Cannot load Dashboard local.settings.json");
+      expect(() => loadRuntimeSettings({}, file)).not.toThrow("do-not-expose");
+      expect(loadRuntimeSettings({ LLM_PROVIDER: "claude" }, path.join(directory, "absent.json"))).toEqual({ LLM_PROVIDER: "claude" });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test.each(["AGENT", "JUDGE", "CHAT", "REFEREE"] as const)("%s uses role settings, provider settings, then Claude defaults", (role) => {
+    expect(getLlmModel(role, { LLM_PROVIDER: "claude", CLAUDE_MODEL: "common", [`${role}_MODEL`]: "specific" }, "persona")).toBe("specific");
+    expect(getLlmModel(role, { LLM_PROVIDER: "claude", CLAUDE_MODEL: "common", LLM_MODEL: "unrelated-local-model" }, "persona")).toBe("common");
+    expect(getLlmModel(role, { LLM_PROVIDER: "claude" }, "persona")).toBe("persona");
+  });
+
+  test("passes the selected model to Claude CLI and preserves CLI failures", async () => {
+    const runner = vi.fn().mockResolvedValue({ stdout: JSON.stringify({ structured_output: { answer: "ok" } }), stderr: "" });
+    const provider = new ClaudeProvider({ runner });
+    const request = { systemPrompt: "test", input: {}, schema: {}, model: getLlmModel("AGENT", { LLM_PROVIDER: "claude", CLAUDE_MODEL: "sonnet" }, "haiku") };
+    await expect(provider.completeJson(request)).resolves.toEqual({ answer: "ok" });
+    expect(runner.mock.calls[0][1]).toEqual(expect.arrayContaining(["--model", "sonnet", "--tools", ""]));
+    runner.mockResolvedValue({ stdout: JSON.stringify({ loggedIn: false }), stderr: "" });
+    await expect(provider.assertReady()).rejects.toThrow("Claude CLI is not logged in");
+  });
+
+  test("selects local and internet models without using Claude persona defaults", () => {
+    expect(getLlmModel("AGENT", { LLM_PROVIDER: "ollama", OLLAMA_MODEL: "local" }, "haiku")).toBe("local");
+    expect(getLlmModel("JUDGE", { LLM_PROVIDER: "openai", OPENAI_MODEL: "remote" }, "sonnet")).toBe("remote");
+    expect(getLlmModel("JUDGE", { LLM_PROVIDER: "ollama", AGENT_MODEL: "existing-agent-model" }, "sonnet")).toBe("existing-agent-model");
+    expect(getLlmModel("REFEREE", { LLM_PROVIDER: "openai", JUDGE_MODEL: "existing-judge-model" })).toBe("existing-judge-model");
+    expect(getLlmModel("CHAT", { LLM_PROVIDER: "openvino", OPENVINO_MODEL_DIR: "/models/local" })).toBe("/models/local");
+    expect(getLlmModel("AGENT", { LLM_PROVIDER: "openvino", LLM_MODEL: "/models/primary", OPENVINO_MODEL_DIR: "/models/fallback" })).toBe("/models/primary");
+    expect(() => getLlmModel("AGENT", { LLM_PROVIDER: "ollama" }, "haiku")).toThrow("Missing model");
+  });
+
+  test.each(["ollama", "openai"])("%s receives the configured endpoint and model", async (name) => {
+    const env = { LLM_PROVIDER: name, LLM_BASE_URL: name === "ollama" ? "http://localhost:11434/v1" : "https://api.example.test/v1", LLM_MODEL: "configured-model" };
+    const fetchFn = vi.fn().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: '{"answer":"ok"}' } }] })));
+    const provider = new OpenaiCompatibleProvider(name, { baseUrl: env.LLM_BASE_URL, fetchFn });
+    await provider.assertReady();
+    await expect(provider.completeJson({ systemPrompt: "test", input: {}, schema: {}, model: getLlmModel("CHAT", env) })).resolves.toEqual({ answer: "ok" });
+    expect(fetchFn.mock.calls[0][0]).toBe(`${env.LLM_BASE_URL}/chat/completions`);
+    expect(JSON.parse(fetchFn.mock.calls[0][1].body).model).toBe("configured-model");
+  });
+
   test("throws an explanatory error listing options when no provider is set", () => {
     vi.stubEnv("LLM_PROVIDER", "");
     vi.stubEnv("LLM", "");

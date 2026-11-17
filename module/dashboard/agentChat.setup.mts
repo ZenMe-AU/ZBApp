@@ -7,6 +7,7 @@ import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { NAMES } from "./agentChat.config.mjs";
+import { getLlmModel } from "./agentChat.llm.mjs";
 
 const setupDir = path.dirname(fileURLToPath(import.meta.url));
 export const AGENTS_DIR = path.basename(setupDir) === "dist" ? path.resolve(setupDir, "..") : setupDir;
@@ -99,7 +100,7 @@ export async function loadAgent(name) {
   return {
     name,
     persona,
-    model: process.env.AGENT_MODEL ?? meta.model ?? "haiku",
+    model: getLlmModel("AGENT", process.env, meta.model ?? "haiku"),
     token: JSON.parse(process.env.AGENT_EXECUTION_TOKENS ?? "{}")[name],
     memoryDirectory,
     memory,

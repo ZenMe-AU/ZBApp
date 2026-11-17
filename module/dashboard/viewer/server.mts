@@ -18,6 +18,7 @@ import questContainer from "quest3Tier/dist/di/diContainer.mjs";
 import { createAgentOperations } from "./agent-operations.mjs";
 import { toExternalProfileId } from "quest3Tier/dist/handler/profileId.mjs";
 import { NAMES } from "../agentChat.config.mjs";
+import { getLlmModel, loadRuntimeSettings } from "../agentChat.llm.mjs";
 import { createRefereeContextBuilder } from "../agentChat.referee-context.mjs";
 import { sendLiveChat } from "../agentChat.live.mjs";
 import { createActivityRepository } from "../activity/activity-repository.mjs";
@@ -80,8 +81,7 @@ async function rememberHuman(profileId: string, name: string) {
 }
 
 async function localSettings() {
-  const settingsPath = path.join(DASHBOARD_DIR, "local.settings.json");
-  return JSON.parse(await readFile(settingsPath, "utf8").catch(() => "{}")).Values ?? {};
+  return loadRuntimeSettings(CHILD_ENV);
 }
 
 async function getAgentOids(): Promise<Record<string, string>> {
@@ -247,20 +247,7 @@ const CHAT_SCHEMA = {
 };
 const AGENT_NAMES = new Set(["Mike", "Bella", "Ian", "Eric"]);
 
-const chatModel = (env: NodeJS.ProcessEnv, fallback = "") => {
-  const provider = (env.LLM_PROVIDER ?? env.LLM ?? "").toLowerCase();
-  const providerModel =
-    provider === "claude"
-      ? env.CLAUDE_MODEL
-      : provider === "openai"
-        ? env.OPENAI_MODEL
-        : provider === "ollama"
-          ? env.OLLAMA_MODEL
-          : provider === "openvino"
-            ? env.OPENVINO_MODEL_DIR ?? env.LLM_MODEL
-            : env.LLM_MODEL;
-  return env.CHAT_MODEL ?? (fallback || providerModel || "");
-};
+const chatModel = (env: NodeJS.ProcessEnv, fallback = "") => getLlmModel("CHAT", env, fallback);
 
 async function readJson(request) {
   const chunks: Buffer[] = [];
@@ -288,7 +275,7 @@ async function answerAboutRun(run: string, message: string, history: unknown[], 
     const chat = legacyChat || structuredEvents.map((event) =>
       `[${event.occurredAt}] ${event.actorName ?? "System"} ${event.eventType} ${JSON.stringify(event.eventData)}`
     ).join("\n");
-    const env = { ...CHILD_ENV, ...(await localSettings()) };
+    const env = await localSettings();
     return answerResults(
       {
         systemPrompt: `You are ${agent}. Stay in character using the supplied persona, saved relationship memory and completed Q3 run. Continue the conversation naturally. Do not call tools, claim to perform Q3 actions, or reveal private persona facts that your disclosure rules prohibit.`,
@@ -316,7 +303,7 @@ async function answerAboutRun(run: string, message: string, history: unknown[], 
   try {
     const report = await readFile(path.join(RUNS_DIR, run.replace(/\.chat\.md$/, ".md")), "utf8").catch(() => "");
     const chat = await readFile(path.join(RUNS_DIR, run), "utf8").catch(() => "");
-    const env = { ...CHILD_ENV, ...(await localSettings()) };
+    const env = await localSettings();
     return await answerResults(
       {
         systemPrompt:
@@ -381,7 +368,7 @@ async function startRun(humanProfileId?: string, humanName = "Human") {
   questContainer.register("repository", await getTableRepository());
   const operations = createAgentOperations(await getAgentOids());
   agentOperations = operations;
-  const childEnv = { ...CHILD_ENV, ...(await localSettings()), AGENT_RUN: "1",
+  const childEnv = { ...(await localSettings()), AGENT_RUN: "1",
     DASHBOARD_URL: `http://${HOST}:${PORT}`, AGENT_EXECUTION_TOKENS: JSON.stringify(operations.tokens) };
   if (humanMode) Object.assign(childEnv, { HUMAN_RUN: "1", HUMAN_PROFILE_ID: humanProfileId });
   const child = spawn(process.execPath, [RUN_SCRIPT], {
@@ -436,8 +423,8 @@ async function handle(request, response) {
       if (!message || message.length > 1000) return sendJson(response, 400, { error: "Message must be 1-1000 characters" });
       refereeChatPending = true;
       const context = await buildRefereeContext({ runId: run, question: message, apiRequests: NAMES.map((actor) => ({ actor, path: "/questions" })) });
-      const env = { ...CHILD_ENV, ...(await localSettings()) };
-      const result = await answerRefereeChat({ message, history: body.history, context, model: chatModel(env, env.REFEREE_MODEL ?? env.JUDGE_MODEL), env });
+      const env = await localSettings();
+      const result = await answerRefereeChat({ message, history: body.history, context, model: getLlmModel("REFEREE", env, env.JUDGE_MODEL ?? ""), env });
       return sendJson(response, 200, result);
     } catch (error) {
       console.error("Referee chat failed:", error);

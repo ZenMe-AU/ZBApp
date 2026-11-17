@@ -89,7 +89,7 @@ To watch the conversation live, use the terminal, or open `runs/<time>_<particip
 
 See the [viewer architecture overview](viewer/architecture-overview.md) for the UI, data flow, and build details.
 
-**Configuration Single Source of Truth**: All LLM settings (`LLM_PROVIDER`, `LLM_MODEL`, `OPENVINO_MODEL_DIR`, `OPENVINO_DEVICE`, `OPENVINO_LOG_LEVEL`, `LLM_BASE_URL`, `AGENT_MODEL`, etc.) are configured under `Values` in [local.settings.json](../../local.settings.json). The helper scripts `run-openvino.ps1` and `run-ollama.ps1` read `local.settings.json` automatically, ensuring that the launcher scripts, VS Code tasks, integration tests, and the agent chat runner all use the exact same LLM configuration. Explicit parameters passed to the scripts or existing environment variables can still be used to override these values.
+**LLM configuration**: Dashboard and its Agent/results/Referee workers use environment variables first, then `Values` in Dashboard's [local.settings.json](local.settings.json). Invalid settings files fail explicitly. Role settings (`AGENT_MODEL`, `JUDGE_MODEL`, `CHAT_MODEL`, `REFEREE_MODEL`) take precedence over the selected provider's model (`CLAUDE_MODEL`, `OPENAI_MODEL`, `OLLAMA_MODEL`; OpenVINO uses `LLM_MODEL`, then `OPENVINO_MODEL_DIR`). OpenAI/Ollama also accept `LLM_MODEL`. Claude CLI keeps persona/default models only when no model is configured. Existing Judge/Referee model fallbacks remain when no provider model is configured. Restart Dashboard after changing its process environment; each new worker receives the service's resolved settings. Keep credentials in local settings or deployment environment variables, never in tracked files.
 
 From the repo root, start the local viewer in another terminal:
 

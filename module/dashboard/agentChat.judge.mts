@@ -3,7 +3,7 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-import { llm } from "./agentChat.llm.mjs";
+import { getLlmModel, llm } from "./agentChat.llm.mjs";
 
 const JUDGE_SCHEMA = {
   type: "object",
@@ -73,6 +73,6 @@ export async function judge(agents, questions, names, log, sandbox) {
       agents.map((agent) => [agent.name, Object.fromEntries(agents.filter((other) => other !== agent).map((other) => [other.name, agent.memory[other.name]]))])
     ),
   };
-  const model = process.env.JUDGE_MODEL ?? (process.env.LLM_BASE_URL ? process.env.AGENT_MODEL : "sonnet");
+  const model = getLlmModel("JUDGE", process.env, "sonnet");
   return llm(JUDGE_PROMPT, input, model, JUDGE_SCHEMA, sandbox, { effort: "medium", thinking: true });
 }

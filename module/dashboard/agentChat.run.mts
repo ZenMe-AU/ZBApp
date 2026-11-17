@@ -30,7 +30,7 @@ import {
   STEP_SCHEMA,
   writeKind,
 } from "./agentChat.config.mjs";
-import { assertLlmReady, llm } from "./agentChat.llm.mjs";
+import { assertLlmReady, getLlmModel, llm } from "./agentChat.llm.mjs";
 import { judge } from "./agentChat.judge.mjs";
 import { startLiveChat } from "./agentChat.live.mjs";
 import { factMemory, promptMemory } from "./agentChat.memory.mjs";
@@ -365,9 +365,9 @@ export async function replyToDashboard(agent, context, sandbox: string, say): Pr
 }
 
 export async function runAgentChat() {
-  // agent.md says e.g. "haiku", which only the Claude CLI understands.
-  if (process.env.LLM_BASE_URL && !process.env.AGENT_MODEL) throw new Error("LLM_BASE_URL needs AGENT_MODEL (e.g. gpt-5-mini, qwen3:8b)");
   await assertLlmReady();
+  getLlmModel("AGENT", process.env, "haiku");
+  getLlmModel("JUDGE", process.env, "sonnet");
   await takeLock();
   let liveChat: Awaited<ReturnType<typeof startLiveChat>> | undefined;
   try {

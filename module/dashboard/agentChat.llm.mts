@@ -3,7 +3,7 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -18,30 +18,23 @@ import {
 export * from "./llmProvider/index.mjs";
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const localSettingsPath = existsSync(path.resolve(currentDir, "local.settings.json"))
-  ? path.resolve(currentDir, "local.settings.json")
-  : path.resolve(currentDir, "..", "local.settings.json");
+const localSettingsPath = path.join(path.basename(currentDir) === "dist" ? path.dirname(currentDir) : currentDir, "local.settings.json");
 
-function ensureSettingsLoaded() {
-  if (!process.env.LLM_PROVIDER && existsSync(localSettingsPath)) {
-    try {
-      const parsed = JSON.parse(readFileSync(localSettingsPath, "utf8"));
-      if (parsed.Values) {
-        for (const [key, value] of Object.entries(parsed.Values)) {
-          if (process.env[key] === undefined) {
-            process.env[key] = String(value);
-          }
-        }
-      }
-    } catch {
-      // Ignore if local.settings.json cannot be read
-    }
+export function loadRuntimeSettings(env: NodeJS.ProcessEnv = process.env, settingsPath = localSettingsPath): NodeJS.ProcessEnv {
+  let values = {};
+  try {
+    values = JSON.parse(readFileSync(settingsPath, "utf8")).Values ?? {};
+    if (!values || typeof values !== "object" || Array.isArray(values)) throw new Error("Invalid Values");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw new Error("Cannot load Dashboard local.settings.json: check file access and JSON Values");
   }
+  return { ...Object.fromEntries(Object.entries(values).map(([key, value]) => [key, String(value)])),
+    ...Object.fromEntries(Object.entries(env).filter(([, value]) => value !== undefined)) };
 }
 
-export function getLlmProvider(): string {
-  ensureSettingsLoaded();
-  const provider = (process.env.LLM_PROVIDER ?? process.env.LLM)?.trim().toLowerCase();
+export function getLlmProvider(env: NodeJS.ProcessEnv = process.env): string {
+  if (env === process.env) Object.assign(env, loadRuntimeSettings(env));
+  const provider = (env.LLM_PROVIDER ?? env.LLM)?.trim().toLowerCase();
   if (!provider) {
     throw new Error(
       "No LLM provider selected. Configure 'LLM_PROVIDER' in local.settings.json (under 'Values') or as an environment variable.\n\n" +
@@ -60,6 +53,18 @@ export function getLlmProvider(): string {
     );
   }
   return provider;
+}
+
+export function getLlmModel(role: "AGENT" | "JUDGE" | "CHAT" | "REFEREE", env: NodeJS.ProcessEnv = process.env, fallback = ""): string {
+  const provider = getLlmProvider(env);
+  const providerModel = provider === "claude" ? env.CLAUDE_MODEL
+    : provider === "openai" ? env.OPENAI_MODEL ?? env.LLM_MODEL
+    : provider === "ollama" ? env.OLLAMA_MODEL ?? env.LLM_MODEL
+    : env.LLM_MODEL ?? env.OPENVINO_MODEL_DIR;
+  const previousFallback = role === "JUDGE" ? env.AGENT_MODEL : role === "REFEREE" ? env.JUDGE_MODEL : undefined;
+  const model = env[`${role}_MODEL`] ?? providerModel ?? (provider === "claude" ? fallback : previousFallback ?? "");
+  if (!model?.trim() && provider !== "claude") throw new Error(`Missing model for ${role} (${provider}); configure ${role}_MODEL or the provider model`);
+  return model ?? "";
 }
 
 const openvinoProvider = new OpenvinoProvider();
