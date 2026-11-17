@@ -94,7 +94,7 @@ describe("ensureProfile", () => {
       { invocationId: "profile-test", functionName: "UpdateMyProfileTest" }
     );
 
-    expect(response.jsonBody).toEqual({ success: true, return: { id: internalId, preferredName: "Josh" } });
+    expect(response.jsonBody).toEqual({ success: true, return: { id: externalId, preferredName: "Josh" } });
     expect(updateRepositoryPreferredName).toHaveBeenCalledWith(externalId, "Josh");
   });
 });
