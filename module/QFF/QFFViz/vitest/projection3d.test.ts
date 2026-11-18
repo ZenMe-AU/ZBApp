@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { project3d } from "./projection3d";
+import { project3d } from "../src/shared/projection3d";
 
 describe("3D t-SNE projection", () => {
   const vectors = Array.from({ length: 12 }, (_, i) =>

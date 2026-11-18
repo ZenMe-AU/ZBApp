@@ -1,0 +1,21 @@
+{
+  "name": "qff-repository",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "pnpm run build && func start --address 127.0.0.1 --port 7182",
+    "test": "node --test src/repository.test.ts"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "@lancedb/lancedb": "^0.41.0",
+    "apache-arrow": "^21.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2"
+  }
+}

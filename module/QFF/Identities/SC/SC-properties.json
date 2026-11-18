@@ -1,0 +1,201 @@
+{
+  "identity_id": "SC",
+  "preferences": [
+    {
+      "keyword": "Christianity",
+      "kind": "interest",
+      "definition": "The religion centered on the life and teachings of Jesus Christ.",
+      "personas": [
+        {
+          "persona": "christian friend",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "466f1a27-53a3-4ffc-9595-019b3d4bd387"
+    },
+    {
+      "keyword": "Bible study",
+      "kind": "interest",
+      "definition": "Reading and discussing the Bible to understand its content and significance.",
+      "personas": [
+        {
+          "persona": "christian friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "54b69b73-9499-496a-96d7-0f114f04fb8f"
+    },
+    {
+      "keyword": "manipulative religious behaviour",
+      "kind": "boundary",
+      "definition": "Using religious ideas or authority to deceive, pressure, or control another person.",
+      "personas": [],
+      "preference_id": "ce0ec2f0-0dfc-433e-8bce-d25ad437dbef"
+    },
+    {
+      "keyword": "attending live music",
+      "kind": "interest",
+      "definition": "Going to a performance where musicians play in person.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "3a642632-d89b-41ed-882b-d9cd7a47689e"
+    },
+    {
+      "keyword": "visiting galleries",
+      "kind": "interest",
+      "definition": "Viewing exhibitions of art and other creative work in a gallery.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "e6f2c5aa-4ca3-4749-95ce-8bb0ebc24e76"
+    },
+    {
+      "keyword": "coffee",
+      "kind": "interest",
+      "definition": "The brewed drink and relaxed cafe experience enjoyed in social settings.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "abd351eb-236b-418e-a042-a97249cabb32"
+    },
+    {
+      "keyword": "local history",
+      "kind": "interest",
+      "definition": "Past events, people, and places that have shaped a local area.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "ea6f5fbd-b266-40d5-8a38-198d1a48767b"
+    },
+    {
+      "keyword": "inclusion",
+      "kind": "want",
+      "definition": "Welcoming people with different backgrounds and enabling them to participate.",
+      "personas": [],
+      "preference_id": "325bdb32-5f1e-42e3-be3c-8835d76df5f7"
+    },
+    {
+      "keyword": "one-sided planning",
+      "kind": "boundary",
+      "definition": "Planning where one person consistently makes decisions without considering others’ preferences.",
+      "personas": [],
+      "preference_id": "f78c412d-f7d0-4b2d-bdeb-4969c7c4ece4"
+    },
+    {
+      "keyword": "walking",
+      "kind": "interest",
+      "definition": "Moving on foot for recreation, exercise, or conversation.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "cee00fb6-e50b-4fde-859a-2b7b8dcc3987"
+    },
+    {
+      "keyword": "regional day trips",
+      "kind": "interest",
+      "definition": "Short visits to nearby destinations that begin and end on the same day.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "a6bf7240-c0c9-44d2-acf8-d2f67e60f00b"
+    },
+    {
+      "keyword": "wildlife",
+      "kind": "interest",
+      "definition": "Wild animals observed in their natural environments.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "1805deb0-bf40-4a05-8a05-dc31516dc06f"
+    },
+    {
+      "keyword": "high-intensity guided hiking",
+      "kind": "interest",
+      "definition": "Strenuous hikes led by a guide, often involving demanding pace, distance, or terrain.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": -0.7
+        }
+      ],
+      "preference_id": "6b9f6a29-b705-4206-b560-16964ec8fbed"
+    },
+    {
+      "keyword": "pressure to exceed agreed difficulty",
+      "kind": "boundary",
+      "definition": "Pushing someone to take on more strenuous activity than agreed or comfortable.",
+      "personas": [],
+      "preference_id": "5df84c7b-13fc-4ffe-88ec-12a0fc1f3e90"
+    },
+    {
+      "keyword": "faith in daily life",
+      "definition": "Putting religious trust and convictions into practice in everyday choices and actions.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "57fbfeef-c57a-4004-9b76-334bbe767d6c"
+    },
+    {
+      "keyword": "humility",
+      "definition": "Recognizing one’s limitations and valuing others without seeking superiority.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "8df3dab1-173e-40b3-b222-a2962f39b139"
+    },
+    {
+      "keyword": "respectful disagreement",
+      "definition": "Discussing different views without insults, contempt, or dismissiveness.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "e272a5c0-ce88-41ef-b930-95481bbfad40"
+    },
+    {
+      "keyword": "consideration",
+      "definition": "Taking other people’s comfort, needs, and limits into account.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "bf2d1e6b-4bd6-4b44-9889-21a1275ef940"
+    }
+  ]
+}

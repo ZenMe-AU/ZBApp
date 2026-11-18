@@ -80,6 +80,14 @@
       "name": "QFFViz",
       "path": "./module/QFF/QFFViz",
     },
+    {
+      "name": "IdentityRepository",
+      "path": "./module/QFF/IdentityRepository",
+    },
+    {
+      "name": "QFFRepository",
+      "path": "./module/QFF/QFFRepository",
+    },
   ],
   "launch": {
     "version": "0.2.0",

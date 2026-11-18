@@ -1,0 +1,41 @@
+{
+  "concepts": {
+    "concept_id": "text",
+    "label": "text",
+    "definition": "text",
+    "status": "text",
+    "catalogue_version": "text",
+    "details_json": "text"
+  },
+  "mappings": {
+    "identity_id": "text",
+    "preference_id": "text",
+    "concept_id": "text",
+    "relationship": "text",
+    "status": "text",
+    "catalogue_version": "text",
+    "embedding_similarity": "number",
+    "confidence_score": "number",
+    "details_json": "text"
+  },
+  "vectors": {
+    "source_type": "text",
+    "source_id": "text",
+    "identity_id": "text",
+    "embedding_model": "text",
+    "embedding_model_version": "text",
+    "dimensions": "integer",
+    "vector": "vector"
+  },
+  "runs": {
+    "run_id": "text",
+    "status": "text",
+    "details_json": "text"
+  },
+  "match_transactions": {
+    "transaction_id": "text",
+    "requester_id": "text",
+    "created_at": "text",
+    "details_json": "text"
+  }
+}

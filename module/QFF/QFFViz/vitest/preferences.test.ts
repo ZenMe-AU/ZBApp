@@ -4,9 +4,9 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { personaGroups, removePreferenceUse, renamePersona } from "./preferences";
-import { itemsFor } from "../shared/sets";
-import type { Person } from "./types";
+import { personaGroups, removePreferenceUse, renamePersona } from "../src/data/preferences";
+import { itemsFor } from "../src/shared/sets";
+import type { Person } from "../src/data/types";
 
 function fixture(): Person {
   const persona = (name: string) => ({

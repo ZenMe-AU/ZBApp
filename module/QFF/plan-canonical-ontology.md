@@ -4,7 +4,7 @@
 
 This document turns [the evolutionary semantic ontology proposal](evolutionary-semantic-ontology-inference.md) into a staged technical plan. The proposal is implementable as a new semantic layer over QFF preferences; it must not rewrite customer terminology or treat existing interest-mode vectors as a complete subject ontology.
 
-**Current stage: Phase 0 decisions recorded; Phase 1 is next.** The decisions below establish test-environment behavior and future production boundaries. Keep the work MVP-sized: design, simulate, validate, and iterate before building later-phase functionality.
+**Current stage: Phase 1 local repository foundations and fixture migration implemented.** The decisions below establish test-environment behavior and future production boundaries. Keep the work MVP-sized: design, simulate, validate, and iterate before building later-phase functionality.
 
 ## Governing requirements
 
@@ -192,6 +192,14 @@ Production hosting, authorization implementation details, retention, backup, and
 - Use revision checks and atomic source-file replacement for Identity Repository development writes; serialize QFF Repository writes and reject unsafe concurrent access. Source changes/deletions set the general staleness indicator for later full recomputation.
 - Add focused tests for GUID assignment/stability, source-field preservation, removal of vector-only fields, revision handling, and repository boundaries. Test profile selection is a test feature, not production authorization.
 
+#### Running the Phase 1 foundations locally
+
+- In separate PowerShell terminals, set `$env:FUNCTIONS_WORKER_RUNTIME = "node"` and `$env:QFF_FIXTURE_MODE = "1"`, then run `pnpm --filter qff-identity-repository start` (7181) or `pnpm --filter qff-repository start` (7182). Use synthetic data only. Production authentication and hosting are not implemented.
+- Identity API: `GET /api/v1/profiles`, `GET /api/v1/profiles/{profileId}`, and `PUT /api/v1/profiles/{profileId}/preferences/{preferenceId}`. For the edit, send the profile response's `revision` in `If-Match` and provide `keyword`, `definition`, `kind`, and `personas`. A stale revision returns `412`; reload before retrying.
+- Fixture migration: `pnpm --filter qff-identity-repository migrate:fixtures` assigns missing GUIDs and removes preference vectors. It is safe to rerun. If a process crashes mid-write, verify that no writer is active before deleting any leftover per-file `.lock` or `.tmp` files.
+- QFF API: `GET /api/v1/catalogue` initializes the local LanceDB dataset from the versioned schema and seed in `CanonicalModels/` and reads the active catalogue. The initial catalogue has no reviewed concepts. The dataset in `QFFRepository/.data/` is disposable; a fresh dataset starts with empty derived tables.
+- QFFViz uses the Identity Repository for local profile reads. Legacy identity writes and vector features are paused rather than supported by a temporary storage path. [Phase 6](#phase-6--qffviz-redesign) records the impact and collects redesign work.
+
 ### Phase 2 — Semantic derivation, Matcher, and repository API integration
 
 #### Components and changes in this phase
@@ -312,13 +320,40 @@ Production hosting, authorization implementation details, retention, backup, and
 - Keep the calibration procedure reproducible and versioned. Routine tests use fixtures and cached scores, not live embedding calls.
 - Treat approval of a calibration model as an analyst decision; it does not change source preferences or independently approve canonical concepts.
 
+### Phase 6 — QFFViz redesign
+
+Collect QFFViz redesign changes here so they can be prioritized together. The first work item is recovery from the Phase 1 repository migration. Vector-dependent work uses the rebuilt vectors and APIs delivered in Phase 2.
+
+#### Work item: Recover from the Phase 1 repository migration
+
+| Area | Change and impact |
+| --- | --- |
+| Identity fixtures | Assigned stable GUIDs to 162 preferences across six profiles. Removed preference and kind vectors and embedding metadata without changing the other source fields. Legacy vector views no longer have data in the identity JSON. |
+| Profile reads and edits | QFFViz's local `GET /api/files` now adapts Identity Repository API responses for existing profile views. `PUT /api/files` returns `405`, so the Raw JSON and preference editors can no longer save through that route. The Identity Repository already exposes revision-checked preference updates. |
+| Vector tools | The legacy `/api/embeddings` routes return `503`. The old refresh/status tools, heatmaps, similarity plots, keyword maps, and match preview are disabled or lack data. These are examples of the impact, not a feature restoration checklist. |
+
+#### Components and changes in this phase
+
+| System component | Change |
+| --- | --- |
+| QFFViz | Redesign a small set of analyst workflows for exploration, data cleansing, and approved overrides. Remove or replace obsolete pages and retire the temporary profile adapter as the new views take over. |
+| Identity Repository API | Reuse authorized profile reads and revision-checked preference edits for source-data cleansing. Add only operations required by the agreed workflows; do not restore a raw file editor. |
+| QFF Repository API and semantic derivation service | Use repository APIs for derived analytics and analyst overrides, and backend derivation for refreshes. Add only missing endpoints needed by the selected workflows. If an analyst match preview is retained, call the Matcher service rather than computing matches in QFFViz. |
+
+#### Requirements
+
+- Choose which analyst tasks to support before designing pages. Use legacy pages only to identify what was interrupted, not as requirements for the replacement.
+- Keep source edits in the Identity Repository and vectors and QFF-owned overrides in the QFF Repository. QFFViz must not read or write repository files or LanceDB, run derivation, or approve preferences on a customer's behalf.
+- Show dataset-level staleness and clear states for missing, rebuilding, or failed derived data. A full update runs on the backend; the UI reloads results when it completes.
+- Verify on simulated profiles that an analyst can read data, save a permitted edit with revision checking, and view rebuilt analytics after a backend refresh without restoring vectors to identity JSON.
+
 ## Decisions requiring follow-up
 
 Phase 0 decisions are recorded above. Production identity security, hosting, backup, retention, and log forwarding remain deployment work. Exact semantic-envelope wording, retrieval limits, heuristic weights, and review thresholds are left to Phase 2 design/simulation and must be versioned and evaluated on reviewed examples. Probability calibration gates are defined in Phase 5. Advanced time-series/context-aware analysis of changing or contradictory preferences is deferred until a sufficiently large longitudinal dataset is available.
 
 ## Recommended immediate milestone
 
-Proceed with Phase 1 repository foundations and GUID/vector migration using the recorded test-environment decisions. Use the rebuildable local dataset to design and simulate Phase 2 before building the services; build the Phase 3 MVP only after those service contracts are exercised. Add repository Pub/Sub/batching in a later phase, and begin Phase 5 calibration only when sufficient reviewed labels exist.
+Use the Phase 1 repository APIs and rebuildable local dataset to design and simulate Phase 2 before building the services. Build the Phase 3 MVP only after those service contracts are exercised. Add repository Pub/Sub/batching in a later phase, and begin Phase 5 calibration only when sufficient reviewed labels exist.
 
 ## Application Architecture
 

@@ -1,0 +1,425 @@
+{
+  "identity_id": "DM",
+  "preferences": [
+    {
+      "keyword": "cloud architecture",
+      "definition": "The design and organization of cloud-based services, infrastructure, and their interactions.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "7ea3c99d-d6c7-4303-ae89-bba20d613e4d"
+    },
+    {
+      "keyword": "cyber security",
+      "definition": "The practices and technologies used to protect systems, networks, and data from digital threats.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "ccf2aa23-afba-48a1-ad3d-759b55cdf017"
+    },
+    {
+      "keyword": "identity and access management",
+      "definition": "The processes for managing digital identities and controlling who can access which resources.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "f072a064-d95b-42b2-a9fb-4e8bd89bdb20"
+    },
+    {
+      "keyword": "artificial intelligence",
+      "definition": "Computing methods that perform tasks such as learning, reasoning, or language generation.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "30c32535-09af-4233-a00d-0f549f137c7a"
+    },
+    {
+      "keyword": "software architecture",
+      "definition": "The structure of a software system, including its components and how they interact.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "45bb69fc-7da0-4343-a082-a6e868b4ce59"
+    },
+    {
+      "keyword": "automation",
+      "definition": "Using technology to carry out repeatable tasks with reduced manual effort.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "a9b0f209-bce7-4176-9b4d-da4659460cd6"
+    },
+    {
+      "keyword": "persistent exaggeration",
+      "definition": "Repeatedly overstating claims or results beyond what the evidence supports.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "1f4f195a-22a6-4c89-b60d-d517f5abbabf"
+    },
+    {
+      "keyword": "dishonesty",
+      "definition": "Intentionally misleading others or presenting information as true when it is not.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "57be983a-6a6f-4686-be7f-ae5953526e2f"
+    },
+    {
+      "keyword": "status-driven conversation",
+      "definition": "Conversation focused mainly on rank, prestige, or influence rather than its substance.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "45b63cac-9f0d-4c11-a2f2-ada78b2fc39d"
+    },
+    {
+      "keyword": "pressure to disclose confidential information",
+      "definition": "Attempts to make someone reveal protected work, business, or personal information.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "5c242ad7-dace-4d7b-a51a-6f260f2eaf01"
+    },
+    {
+      "keyword": "Christianity",
+      "definition": "The religion centered on the life and teachings of Jesus Christ.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "christian friend",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "ae3ca318-dcf8-4f49-a5e4-f9a451421a7c"
+    },
+    {
+      "keyword": "Bible study",
+      "definition": "Reading and discussing the Bible to understand its content and significance.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "christian friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "b2f47eda-a68e-496a-a322-4a5715346364"
+    },
+    {
+      "keyword": "theology",
+      "definition": "The study and reasoned discussion of God, religious belief, and Christian teaching.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "christian friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "219f6715-4beb-4930-a0c0-875b448dbd27"
+    },
+    {
+      "keyword": "hostility toward beliefs",
+      "definition": "Treating Christian beliefs or those who hold them with aggression or contempt.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "a4d4e45b-9459-4b64-b652-cc3cda9ddf14"
+    },
+    {
+      "keyword": "manipulative religious behaviour",
+      "definition": "Using religious ideas or authority to deceive, pressure, or control another person.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "bad6692c-aa0b-4d13-bd0a-7c3d59c883ce"
+    },
+    {
+      "keyword": "pressure to disclose sensitive experiences",
+      "definition": "Pressuring someone to share private personal, emotional, or spiritual experiences.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "78f15e07-87e7-4324-a650-0ec6e1d6d5ac"
+    },
+    {
+      "keyword": "walking",
+      "definition": "Moving on foot for recreation, exercise, or conversation.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "165b103b-88fd-4b9f-80a5-425287270788"
+    },
+    {
+      "keyword": "moderate hiking",
+      "definition": "Walking on trails at a manageable pace and difficulty, without extreme terrain or exertion.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "625d8aca-6052-428f-9309-b42780aaee5e"
+    },
+    {
+      "keyword": "travel",
+      "definition": "Going to places beyond one’s usual surroundings for leisure or exploration.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "f48780be-0de9-4b73-8f1c-58ef986ede6b"
+    },
+    {
+      "keyword": "regional day trips",
+      "definition": "Short visits to nearby destinations that begin and end on the same day.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "621b7461-4214-4fcc-b46d-4099eeacc0e8"
+    },
+    {
+      "keyword": "wildlife",
+      "definition": "Wild animals observed in their natural environments.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "e647941b-bcba-4d59-80aa-a0b95a8dcfb5"
+    },
+    {
+      "keyword": "scenery",
+      "definition": "The visible natural features and landscapes of a place.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "76b53b5e-87ad-4e45-bbf6-71b3cc23c4c8"
+    },
+    {
+      "keyword": "taking photographs",
+      "definition": "Creating images to capture and preserve places, wildlife, or moments.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.6
+        }
+      ],
+      "preference_id": "e1a316e4-0496-428a-88da-f1c4f6d8bb8c"
+    },
+    {
+      "keyword": "safety",
+      "definition": "Taking reasonable precautions to reduce avoidable risks during activities.",
+      "kind": "want",
+      "personas": [],
+      "preference_id": "8e587181-0526-48ca-a371-9497e7fb0a0e"
+    },
+    {
+      "keyword": "repeated unreliability",
+      "definition": "Frequently failing to keep plans or follow through on commitments.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "109027c6-bb07-4420-abe3-f56bca7709b9"
+    },
+    {
+      "keyword": "pressure for excessive social commitment",
+      "definition": "Pushing someone to accept more or more frequent social plans than they want.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "de8a7f66-3b0f-4b15-be00-e547807db6bd"
+    },
+    {
+      "keyword": "reckless or extreme activities",
+      "definition": "Activities that involve unnecessary danger or exceed agreed comfort and ability.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "23e4515d-8d8b-48f3-ab34-ead08b23f199"
+    },
+    {
+      "keyword": "disregard for agreed plans",
+      "definition": "Ignoring or changing arrangements without respecting or coordinating with those involved.",
+      "kind": "boundary",
+      "personas": [],
+      "preference_id": "d533f418-32cf-43b6-b892-90f3827923fd"
+    },
+    {
+      "keyword": "high-intensity guided hiking",
+      "definition": "Strenuous hikes led by a guide, typically involving a demanding pace, distance, or terrain.",
+      "kind": "interest",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "2802607b-8767-4790-8175-fc96093d909c"
+    },
+    {
+      "keyword": "competence",
+      "definition": "Demonstrating the knowledge and ability to handle technical work effectively.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "8c532b30-c2e3-457b-a569-cc0d3a85a028"
+    },
+    {
+      "keyword": "curiosity",
+      "definition": "A desire to ask questions and explore ideas to gain understanding.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "9f7f02eb-2c3c-4adb-bfa2-81d1213ba6c3"
+    },
+    {
+      "keyword": "openness",
+      "definition": "Willingness to consider different ideas, evidence, and perspectives.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "7e810467-38fc-43ac-9e63-299ad93059d7"
+    },
+    {
+      "keyword": "ethics",
+      "definition": "Principles used to consider what is right, responsible, and fair.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "8cd5fc83-4ac1-4a06-b95f-b10e8be19b5e"
+    },
+    {
+      "keyword": "faith in daily life",
+      "definition": "Putting religious trust and convictions into practice in everyday choices and actions.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "cbb4c4e6-562d-4e0e-b381-90daeb069ee9"
+    },
+    {
+      "keyword": "honesty",
+      "definition": "Communicating truthfully and accurately, including when it is difficult.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "afc7fe97-e774-4854-a839-447ef0f31c69"
+    },
+    {
+      "keyword": "humility",
+      "definition": "Recognizing one’s limitations and valuing others without seeking superiority.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "62bb0f75-1d1a-4939-b047-8c163c1a6eab"
+    },
+    {
+      "keyword": "respectful disagreement",
+      "definition": "Discussing different views without insults, contempt, or dismissiveness.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "5acb8824-92a7-4483-a534-38af47be6af5"
+    },
+    {
+      "keyword": "reliability",
+      "definition": "Following through on plans and commitments consistently.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "2d40d260-7def-4f1c-9536-b50b310ba16b"
+    },
+    {
+      "keyword": "curiosity",
+      "definition": "Interest in exploring, noticing, and learning about places and nature.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "6384d390-d01d-4b00-b755-0149491ec62a"
+    },
+    {
+      "keyword": "consideration",
+      "definition": "Taking other people’s comfort, needs, and limits into account.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "eb17c9b3-3a02-4f52-a445-069d6386666c"
+    }
+  ]
+}

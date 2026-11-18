@@ -31,10 +31,10 @@ flowchart LR
 
 ## Application Architecture
 
-Today, the local app uses Vite middleware for fixture file access and embedding operations. The planned split routes identity reads and edits through the Identity Repository API and QFF data and overrides through the QFF Repository API. Matching and semantic derivation move to backend services; the browser does not open repository files or LanceDB.
+During Phase 1, the Vite development server reads simulated profiles through the local Identity Repository API. Legacy identity editing and vector features are paused. The planned split routes identity edits through the Identity Repository API and QFF data and overrides through the QFF Repository API. Matching and semantic derivation move to backend services; the browser does not open repository files or LanceDB.
 
 ## Technical Guidance
 
-- Use the app-local VS Code **Start** launcher or run `pnpm dev` from this folder (port 5180).
-- Treat current file and embedding routes as local development tooling, not production APIs. Do not copy them into other apps.
+- Start the [local Identity Repository](../plan-canonical-ontology.md#running-the-phase-1-foundations-locally) first. Then use the app-local VS Code **Start** launcher or run `pnpm dev` from this folder (port 5180).
+- Redesign legacy pages against the new repository boundaries; do not treat them as requirements or reintroduce vector writes to identity JSON.
 - Text changes invalidate the affected embedding. Follow the [shared QFF embedding rules](../Readme.md#embedding-text-changes-invalidate-vectors) rather than adding a separate refresh policy.
