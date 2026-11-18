@@ -4,7 +4,7 @@
  */
 
 import { createHash, randomUUID } from "node:crypto";
-import { lstat, open, readFile, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, open, readFile, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -125,18 +125,82 @@ export async function migratePreferences(root = fixtureRoot) {
 }
 
 export async function readProfile(folder: string, id: string) {
-  const [identity, personas, relations, text] = await Promise.all(
-    ["identity", "personas", "relations", "properties"].map(kind => readFile(join(folder, `${id}-${kind}.json`), "utf8")),
-  );
+  const read = (kind: string) => readFile(join(folder, `${id}-${kind}.json`), "utf8");
+  const [identity, relations, text, testContext] = await Promise.all([
+    read("identity"), read("relations"), read("properties"),
+    read("test-context").catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== "ENOENT") throw error;
+      return undefined;
+    }),
+  ]);
   return {
     revision: etag(text),
     profile: {
       identity: JSON.parse(identity) as unknown,
-      personas: JSON.parse(personas) as unknown,
+      ...(testContext === undefined ? {} : { personas: JSON.parse(testContext) as unknown }),
       relations: JSON.parse(relations) as unknown,
       properties: parsePreferences(text, id),
     },
   };
+}
+
+export async function createProfile(id: string, input: unknown, root = fixtureRoot) {
+  if (!profileIdPattern.test(id)) throw new RequestError(400, "Invalid profile ID.");
+  if (!isRecord(input)) throw new RequestError(400, "Supply identity, relations and properties objects.");
+  const required = ["identity", "relations", "properties"];
+  for (const key of Object.hasOwn(input, "personas") ? [...required, "personas"] : required) {
+    const document = input[key];
+    if (!isRecord(document) || document.identity_id !== id) {
+      throw new RequestError(400, `The ${key} identity_id must match the profile ID.`);
+    }
+  }
+
+  const properties = parsePreferences(JSON.stringify(input.properties), id);
+  const preferenceIds = new Set<string>();
+  for (const preference of properties.preferences) {
+    if (!Object.hasOwn(preference, "preference_id")) preference.preference_id = randomUUID();
+    const preferenceId = preference.preference_id;
+    if (typeof preferenceId !== "string" || !guid.test(preferenceId) || preferenceIds.has(preferenceId.toLowerCase())) {
+      throw new RequestError(400, "Preferences must have unique GUID IDs.");
+    }
+    preferenceIds.add(preferenceId.toLowerCase());
+  }
+
+  await mkdir(root, { recursive: true });
+  const temporary = join(root, `.create-${randomUUID()}`);
+  const target = join(root, id);
+  await mkdir(temporary);
+  try {
+    const documents = {
+      identity: input.identity,
+      ...(Object.hasOwn(input, "personas") ? { "test-context": input.personas } : {}),
+      relations: input.relations,
+      properties,
+    };
+    for (const [kind, value] of Object.entries(documents)) {
+      await writeFile(join(temporary, `${id}-${kind}.json`), `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+    }
+    try {
+      await rename(temporary, target);
+    }
+    catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "EEXIST" || code === "ENOTEMPTY" || code === "EPERM") {
+        try {
+          await lstat(target);
+          throw new RequestError(409, "Profile already exists.");
+        }
+        catch (targetError) {
+          if (targetError instanceof RequestError) throw targetError;
+          if ((targetError as NodeJS.ErrnoException).code !== "ENOENT") throw targetError;
+        }
+      }
+      throw error;
+    }
+  }
+  finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 }
 
 export function updatePreference(folder: string, id: string, preferenceId: string, revision: string | null, input: unknown) {
@@ -149,7 +213,7 @@ export function updatePreference(folder: string, id: string, preferenceId: strin
     || typeof input.kind !== "string" || !kinds.includes(input.kind)
     || !Array.isArray(input.personas) || !input.personas.every((entry: unknown) => isRecord(entry)
       && Object.keys(entry).every(key => ["persona", "affinity"].includes(key))
-      && typeof entry.persona === "string" && entry.persona.trim()
+      && typeof entry.persona === "string" && (entry.persona === "" || entry.persona.trim() !== "")
       && typeof entry.affinity === "number" && Number.isFinite(entry.affinity) && Math.abs(entry.affinity) <= 1)
   ) throw new RequestError(400, "Supply valid keyword, definition, kind and persona affinities.");
 

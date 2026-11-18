@@ -1,5 +1,7 @@
 # Persona preference embedding data model
 
+> The vector layout and persona-grouped matching described here are the historical simulation baseline. Phase 1 removed vectors and model metadata from identity JSON; Phase 2 compares persona-optional discovery against that baseline. See the [implementation plan](plan-canonical-ontology.md#phase-2--semantic-derivation-matcher-and-repository-api-integration).
+
 ## Purpose
 
 Represent each identity's preferences as explicit concepts shared across personas. Each preference has a kind and concept embedding; each persona membership has its own signed affinity. Kind vectors are stored once in an identity-level map, keeping the identity property file self-contained and portable.
@@ -100,7 +102,9 @@ When the embedding model, version or dimensions change, regenerate all concept a
 
 ## Persona model
 
-Persona details remain in the identity's separate `*-personas.json` file. A persona's preferences are those whose `personas` array names it; the affinity in that membership applies only to that persona. The preference entries are authoritative. Persona vectors, if later useful for broad candidate retrieval, are derived data and should not replace the individual preferences.
+The preference entries are authoritative. In a `personas` array, `"persona": ""` is identity-wide scope, not an unnamed persona; a named entry records an affinity scoped to that label. `personas: []` does not assert an identity-wide affinity. Do not automatically promote scoped affinities to identity-wide facts.
+
+The optional `*-test-context.json` file preserves scripted persona narratives for baseline comparisons. It does not define required inputs, override source preferences, or authorize disclosure. Personas can emerge from recurring patterns and are saved only at the person's choice.
 
 ## Portable identity files and BASE consistency
 

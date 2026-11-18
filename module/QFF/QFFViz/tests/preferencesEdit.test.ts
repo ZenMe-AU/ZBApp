@@ -24,7 +24,7 @@ test("Preferences Edit selects identities and saves persona preferences", { time
     for (const [id, name] of [["a", "Alice"], ["b", "Bob"]]) {
       files.push(
         { path: `${id}/${id}-identity.json`, content: { identity_id: id, name } },
-        { path: `${id}/${id}-personas.json`, content: { identity_id: id, personas: [{ persona: "Friends" }, { persona: "Colleagues" }] } },
+        { path: `${id}/${id}-test-context.json`, content: { identity_id: id, personas: [{ persona: "Friends" }, { persona: "Colleagues" }] } },
         { path: `${id}/${id}-properties.json`, content: {
           identity_id: id, embedding_model: { name: "test", version: "1", dimensions: 16 },
           preferences: [{ keyword: "Music", definition: "Listening to music", kind: "interest", personas: [{ persona: "Friends", affinity: 0.5 }], embedding: [1, ...Array(15).fill(0)] }],

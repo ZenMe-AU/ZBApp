@@ -25,7 +25,7 @@ flowchart LR
 
 ## Functional Requirements
 
-- Let customers submit a match request for their profile and the applicable persona or pair scope. Allow profile selection only in the test environment.
+- Let customers submit a match request for their profile and applicable pair scope, with optional current intent. Do not require a persona. Allow profile selection only in the test environment.
 - Explain the result without exposing another person's preferences, affinities, or evidence that could identify them.
 
 ## Application Architecture

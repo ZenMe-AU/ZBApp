@@ -32,7 +32,7 @@ test("migrates only vector fields and keeps stable IDs across revision-checked e
   t.after(() => rm(root, { recursive: true, force: true }));
   const folder = join(root, "EX");
   await mkdir(folder);
-  for (const kind of ["identity", "personas", "relations"]) {
+  for (const kind of ["identity", "relations"]) {
     await writeFile(join(folder, `EX-${kind}.json`), JSON.stringify({ identity_id: "EX" }));
   }
   const input = {

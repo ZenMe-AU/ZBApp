@@ -9,6 +9,8 @@ Discover candidate personas and social contexts by aggregating what a person sha
 
 A contact can encounter several personas and belong to several social contexts. The person reviews and names the patterns discovered from their sharing history and stated boundaries.
 
+Neither a persona nor contact history is required for discovery. Start with stated preferences and boundaries, with optional current intent for the encounter. Suggest concrete connection opportunities without assigning either person a role. A single suggestion, selection, or skip is not enough to infer a durable persona. Defer automated pattern discovery until persona-optional matching has been evaluated; people may still define a persona themselves.
+
 ## Boundary-first input
 
 People may find it easier or feel more comfortable naming concepts they prefer not to share than listing concepts they want to share. Offer a boundary-first prompt: "Which topics would you prefer to keep private from this contact?"
@@ -57,3 +59,5 @@ These bundles, audiences, and boundaries provide candidates for personas and soc
 5. Let the person name, merge, split, confirm, or dismiss candidate personas and social contexts.
 
 Keep source observations and choices, derived candidates, and person-confirmed structures separately identifiable. Store sharing history and boundaries privately, with controls to inspect, correct, and delete inputs and their derived results.
+
+Topic affinity, conversation fit, and permission to disclose are separate. A pattern may inform a suggestion, but cannot override an explicit boundary or authorize disclosure.

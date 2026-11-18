@@ -66,7 +66,9 @@ function identitiesApi(): Plugin {
           const { profile_ids: ids } = await readIdentityApi<{ profile_ids: string[] }>("profiles");
           const profiles = await Promise.all(ids.map(async (id) => {
             const { profile } = await readIdentityApi<{ profile: Record<string, unknown> }>(`profiles/${encodeURIComponent(id)}`);
-            return Object.entries(profile).map(([kind, content]) => ({ path: `${id}/${id}-${kind}.json`, content }));
+            return Object.entries(profile).map(([kind, content]) => ({
+              path: `${id}/${id}-${kind === "personas" ? "test-context" : kind}.json`, content,
+            }));
           }));
           sendJson(res, 200, profiles.flat());
         }

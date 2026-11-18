@@ -157,6 +157,7 @@ The plan is deliberately incremental; phases remain requirements and proposed im
 #### Requirements
 
 - Design, simulate and validate semantic mapping behavior against source identities before implementing the service.
+- Compare persona-optional discovery against the existing persona-grouped baseline on the same fixtures. Use identity-wide preferences (`persona: ""`) and boundaries, with optional current intent; test whether suggestions are actionable and surface useful overlaps across the old roles without leaking counterpart evidence.
 - Generate semantic representations and mappings without modifying source preferences; persist all derived vectors/mappings in QFF Repository.
 - Move matcher execution to a separate Node.js Azure Functions app. It must persist each match transaction through QFF Repository and return the permitted result to its requester.
 - Provide explainable mapping/match paths, respect hand-authored controls, and keep source data private in per-requester outputs.
@@ -173,6 +174,7 @@ The plan is deliberately incremental; phases remain requirements and proposed im
 - Build a headless derivation backend: read identity preferences through Identity Repository, regenerate preference/kind/concept vectors into QFF Repository, and persist mappings, provenance and run status there.
 - Build Matcher as a separate Node.js Azure Functions app. It reads permitted identity data through Identity Repository and QFF aggregates/vectors through QFF Repository, computes explainable concept-based matches, persists a minimal transaction through QFF Repository, and returns a requester-scoped response.
 - Retain direct preference-to-preference matching as an evaluation baseline. Keep kind, signed affinity and ontology relationship as distinct signals.
+- Exclude optional `*-test-context.json` narratives from derivation and the persona-optional matching path. Do not treat scripted personas as ground truth or save inferred personas automatically. Defer automated [persona discovery](socialContextPersonaDiscovery.md) until the persona-optional experiment has been evaluated.
 - Implement customer confirmation through the QFFIdentity and Identity Repository: accepting proposed wording creates a new preference linked to its inference; keep the prior preference independent and allow it to be marked superseded. Analyst overrides never imply customer consent.
 - Use idempotent request/run identifiers and bounded operations so retries do not duplicate logical transactions. Avoid live Azure embedding calls in routine tests by using fixtures/cached vectors.
 - Add focused derivation and Matcher tests for provenance, score terminology, privacy-safe responses, repository persistence, retries, and failure handling.
@@ -265,7 +267,7 @@ The plan is deliberately incremental; phases remain requirements and proposed im
 
 ### Phase 6 — QFFViz redesign
 
-Collect QFFViz redesign changes here so they can be prioritized together. The first work item is recovery from the Phase 1 repository migration. Vector-dependent work uses the rebuilt vectors and APIs delivered in Phase 2.
+QFFViz does not need to remain operational before Phase 6. Do not block earlier phases or add compatibility workarounds just to keep the legacy UI running. Its current design may no longer be valid: use it only as historical context, not as a source of requirements or implementation details for new work. Base the redesign on validated analyst workflows and the repository and service contracts.
 
 #### Work item: Recover from the Phase 1 repository migration
 
@@ -274,6 +276,12 @@ Collect QFFViz redesign changes here so they can be prioritized together. The fi
 | Identity fixtures | Assigned stable GUIDs to 162 preferences across six profiles. Removed preference and kind vectors and embedding metadata without changing the other source fields. Legacy vector views no longer have data in the identity JSON. |
 | Profile reads and edits | QFFViz's local `GET /api/files` now adapts Identity Repository API responses for existing profile views. `PUT /api/files` returns `405`, so the Raw JSON and preference editors can no longer save through that route. The Identity Repository already exposes revision-checked preference updates. |
 | Vector tools | The legacy `/api/embeddings` routes return `503`. The old refresh/status tools, heatmaps, similarity plots, keyword maps, and match preview are disabled or lack data. These are examples of the impact, not a feature restoration checklist. |
+
+#### Work item: Support profiles without scripted personas
+
+- The Personas grid and profile editor have no narrative rows for profiles without test context. The Personas grid's **Add persona** only changes an in-memory draft when no fixture exists; don't restore test-narrative editing as a production workflow.
+- The legacy Preferences grid requires a non-empty persona when adding a preference, so it blocks identity-wide entries (`"persona": ""`). Any retained editor should make **Identity-wide** an explicit choice and work for profiles with no persona labels.
+- Review persona and similarity networks before retaining them. They group by legacy labels and may have no persona nodes without labelled data; don't render missing labels as inferred personas. Verify retained workflows with profiles that have identity-wide preferences and no test-context file.
 
 #### Components and changes in this phase
 

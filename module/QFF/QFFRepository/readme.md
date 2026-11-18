@@ -22,6 +22,7 @@ flowchart LR
 ## Functional Requirements
 
 - **Implemented:** `GET /api/v1/catalogue` returns the active version, up to 100 concepts, and a `truncated` flag. The initial catalogue has no reviewed concepts, and `derived_data_stale` remains true because refresh is not implemented in Phase 1.
+- **Implemented:** Keep an idempotent `identity_preference_refs` index of source identity IDs, preference IDs, and source revisions for downstream derivation. It does not duplicate identity profiles.
 - **Planned:** Serve and persist canonical concepts, mappings, vectors, derivation runs, and minimal match transactions through the API. Keep identity source data in the [Identity Repository](../IdentityRepository/readme.md).
 
 ## Application Architecture

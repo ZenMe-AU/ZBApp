@@ -27,6 +27,11 @@
     "dimensions": "integer",
     "vector": "vector"
   },
+  "identity_preference_refs": {
+    "identity_id": "text",
+    "preference_id": "text",
+    "source_revision": "text"
+  },
   "runs": {
     "run_id": "text",
     "status": "text",

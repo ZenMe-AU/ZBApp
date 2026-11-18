@@ -15,7 +15,7 @@ test("bootstraps a disposable LanceDB dataset without resetting existing data", 
   t.after(() => rm(path, { recursive: true, force: true }));
   const first = await openDataset(path);
   assert.deepEqual((await first.tableNames()).sort(), [
-    "catalogue", "concepts", "mappings", "match_transactions", "runs", "vectors",
+    "catalogue", "concepts", "identity_preference_refs", "mappings", "match_transactions", "runs", "vectors",
   ]);
   const runs = await first.openTable("runs");
   await runs.add([{ run_id: "example", status: "failed", details_json: "{}" }]);
