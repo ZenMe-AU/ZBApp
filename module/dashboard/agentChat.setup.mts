@@ -84,9 +84,9 @@ export async function takeLock() {
   }
 }
 
-export async function pickParticipants() {
+export async function pickParticipants(runsDirectory = RUNS_DIR) {
   if (process.env.AGENTS) return process.env.AGENTS.split(",").map((name) => name.trim());
-  const runCount = (await readdir(RUNS_DIR).catch(() => [])).filter((file) => /_\w+(?:-\w+){2,3}\.md$/.test(file)).length;
+  const runCount = (await readdir(runsDirectory).catch(() => [])).filter((file) => /^\d{4}-\d{2}-\d{2}T.+Z_.+\.md$/.test(file) && !file.endsWith(".chat.md")).length;
   return [0, 1, 2].map((index) => NAMES[(runCount + index) % NAMES.length]);
 }
 

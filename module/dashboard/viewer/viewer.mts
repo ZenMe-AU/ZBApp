@@ -23,7 +23,7 @@ type RefereeEvidence = {
   activity?: Array<{ runId: string; eventIds: string[] }>;
   memories?: Array<{ owner: string; subject: string; path: string }>;
   repository?: Array<{ path: string; line: number }>;
-  api?: Array<{ actor: string; path: string }>;
+  api?: Array<{ actor: string; path: string; data?: unknown }>;
 };
 type ChatMessage = { role: "user" | "assistant"; content: string; evidence?: RefereeEvidence };
 type RunOption = { name: string; mtime: number; completed: boolean };
@@ -420,6 +420,54 @@ function inspectRefereeMessage(message: ChatMessage, index: number) {
       `Response content\n${message.content}`,
     ].join("\n\n"),
   });
+  const evidence = message.evidence;
+  if (message.role === "assistant") {
+    const content = document.createElement("div");
+    content.className = "referee-detail";
+    const section = (label: string, text: string) => {
+      const element = document.createElement("section");
+      const heading = document.createElement("h3");
+      const paragraph = document.createElement("p");
+      heading.textContent = label;
+      paragraph.textContent = text;
+      element.append(heading, paragraph);
+      content.append(element);
+      return element;
+    };
+    section("Answer", message.content);
+    section("Scope", evidence?.scope === "all-runs" ? "All runs · Activity history" : evidence?.scope === "selected-run" ? "Selected run · Activity history" : "Not recorded");
+    const api = section("API", "Read-only Q3 queries inside Dashboard. Data below was supplied to the Referee, not verified as proof of each claim.");
+    for (const source of evidence?.api ?? []) {
+      const detail = document.createElement("details");
+      const summary = document.createElement("summary");
+      const data = document.createElement("pre");
+      summary.textContent = `API · ${source.actor}: ${source.path}`;
+      data.textContent = source.data === undefined ? "Response data was not included." : JSON.stringify(source.data, null, 2);
+      detail.append(summary, data);
+      api.append(detail);
+    }
+    if (!evidence?.api?.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "No API evidence included.";
+      api.append(empty);
+    }
+    const other = section("Other evidence", "Memory and repository sources reflect the data collected for this response, not a historical snapshot.");
+    const groups: Array<[string, string[]]> = [
+      ["Activity", (evidence?.activity ?? []).map(({ runId, eventIds }) => `${runId}\n${eventIds.length} events\n${eventIds.join("\n")}`)],
+      ["Memory", (evidence?.memories ?? []).map(({ owner, subject, path }) => `${owner} → ${subject}\n${path}`)],
+      ["Repository", (evidence?.repository ?? []).map(({ path, line }) => `${path}:${line}`)],
+    ];
+    for (const [label, entries] of groups) {
+      const detail = document.createElement("details");
+      const summary = document.createElement("summary");
+      const body = document.createElement("p");
+      summary.textContent = `${label} (${entries.length})`;
+      body.textContent = entries.join("\n\n") || "No evidence included.";
+      detail.append(summary, body);
+      other.append(detail);
+    }
+    elements.eventText.replaceChildren(content);
+  }
   renderChat();
 }
 
@@ -590,7 +638,7 @@ function chatStatus(text: string) {
   return status;
 }
 
-function renderChat() {
+function renderChat(scrollToLatest = false) {
   if (!elements.chatMessages) return;
   const referee = state.activeView === "referee-chat";
   const messages = referee ? state.refereeMessages : state.chatMessages;
@@ -620,7 +668,9 @@ function renderChat() {
     return item;
   });
   if (statusText) renderedMessages.push(chatStatus(statusText));
+  const scrollTop = elements.chatMessages.scrollTop;
   elements.chatMessages.replaceChildren(...renderedMessages);
+  elements.chatMessages.scrollTop = scrollToLatest ? elements.chatMessages.scrollHeight : scrollTop;
 }
 
 function renderRefereeEvidence(evidence: RefereeEvidence | null) {
@@ -633,7 +683,7 @@ function renderRefereeEvidence(evidence: RefereeEvidence | null) {
     ["Activity", (evidence.activity ?? []).map(({ runId, eventIds }) => `${runId}: ${eventIds.length} event${eventIds.length === 1 ? "" : "s"}`)],
     ["Memory", (evidence.memories ?? []).map(({ owner, subject, path }) => `${owner} → ${subject}: ${path}`)],
     ["Repository", (evidence.repository ?? []).map(({ path, line }) => `${path}:${line}`)],
-    ["API", (evidence.api ?? []).map(({ actor, path }) => `${actor}: GET ${path}`)],
+    ["API", (evidence.api ?? []).map(({ actor, path }) => `${actor}: ${path}`)],
   ].filter(([, values]) => values.length) as Array<[string, string[]]>;
   elements.refereeEvidenceSummary.textContent = `Evidence used (${rows.reduce((count, [, values]) => count + values.length, 0)})`;
   elements.refereeEvidenceList.replaceChildren(...rows.map(([label, values]) => {
@@ -643,6 +693,28 @@ function renderRefereeEvidence(evidence: RefereeEvidence | null) {
     title.textContent = label;
     detail.textContent = values.join("\n");
     item.append(title, detail);
+    if (label === "API") {
+      detail.remove();
+      for (const source of evidence.api ?? []) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = `${source.actor}: ${source.path}`;
+        button.addEventListener("click", () => renderInspector({
+          kind: "system",
+          title: "Referee API evidence",
+          actorLabel: source.actor,
+          kindLabel: "Read-only · in-process",
+          text: [
+            `Actor\n${source.actor}`,
+            `Query path\n${source.path}`,
+            "Source\nDashboard → Q3 repository → configured Table storage. This is an internal read, not a Q3 HTTP request.",
+            "Evidence\nData supplied to the Referee for this response; this does not prove that every returned item supports the answer.",
+            `Response data\n${source.data === undefined ? "Not included in this response." : JSON.stringify(source.data, null, 2)}`,
+          ].join("\n\n"),
+        }));
+        item.append(button);
+      }
+    }
     return item;
   }));
   elements.refereeEvidence.hidden = false;
@@ -926,7 +998,7 @@ if (elements) {
     elements.chatSend.textContent = referee ? "Investigating…" : "Thinking…";
     if (referee) state.refereeStatus = "Investigating…";
     else state.chatStatus = "Thinking…";
-    renderChat();
+    renderChat(true);
     try {
       const response = await fetch(referee ? "/api/referee-chat" : "/api/chat", {
         method: "POST",
@@ -953,7 +1025,7 @@ if (elements) {
       else state.chatStatus = "";
       elements.chatSend.disabled = false;
       elements.chatSend.textContent = "Send";
-      renderChat();
+      renderChat(true);
       elements.chatInput.focus();
     }
   });

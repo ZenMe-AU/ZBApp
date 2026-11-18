@@ -36,7 +36,7 @@ export function refereeEvidence(context) {
     activity: context.activity.map((run) => ({ runId: run.runId, eventIds: run.events.map((event) => event.id).filter(Boolean) })),
     memories: context.memories.map(({ owner, subject, path }) => ({ owner, subject, path })),
     repository: context.repository.map(({ path, line }) => ({ path, line })),
-    api: context.api.map(({ actor, path }) => ({ actor, path })),
+    api: context.api.map(({ actor, path, data }) => ({ actor, path, data })),
   };
 }
 

@@ -72,7 +72,7 @@ const base = process.env.DASHBOARD_URL ?? "http://127.0.0.1:4178";
       }
       if (url.pathname === "/api/answers") data = { answers: [], activity: [] };
       if (url.pathname === "/api/chat" || url.pathname === "/api/referee-chat")
-        data = { answer: longReply ? "Long reply line\n".repeat(100) : "Verified response", evidence: { scope: "run", activity: [] } };
+        data = { answer: longReply ? "Long reply line\n".repeat(100) : "Verified response", evidence: { scope: "run", activity: [], api: [{ actor: "Ian", path: "/questions", data: [{ id: "evidence-question", title: "Evidence snapshot" }] }] } };
       if (url.pathname === "/api/referee-chat") refereeScopes.push(route.request().postDataJSON().scope);
       if (url.pathname === "/api/chat" || url.pathname === "/api/referee-chat") await new Promise(resolve => setTimeout(resolve, 700));
       await route.fulfill({ json: data });
@@ -114,6 +114,14 @@ const base = process.env.DASHBOARD_URL ?? "http://127.0.0.1:4178";
       assert.equal(await page.locator(".thinking-dots span").first().evaluate(element => getComputedStyle(element).animationName), view === "referee-chat" ? "none" : "thinking-wave");
       await page.getByRole("button", { name: "Verified response", exact: true }).waitFor();
     }
+    await page.getByRole("button", { name: "Verified response", exact: true }).click();
+    assert((await page.locator("#event-text").innerText()).includes("Verified response"));
+    assert.deepEqual(await page.locator("#event-text h3").allTextContents(), ["Answer", "Scope", "API", "Other evidence"]);
+    await page.locator("#event-text summary").filter({ hasText: "API · Ian: /questions" }).click();
+    assert((await page.locator("#event-text").innerText()).includes("Evidence snapshot"));
+    await page.locator("#referee-evidence summary").click();
+    await page.getByRole("button", { name: "Ian: /questions", exact: true }).click();
+    assert((await page.locator("#event-text").innerText()).includes("Evidence snapshot"));
     assert.deepEqual(refereeScopes, ["all-runs"]);
     await page.locator("#chat-run-select").selectOption(run);
     await page.locator("#chat-input").fill("Check only this run");
@@ -146,6 +154,10 @@ const base = process.env.DASHBOARD_URL ?? "http://127.0.0.1:4178";
         await page.locator("#chat-input").fill("Long response check");
         await page.locator("#chat-send").click();
         await page.waitForFunction(() => document.querySelector("#chat-messages").textContent.includes("Long reply line") && !document.querySelector("#chat-send").disabled);
+        await page.waitForFunction(() => {
+          const element = document.querySelector("#chat-messages");
+          return element.scrollHeight - element.clientHeight - element.scrollTop < 2;
+        });
         await page.locator("#chat-messages").evaluate((element) => { element.scrollTop = 0; });
         await page.locator("#chat-panel").evaluate(element => element.scrollIntoView({ block: "end" }));
         await page.locator("#chat-messages").hover();

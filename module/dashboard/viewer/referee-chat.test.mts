@@ -36,6 +36,6 @@ test("returns interpretation separately from its evidence inventory", async () =
     activity: [{ runId: "run-1", eventIds: Array.from({ length: 300 }, (_, index) => `event-${index}`) }],
     memories: [{ owner: "Ian", subject: "Mike", path: "Ian/memory/Mike.md" }],
     repository: [{ path: "module/file.mts", line: 4 }],
-    api: [{ actor: "Ian", path: "/questions" }],
+    api: [{ actor: "Ian", path: "/questions", data: [] }],
   });
 });

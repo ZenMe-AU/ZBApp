@@ -14,7 +14,7 @@ import { assertLlmReady, getLlmProvider, getLlmModel, loadRuntimeSettings, getPr
 import { list, receiveDashboardMessage, replyToDashboard, runAgentChat } from "./agentChat.run.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import { report } from "./agentChat.report.mjs";
-import { HUMAN_NAME, writeMemory } from "./agentChat.setup.mjs";
+import { HUMAN_NAME, pickParticipants, writeMemory } from "./agentChat.setup.mjs";
 import { belongsToExperiment, isLocalAzurite, resetExperiment } from "./agentChat.reset.mjs";
 
 const originalFetch = globalThis.fetch;
@@ -511,4 +511,29 @@ describe.skipIf(!process.env.AGENT_RUN)("agent chat run", () => {
     }
     expect(state.status, JSON.stringify(state)).toBe("passed");
   }, 60 * 60 * 1000);
+});
+
+
+test("rotates all agents after completed human runs, ignoring chat logs and unrelated files", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-rotation-"));
+  vi.stubEnv("AGENTS", "");
+  try {
+    await writeFile(path.join(directory, "README.md"), "notes");
+    await writeFile(path.join(directory, "2026-11-17T05-52-29.396Z_Ian-Eric-Mike-Josh Kim (Zenedu).chat.md"), "incomplete");
+    const expected = [
+      ["Mike", "Bella", "Ian"],
+      ["Bella", "Ian", "Eric"],
+      ["Ian", "Eric", "Mike"],
+      ["Eric", "Mike", "Bella"],
+      ["Mike", "Bella", "Ian"],
+    ];
+    for (let count = 0; count < expected.length; count++) {
+      expect(await pickParticipants(directory)).toEqual(expected[count]);
+      await writeFile(path.join(directory, `2026-11-17T05-52-0${count}.396Z_Ian-Eric-Mike-Josh Kim (Zenedu).md`), "report");
+    }
+    vi.stubEnv("AGENTS", "Bella, Eric, Mike");
+    expect(await pickParticipants(directory)).toEqual(["Bella", "Eric", "Mike"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
