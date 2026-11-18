@@ -69,8 +69,8 @@
       "path": "./module/QFF/QFFIdentity",
     },
     {
-      "name": "QFFModelling",
-      "path": "./module/QFF/QFFModelling",
+      "name": "QFFModeler",
+      "path": "./module/QFF/QFFModeler",
     },
     {
       "name": "QFFMatcher",

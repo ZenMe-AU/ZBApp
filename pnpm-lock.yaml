@@ -118,7 +118,7 @@ importers:
         specifier: ^8.3.6
         version: 8.3.6(@types/node@20.19.43)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.9.1)
 
-  module/QFF/QFFModelling:
+  module/QFF/QFFModeler:
     dependencies:
       ag-grid-community:
         specifier: ^36.3.0

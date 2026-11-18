@@ -9,4 +9,4 @@ if (!app) {
   throw new Error("Application root element is missing.");
 }
 
-app.textContent = "QFFModelling is ready for implementation.";
+app.textContent = "QFFModeler is ready for implementation.";
