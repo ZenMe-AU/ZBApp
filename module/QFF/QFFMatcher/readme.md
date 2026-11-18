@@ -37,3 +37,10 @@ The browser calls the Matcher service, not the repositories. The service reads t
 - Use the app-local VS Code **Start** launcher or run `pnpm dev` from this folder (port 5183).
 - Enforce privacy in the service response, not by hiding fields in the browser. Test the response with simulated profiles.
 - If scores are shown, label similarity and heuristic confidence separately. Show probability only when the service supplies it from an approved calibration.
+
+## Design decisions
+
+- In production, customers may access only their own data or permitted de-identified aggregates. Analysts access cross-identity data only through their authorized APIs; profile selection is a test-only facility.
+- The Matcher reads the minimum required data through the repository APIs, persists a minimal QFF-owned match transaction before returning a result, and does not copy full identity profiles into that transaction.
+- Use stable request/transaction IDs and idempotent retries so a retry does not create a duplicate logical match.
+- Similarity is a retrieval/ranking signal; heuristic confidence is separate and versioned. Do not expose probability until an approved calibration is available.

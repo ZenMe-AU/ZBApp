@@ -6,6 +6,7 @@ This folder contains all system, module, and API documentation.
 
 - System overview: [Overview.md](Overview.md)
 - Architecture pattern index: [ArchitecturePatterns/README.md](ArchitecturePatterns/README.md)
+- Component README template: [architecture.template.md](architecture.template.md)
 - Side effect and idempotency guidance: [SideEffectIdempotency.md](SideEffectIdempotency.md)
 - Data consistency decision: [Decisions/001-base-over-distributed-acid.md](Decisions/001-base-over-distributed-acid.md)
 

@@ -33,3 +33,9 @@ The browser reads and saves preferences through the Identity Repository API, whi
 
 - Use the app-local VS Code **Start** launcher or run `pnpm dev` from this folder (port 5181).
 - Use stable preference GUIDs and handle revision conflicts without silently overwriting edits. Test that approving wording creates a new record and preserves the original.
+
+## Design decisions
+
+- Customer acceptance creates an independent preference linked to its inference; it never overwrites or deletes the existing preference. The customer may keep, replace, supersede, or contradict preferences.
+- Preference confirmation belongs to QFFIdentity. Analyst approval of a concept or mapping in QFFModeler is not customer confirmation.
+- Profile selection/impersonation is test-only. Production access uses the authenticated user's MSAL `oid` to resolve their internal profile and limits access to that profile.

@@ -42,3 +42,11 @@ The browser reads authorized source preferences through the Identity Repository 
 - Use the app-local VS Code **Start** launcher or run `pnpm dev` from this folder (port 5182).
 - Use AG Grid for editing and review tables and Plotly for charts. Keep one primary visualization per page except on the dashboard.
 - Keep similarity and heuristic confidence separate and preserve version and evidence details when reviewing mappings. Probability calibration is later work.
+
+## Design decisions
+
+- `embedding_similarity` retrieves and ranks candidates; a separately versioned `confidence_score` is an uncalibrated heuristic for mapping evidence. Neither is a probability.
+- Keep persona affinity out of primary semantic embeddings. Use directly supported evidence and typed ontology relationships in the heuristic; tune weights and review thresholds through Phase 2 simulation.
+- Introduce `probability` only after held-out calibration and review in Phase 5, with the calibration model, labelled dataset, relationship type, and catalogue version recorded.
+- Analysts may approve concepts, mappings, and overrides, but those actions never confirm customer preferences. Customer wording approval remains in QFFIdentity.
+- Semantic derivation runs execute in the backend, use stable run IDs, and support idempotent retries; the browser only submits and monitors runs.
