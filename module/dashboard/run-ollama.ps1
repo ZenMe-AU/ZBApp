@@ -92,11 +92,12 @@ Write-Host 'Ollama JSON smoke test passed.'
 if ($SmokeOnly) { return }
 
 $savedEnvironment = @{}
-foreach ($name in @('LLM_BASE_URL', 'LLM_API_KEY', 'AGENT_MODEL', 'JUDGE_MODEL', 'AGENT_RUN')) {
+foreach ($name in @('LLM_PROVIDER', 'LLM_BASE_URL', 'LLM_API_KEY', 'AGENT_MODEL', 'JUDGE_MODEL', 'AGENT_RUN')) {
     $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
 Push-Location (Join-Path $PSScriptRoot '../..')
 try {
+    $env:LLM_PROVIDER = 'ollama'
     $env:LLM_BASE_URL = "$baseUrl/v1"
     $env:AGENT_MODEL = $Model
     $env:JUDGE_MODEL = $Model

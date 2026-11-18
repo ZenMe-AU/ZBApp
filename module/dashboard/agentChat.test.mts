@@ -11,7 +11,7 @@ import { TableClient } from "@azure/data-tables";
 import { invalidAction, learningCoverage, needsAnswer, offlineActionReason, participantFriends, rules } from "./agentChat.config.mjs";
 import { factMemory, promptMemory } from "./agentChat.memory.mjs";
 import { assertLlmReady, getLlmProvider, getLlmModel, loadRuntimeSettings, getProviderInstance, llm, OpenvinoProvider, ClaudeProvider, OpenaiCompatibleProvider } from "./agentChat.llm.mjs";
-import { list, receiveDashboardMessage, replyToDashboard } from "./agentChat.run.mjs";
+import { list, receiveDashboardMessage, replyToDashboard, runAgentChat } from "./agentChat.run.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import { report } from "./agentChat.report.mjs";
 import { HUMAN_NAME, writeMemory } from "./agentChat.setup.mjs";
@@ -33,6 +33,14 @@ describe("Agent API lists", () => {
 });
 
 describe("Dashboard agent transport", () => {
+  test("checks Dashboard readiness before starting inference or agent writes", async () => {
+    for (const response of [new Response("Unavailable", { status: 503 }), new Response(JSON.stringify({ status: "idle" }))]) {
+      globalThis.fetch = vi.fn().mockResolvedValue(response);
+      await expect(runAgentChat()).rejects.toThrow("Dashboard must have an active run");
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(new URL(String(vi.mocked(fetch).mock.calls[0][0])).pathname).toBe("/api/run");
+    }
+  });
   test("sends scoped operations and correlation IDs to Dashboard HTTP", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ return: { list: [] } })));
     await list({ token: "execution-token" }, "/questions");

@@ -114,7 +114,7 @@ export function renderQuestions({ activeAgent, elements, questions, status, sele
     empty.className = "empty";
     empty.textContent = `Questions for ${activeAgent} could not be loaded.`;
     elements.feed.replaceChildren(empty);
-    renderInspector({ title: "Question details", kindLabel: "Question", text: "The Question API request failed." });
+    renderInspector({ title: "Question details", kindLabel: "Question", text: "The Dashboard question request failed." });
     return;
   }
   if (!questions.length) {
@@ -220,10 +220,10 @@ export function renderQuestions({ activeAgent, elements, questions, status, sele
     const technical = node("div", "detail-disclosure-body");
     const technicalList = node("dl", "technical-list");
     technicalList.append(
-      technicalRow("Question Source API", "GET /questionQry/getQuestions", true),
-      technicalRow("Question Dashboard Proxy", "GET /api/questions?person={person}", true),
-      technicalRow("Answer Source API", "GET /questionQry/getAnswers/{questionId}", true),
-      technicalRow("Answer Dashboard Proxy", "POST /api/answers", true)
+      technicalRow("Question Dashboard API", "GET /api/questions?person={person}", true),
+      technicalRow("Question Source", "Quest repository · getCombinationListByUser (in-process)"),
+      technicalRow("Answer Dashboard API", "POST /api/answers", true),
+      technicalRow("Answer Source", "Quest repository · getAnswerListByQuestionId (in-process)")
     );
     const executions = (activityEvents as QuestionApiEvent[])
       .filter((event) => event.questionId === question.id && event.httpMethod && event.apiPath && event.eventType !== "api.failed")

@@ -11,20 +11,26 @@ results, relationships, questions, and chat in one interface.
 ```mermaid
 flowchart LR
   Browser["Browser UI<br/>index.html + viewer modules"] -->|"HTTP / JSON"| Server["viewer/server.mts<br/>Node HTTP server"]
-  Server -->|"read + append"| Runs["vitest/agents/runs/<br/>.chat.md + .md"]
-  Server -->|"start test process"| Harness["agentChat.test.mts<br/>Vitest harness"]
-  Harness --> API["Q3 Functions API<br/>localhost:7073"]
-  Harness --> Storage["Azurite Table Storage<br/>localhost:10002"]
-  Server -->|"friend rows for network view"| Storage
-  Browser -->|"optional join + human activity"| Q3UI["Q3 React UI"]
-  Q3UI -->|"localhost:4178 /api/join,<br/>/api/human-event"| Server
+  Server -->|"reports + legacy logs"| Runs["module/dashboard/runs/<br/>.chat.md + .md"]
+  Server -->|"start child process"| Harness["agentChat.run.mts"]
+  Harness -->|"HTTP /api/agent + execution credentials"| Server
+  Server -->|"imported handlers + repository"| Quest["Q3 backend inside Dashboard process"]
+  Quest --> Storage["Configured Table Storage<br/>Azure or local Azurite"]
+  Harness -->|"write events"| Activity["Activity LanceDB"]
+  Server -->|"read events"| Activity
+  Q3UI["Human Quest UI"] -->|"/api/join"| Server
+  Q3UI -->|"authenticated HTTP"| API["Separate Q3 Functions host"]
+  API --> Storage
+  Harness --> LLM["Configured LLM provider"]
   Server -->|"optional run/agent chat"| LLM["Configured LLM provider"]
 ```
 
 The viewer listens on `127.0.0.1:4178` by default; `AGENT_VIEW_PORT` overrides
-the port. Its process owns only the test-run state and child processes. Run
-history is persisted as files under `vitest/agents/runs/`, while the Q3 API and
-local Table Storage remain separate services.
+the port. Its process owns run state, child processes and one initialized Q3
+Table repository. Reports and legacy logs live under `module/dashboard/runs/`;
+structured Activity lives in LanceDB. The configured Table database is separate.
+The Q3 Functions host is needed for human UI requests and external API tests,
+not for Dashboard observation or Agent Chat operations.
 
 ## Browser UI
 
@@ -59,24 +65,31 @@ live while its log is recent; older runs are replayed from disk.
 | `GET /api/log?run=...` | Selected run's live/replay activity log |
 | `GET /api/report?run=...` | Completed judge report, if available |
 | `GET /api/network?run=...` | Current friend rows for participant profiles in the report |
-| `POST /api/run` | Start a Vitest agent run |
+| `POST /api/run` | Start the Agent Chat child process |
+| `POST /api/agent` | Execute an allowed Quest operation for the authenticated agent execution |
+| `GET /api/questions?person=...` | Current owned/shared questions for the selected agent |
+| `POST /api/answers` | Answers after checking the selected agent's question access |
+| `GET /api/activity` | Structured Activity with legacy text-log fallback |
+| `POST /api/referee-chat` | Administrative analysis with Activity and in-process Quest reads |
 | `POST /api/chat` | Ask the results assistant or a selected agent about a run |
 | `POST /api/join` | Register a human participant from the local Q3 UI |
 | `POST /api/human-event` | Append a human answer to the active run log |
 
-Activity and completed results come from paired files: `<run>.chat.md` is the
-incremental event stream and `<run>.md` is the final report. The viewer parses
-these text formats in `viewer-data.mts`; it does not query Q3 for historical
-run events. The People & friends view is different: the server reads participant
-profile IDs from the report, initializes the existing Table Storage repository,
-and requests each participant's current friend rows.
+Activity uses LanceDB events when available and falls back to `<run>.chat.md`
+for legacy runs; `<run>.md` holds the final report. Activity is historical evidence,
+not current Quest state. Questions, answers and friend rows are read through
+the shared Q3 Table repository inside Dashboard. External profile IDs are
+resolved to internal IDs before repository calls. Reads neither create tables
+nor migrate old profiles; profile creation is an explicit agent setup operation.
 
-Starting a run invokes the root-workspace Vitest command for
-`agentChat.test.mts`, with `AGENT_RUN=1` and values from the Functions project's
-`local.settings.json`. The server starts Azurite Table Storage on port 10002
-when it is not already listening, but requires the Q3 API on port 7073 to be
-running. Run output is streamed to the server terminal as well as written to
-run files.
+Starting a run launches compiled `agentChat.run.mjs` with temporary per-agent
+execution credentials and resolved Dashboard settings. Environment variables
+override `Values` in `module/dashboard/local.settings.json`. The child checks
+Dashboard's `/api/run` before inference or writes. With `UseDevelopmentStorage=true`,
+Dashboard starts default Azurite on port 10002 if needed. Custom or remote Table
+endpoints must already be available; they do not trigger local Azurite startup.
+Q3 HTTP readiness is not required. Run output is streamed to the terminal and
+persisted in run files and Activity.
 
 ### Design decision: live agent chat
 
@@ -101,9 +114,11 @@ chat log after the active run ends. It is unavailable during a run to avoid a
 second concurrent model allocation. Persona files are not served as static
 assets or returned by a viewer API endpoint.
 
-The post-run results assistant alone uses a disposable inference subprocess;
-it is not an agent session. Its model is released before another run can start,
-and native inference failures are reported without terminating the HTTP viewer.
+Post-run chat uses a disposable inference subprocess. As an approved administrative
+review exception, post-run agent-persona chat may receive the full report and
+Activity excerpts; it neither executes Quest actions nor writes those excerpts
+to agent memory. Its model is released before another run can start, and native
+inference failures are reported without terminating the HTTP viewer.
 
 ### Design decision: Activity master data
 
@@ -137,34 +152,33 @@ From the repository root:
 
 ```powershell
 pnpm --dir module/quest3Tier/func run build
-pnpm exec tsc --project module/quest3Tier/func/vitest/agents/tsconfig.json
-node module/quest3Tier/func/dist/vitest/agents/viewer/server.mjs
+pnpm --dir module/dashboard start
 ```
 
-The first TypeScript build compiles the Q3 Functions project. The second uses
-the Agent Lab `tsconfig.json` to emit the harness and viewer modules beneath
-`module/quest3Tier/func/dist/vitest/agents/`. At runtime the server loads
+The first TypeScript build compiles the imported Q3 backend. Dashboard's
+`prestart` builds its harness and viewer into `module/dashboard/dist/`.
+At runtime the server loads
 `index.html` from the source `viewer/` directory and serves the compiled
 browser modules from `dist/`.
 
-The Q3 API must already be running for a new test. Open
+The configured database must be available; the Q3 API can stay stopped. Open
 `http://127.0.0.1:4178`; the UI can also be started through the VS Code task or
-`vitest/agents/run-ollama.ps1`. The latter checks local Ollama compatibility,
+`module/dashboard/run-ollama.ps1`. The latter checks local Ollama compatibility,
 builds both projects, sets the local-model environment variables, and starts
 the viewer. To run its lightweight parser and route-guard self-check after
 building:
 
 ```powershell
-node module/quest3Tier/func/dist/vitest/agents/viewer/server.mjs --check
+pnpm --dir module/dashboard check
 ```
 
 ## Boundaries and operational notes
 
-- This is a local development observer, not an authenticated production
-  monitoring service. The server binds to loopback and expects local Q3 and
-  Azurite services.
+- The local listener binds to loopback. Deployed Dashboard access relies on
+  independently managed hosting security; admitted users have administrative
+  access. Agent execution credentials still enforce separate agent restrictions.
 - Viewer mutations require the viewer's same-origin request. The join and
-  human-event routes accept only the local Q3 UI origins on port 5183 and set
+  human-event routes accept only the local Quest UI origins on port 5186 and set
   CORS headers for those origins.
 - Run names are restricted to basenames ending in `.chat.md` and checked
   against discovered run files before reads, preventing path traversal through

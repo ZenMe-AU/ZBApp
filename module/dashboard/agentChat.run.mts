@@ -365,6 +365,8 @@ export async function replyToDashboard(agent, context, sandbox: string, say): Pr
 }
 
 export async function runAgentChat() {
+  const dashboard = await fetch(new URL("/api/run", DASHBOARD_URL), { signal: AbortSignal.timeout(5000) });
+  if (!dashboard.ok || (await dashboard.json()).status !== "running") throw new Error("Dashboard must have an active run before Agent Chat starts");
   await assertLlmReady();
   getLlmModel("AGENT", process.env, "haiku");
   getLlmModel("JUDGE", process.env, "sonnet");

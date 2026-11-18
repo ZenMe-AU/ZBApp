@@ -18,6 +18,7 @@ import questContainer from "quest3Tier/dist/di/diContainer.mjs";
 import { createAgentOperations } from "./agent-operations.mjs";
 import { toExternalProfileId } from "quest3Tier/dist/handler/profileId.mjs";
 import { NAMES } from "../agentChat.config.mjs";
+import { isLocalAzurite } from "../agentChat.reset.mjs";
 import { getLlmModel, loadRuntimeSettings } from "../agentChat.llm.mjs";
 import { createRefereeContextBuilder } from "../agentChat.referee-context.mjs";
 import { sendLiveChat } from "../agentChat.live.mjs";
@@ -345,8 +346,10 @@ const waitForPort = async (port, host, attempts) => {
   return false;
 };
 
-async function ensureServices() {
-  if (!(await portOpen(10002))) {
+async function ensureServices(loadSettings = localSettings, checkPort = portOpen) {
+  await getTableRepository(loadSettings);
+  const settings = await loadSettings();
+  if (isLocalAzurite(settings.AzureWebJobsStorage ?? "") && !(await checkPort(10002))) {
     state.azuriteProcess = spawn(process.execPath, [AZURITE_BIN, "--location", REPO_DIR, "--tableHost", HOST, "--tablePort", "10002", "--silent"], {
       cwd: REPO_DIR,
       env: CHILD_ENV,
@@ -356,7 +359,6 @@ async function ensureServices() {
     state.azuriteProcess.stderr?.pipe(process.stderr);
     if (!(await waitForPort(10002, HOST, 50))) throw new Error("Azurite Table did not start on port 10002");
   }
-  await getTableRepository();
 }
 
 async function startRun(humanProfileId?: string, humanName = "Human") {
@@ -650,6 +652,20 @@ async function selfCheck() {
     assert.equal(repository, concurrent);
     assert.equal(await getTableRepository(), repository);
     assert.equal(initializations, 1);
+    for (const storage of [
+      { AzureWebJobsStorage: "DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test" },
+      { AzureWebJobsStorage__tableServiceUri: "https://example.table.core.windows.net" },
+      { AzureWebJobsStorage: "TableEndpoint=http://127.0.0.1:11002/test;AccountName=test;AccountKey=test" },
+    ]) {
+      await ensureServices(async () => storage, async () => { throw new Error("Configured storage must not start default Azurite"); });
+    }
+    let portChecks = 0;
+    await ensureServices(async () => settings, async (port) => {
+      assert.equal(port, 10002);
+      portChecks++;
+      return true;
+    });
+    assert.equal(portChecks, 1);
     const findProfile = repository.findProfileByExternalId;
     try {
       repository.findProfileByExternalId = async (externalId) => {

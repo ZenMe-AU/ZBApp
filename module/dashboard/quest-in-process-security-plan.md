@@ -51,3 +51,11 @@ Approved scope clarification: post-run chat in an agent persona may receive the 
 ## Decisions confirmed
 
 No further policy decision is needed before implementation. As specified in step 4, preserve existing agent-scoped visibility, permitted actions, validation, write budgets, correlation IDs, failure reporting and live chat behavior through Quest backend logic. Privileged Dashboard observer responses must not enter agent prompts or memory. Hosting security, scaling, shutdown and costs are handled independently and are outside this implementation plan.
+
+## Stage 7 implementation verification
+
+- Default Azurite auto-start is limited to `UseDevelopmentStorage=true`; custom and remote endpoints use their configured service. Agent Chat checks Dashboard run readiness before inference or writes.
+- Question source labels, README and architecture describe Dashboard HTTP, imported Quest logic, separate human/API access and Activity storage. The Ollama launcher explicitly selects its provider.
+- Q3 and Dashboard builds, Dashboard self-check, and six targeted Vitest files passed: 122 tests passed, one opt-in real-agent test skipped. Builds include the existing uncommitted SQL model typing fix; clean-checkout build portability is not established here.
+- With Q3 HTTP stopped, a disposable Table database passed Dashboard profile/friend setup, question/share/answer/edit/follow-up, access denial, credential revocation and viewer reads. The actual Agent Chat runner also completed three agent loops and report/memory/Activity writes using a local fake LLM. Existing user data was not reset or migrated.
+- Real human authenticated HTTP sharing, deployed Azure storage/hosting and live Ollama inference were not verified. The human share receiver-ID conversion remains a separate deferred fix.

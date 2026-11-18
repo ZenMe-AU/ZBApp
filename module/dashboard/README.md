@@ -6,49 +6,51 @@ Architecture decisions: [Dashboard Activity data](Decisions/001-dashboard-activi
 
 Dashboard question, answer, network and referee data reads now use Q3's Table
 repository in-process. They require existing canonical profiles and provisioned
-tables; reads do not create tables or migrate legacy profiles. Agent Chat runs
-still use the Q3 HTTP API until plan step 4.
+tables; reads do not create tables or migrate legacy profiles. Agent Chat calls
+Dashboard HTTP, which invokes Q3 handlers in-process. Neither path requires the
+Q3 Functions HTTP host. Human Quest UI requests still require that host.
 
 ## How it works
 
-- **Personas**: `Mike/`, `Bella/`, `Ian/`, `Eric/` each hold a `<Name>.agent.md`. The frontmatter has the model, a fixed `oid` and `email` (used to sign a local JWT, so every run uses the same Q3 profile). The body is the private persona: identity, personality, hidden links to the others, and disclosure tiers (Public, Trust, Never). Every record, including the private inner voice, is in English.
+- **Personas**: `Mike/`, `Bella/`, `Ian/`, `Eric/` each hold a `<Name>.agent.md`. The frontmatter has a fallback model, a fixed external profile `oid` and an `email`. Dashboard binds temporary execution credentials to each agent's profile; no Quest JWT is generated. The body is the private persona: identity, personality, hidden links to the others, and disclosure tiers (Public, Trust, Never). Every record, including the private inner voice, is in English.
 - **Options**: every new question has 4-10 distinct options of at most four words. An agent answers with exactly one existing option, or one new short option when none fits. Long-text answers are invalid under the harness rules.
-- **Harness**: `agentChat.run.mts` contains the run logic; `agentChat.test.mts` is the small Vitest entry point. Three of the four agents join each run. The trio rotates, so every pair meets equally often. Agents act concurrently, **one Q3 API call per step**, like people tapping through the app. Each step the LLM gets a compact snapshot (news since its last look, profiles, the questions and answers it can see, its memory, its last few steps). It returns `{note, action, findings}`.
-- **OpenVINO**: local inference calls are queued because the shared pipeline supports only one generation at a time. A failed call is reported to its caller without blocking later calls; Q3 API activity remains concurrent.
+- **Harness**: Dashboard launches `agentChat.run.mts` as a child process; the opt-in run in `agentChat.test.mts` starts it through Dashboard HTTP. Three of the four agents join each run. The trio rotates, so every pair meets equally often. Agents act concurrently, **one Dashboard operation per step**, like people tapping through the app. Each step the LLM gets a compact snapshot (news since its last look, profiles, the questions and answers it can see, its memory, its last few steps). It returns `{note, action, findings}`.
+- **OpenVINO**: local inference calls are queued because the shared pipeline supports only one generation at a time. A failed call is reported to its caller without blocking later calls; Dashboard operations remain concurrent.
 - **Live dashboard chat**: selecting an active participant sends messages to that same agent in the running harness, between action turns. Replies use its current context and existing provider queue; conversation can guide later actions but never bypasses rules or budgets, and is not verified factual memory. The viewer does not load a second model during the run. Offline/finished agents reject messages instead of simulating replies. The separate results assistant is available after the run, with inference isolated in a disposable subprocess.
-- **OpenVINO model loading**: text-only exports use `LLMPipeline`; multimodal exports containing `openvino_vision_embeddings_model.xml` (including Qwen3.5) use `VLMPipeline`, even for text-only requests. Select the model with `LLM_MODEL`, or `OPENVINO_MODEL_DIR` when `LLM_MODEL` is unset. Run `pnpm --dir module/quest3Tier/func test:openvino` to verify the selected model loads, reuses its pipeline, and generates structured JSON on successive calls. These hardware integration tests require a local model and never substitute a different model when the selected directory is missing.
-- **Security boundary**: the LLM runs through `claude -p` with no tools, no MCP and an empty temp dir as cwd. It cannot read files. The harness signs each call with the agent's own token, only calls `QUESTION_URL`, and enforces the run limits before anything reaches the API.
+- **OpenVINO model loading**: text-only exports use `LLMPipeline`; multimodal exports containing `openvino_vision_embeddings_model.xml` (including Qwen3.5) use `VLMPipeline`, even for text-only requests. Select the model with `LLM_MODEL`, or `OPENVINO_MODEL_DIR` when `LLM_MODEL` is unset. Run `pnpm exec vitest run module/dashboard/openvinoUnit.test.mts module/dashboard/llmProvider/openvino.provider.test.mts` to verify the selected model loads, reuses its pipeline, and generates structured JSON on successive calls. These hardware integration tests require a local model and never substitute a different model when the selected directory is missing.
+- **Security boundary**: with Claude CLI, inference runs through `claude -p` with no tools, no MCP and an empty temp dir as cwd. The harness sends proposed actions to Dashboard's `/api/agent` with per-agent execution credentials. Dashboard binds identity to those credentials, restricts allowed operations and enforces write budgets before invoking Q3 handlers. Credentials expire when the run ends. Administrative post-run chat may use the whole report and Activity; active agents and live chat retain agent-scoped context.
 - **Limits per agent per run**: 10 question creates/edits, 100 answer writes, text only. Lengths: title 60, questionText 200, answer 500 characters. Over-limit calls are invalid and logged.
 - **Memory**: after meaningful activity and once at the end, the harness rebuilds one private `<Name>/memory/<Other>.md` file per person from Q3 evidence. This is deterministic code, not another LLM call.
 - **Memory evidence**: memory contains Facts only. An answer is stored under a person only when Q3 explicitly identifies that person as its author. Anonymous answers are discarded rather than assigned by voice, names or story, and every fact carries its question and answer IDs.
-- **Judge**: after the run, one Sonnet call compares each memory file with the real persona. It scores accuracy 0-10, lists hidden links and leaks, and treats every answer as private to its question asker rather than as a global persona fact.
+- **Judge**: after the run, one call using the configured Judge model compares each memory file with the real persona. It scores accuracy 0-10, lists hidden links and leaks, and treats every answer as private to its question asker rather than as a global persona fact.
 
 ## Setup (once)
 
 1. Node 24 and pnpm. Then run `pnpm install` in the repo root (this also installs Azurite).
-2. Azure Functions Core Tools v4: `brew install azure-functions-core-tools@4`.
+2. Configure Table storage in Dashboard's `local.settings.json` (`Values.AzureWebJobsStorage` or `Values.AzureWebJobsStorage__tableServiceUri`). Environment values take precedence. Use `UseDevelopmentStorage=true` for default local Azurite; provision tables before use. Azure Functions Core Tools v4 is needed only for the separate human Quest UI / external Q3 API flow.
 3. Claude Code CLI, logged in:
    ```sh
    curl -fsSL https://claude.ai/install.sh | bash
    claude        # log in once in the browser, then /exit
    ```
-   Runs use **your own** Claude subscription or API key. If `claude` is not in `~/.local/bin` or on PATH, set `CLAUDE_BIN`.
+   Set `LLM_PROVIDER=claude` in Dashboard settings. Runs use **your own** Claude subscription or API key. If `claude` is not in `~/.local/bin` or on PATH, set `CLAUDE_BIN`.
 
-   **No Claude?** Any OpenAI-compatible chat API works instead. Set these three variables and skip the CLI:
+   **No Claude?** Select an OpenAI-compatible provider in Dashboard settings instead:
 
    ```sh
+   LLM_PROVIDER=openai                     # use ollama for Ollama
    LLM_BASE_URL=https://api.openai.com/v1   # or http://localhost:11434/v1 (Ollama), https://openrouter.ai/api/v1, ...
    LLM_API_KEY=sk-...                       # leave unset for local servers such as Ollama
    AGENT_MODEL=gpt-5-mini                   # model name as that provider spells it; also used by the judge unless JUDGE_MODEL is set
    ```
 
-   With `LLM_BASE_URL` set, the harness calls `<base>/chat/completions` directly with `fetch`. The JSON schema is part of the prompt, so it does not depend on provider-specific structured-output support. Small local models sometimes reply with broken JSON. That step then counts as an LLM error, and an agent stops after 3 in a row. Expect lower judge scores from weaker models.
+   With the OpenAI or Ollama provider selected, the harness calls `<base>/chat/completions`. Setting an endpoint alone does not select a provider. The JSON schema is part of the prompt, so it does not depend on provider-specific structured-output support. Small local models sometimes reply with broken JSON. That step then counts as an LLM error, and an agent stops after 3 in a row. Expect lower judge scores from weaker models.
 
 ## Run
 
 ### Provider integration smoke test
 
-Run `pnpm --dir module/quest3Tier/func test:llm` to test the provider selected by `Values.LLM_PROVIDER` in `local.settings.json` first, followed sequentially by a separate suite for each predefined backend below. The existing Q3 Vitest setup loads those settings; the tests use real providers without mocks. Each suite checks readiness, an exact JSON echo, and basic arithmetic in a second independent request.
+From the repository root, run `pnpm exec vitest run module/dashboard/llmProvider/llmProvider.test.mts` to test the configured provider and the predefined backends in that file. Dashboard's settings loader supplies configuration. These tests use real providers without mocks and check readiness and responses; unavailable backends fail rather than skip.
 
 | Preset | Model | Connection |
 |---|---|---|
@@ -68,7 +70,7 @@ The same file exports `testJsonObject(provider, model)` and `testBasicRequest(pr
 Use three terminals:
 
 ```sh
-# 1. Repo root: Azurite. Data goes to ./__azurite_db_table__.json, which is gitignored.
+# 1. Only for default local storage: Azurite. Skip for an already available configured database.
 node node_modules/azurite/dist/src/azurite.js --location . --tableHost 127.0.0.1 --tablePort 10002 --silent
 
 # 2. Repo root: build Quest, then start Dashboard with its storage and LLM settings
@@ -81,7 +83,7 @@ AGENT_RUN=1 pnpm vitest run module/dashboard/agentChat.test.mts --disableConsole
 
 Without `AGENT_RUN=1` the test is skipped, so normal test runs never call an LLM.
 
-Runs retain existing data. Dashboard launches Agent Chat with temporary per-agent execution credentials and invokes Quest in-process; the Quest HTTP host and local JWT signer are not needed. The opt-in test above starts and waits for a Dashboard run, using the running Dashboard's settings.
+Runs retain existing data. Dashboard launches Agent Chat with temporary per-agent execution credentials and invokes Quest in-process; the Quest HTTP host and local JWT signer are not needed. The opt-in test above starts and waits for a Dashboard run, using the running Dashboard's settings. The child verifies Dashboard's `/api/run` before inference or writes. Default Azurite starts automatically on demand only with `UseDevelopmentStorage=true`; custom endpoints and remote storage must already be available and do not start local Azurite.
 
 To watch the conversation live, use the terminal, or open `runs/<time>_<participants>.chat.md`.
 
@@ -94,15 +96,23 @@ See the [viewer architecture overview](viewer/architecture-overview.md) for the 
 From the repo root, start the local viewer in another terminal:
 
 ```sh
-pnpm exec tsc --project module/quest3Tier/func/vitest/agents/tsconfig.json
-node module/quest3Tier/func/dist/vitest/agents/viewer/server.mjs
+pnpm --dir module/quest3Tier/func run build
+pnpm --dir module/dashboard start
 ```
 
 Or run via the helper scripts / VS Code tasks:
-- `pwsh module/quest3Tier/func/vitest/agents/run-openvino.ps1` (or the VS Code task **Start OpenVino**)
-- `pwsh module/quest3Tier/func/vitest/agents/run-ollama.ps1` (or the VS Code task **Start Ollama**)
+- `pwsh module/dashboard/run-openvino.ps1` (or the VS Code task **Start OpenVino**)
+- `pwsh module/dashboard/run-ollama.ps1` (or the VS Code task **Start Ollama**)
 
-Open `http://127.0.0.1:4178`. It follows the selected `.chat.md` once per second, can replay earlier runs and shows the completed judge report under **Results**. **New test** starts Azurite when needed and refuses to spend an agent run if the Q3 API is not available. The viewer does not expose persona files or change what the agents see. Set `AGENT_VIEW_PORT` to use another port. A quick check is available after the build with `node module/quest3Tier/func/dist/vitest/agents/viewer/server.mjs --check`.
+Open `http://127.0.0.1:4178`. The viewer refreshes run data once per second and shows completed judge reports under **Results**. Activity comes from LanceDB, with legacy text-log fallback; question, answer and network views read current Quest data through Dashboard. Set `AGENT_VIEW_PORT` to use another port. After building, run `pnpm --dir module/dashboard check` for the server self-check.
+
+For human participation, also start the Q3 Functions HTTP service and Quest UI configured to use it. Quest UI registers the person with Dashboard via `/api/join`, but question, share and answer requests still go to the authenticated Q3 API and the same configured database. Dashboard agent runs do not test that external HTTP authentication boundary. Run Q3 route-contract tests separately with `pnpm exec vitest run module/quest3Tier/func/vitest/routeContract.test.mts`; these mock authentication/repository dependencies, so real authenticated HTTP verification remains a separate integration check.
+
+For focused tests without real LLM calls, run from the repository root:
+
+```sh
+pnpm exec vitest run module/dashboard/agentChat.test.mts module/dashboard/viewer/agent-operations.test.mts module/dashboard/activity/activity.test.mts module/quest3Tier/func/vitest/routeContract.test.mts module/quest3Tier/func/vitest/tableReadSideEffects.test.mts
+```
 
 To run it from the VS Code Vitest extension instead, add `"vitest.nodeEnv": { "AGENT_RUN": "1" }` to your **user** settings. Then run only this test, and keep Continuous Run off: otherwise every file save starts a paid run. Only one run can be active at a time; a second one fails fast because of `runs/.lock`.
 
@@ -112,13 +122,14 @@ To run it from the VS Code Vitest extension instead, add `"vitest.nodeEnv": { "A
 |---|---|---|
 | `AGENTS` | rotation | Pick the trio, e.g. `AGENTS=Mike,Bella,Ian` |
 | `AGENT_STEPS` | 20 | Max steps (API calls) per agent per run |
-| `AGENT_MODEL` | from `agent.md` (`haiku`) | Model for all agents |
+| `AGENT_MODEL` | provider model, then Claude persona/default | Model override for all agents |
 | `AGENT_EFFORT` | `low` | Effort for agent steps (thinking is off; Claude CLI only) |
-| `JUDGE_MODEL` | `sonnet`, or `AGENT_MODEL` with `LLM_BASE_URL` | Model for the judge |
-| `REFEREE_MODEL` | `JUDGE_MODEL` | Optional model override for Referee Chat |
+| `JUDGE_MODEL` | provider model, then Claude `sonnet` or non-Claude `AGENT_MODEL` | Model override for the judge |
+| `REFEREE_MODEL` | provider model, then `JUDGE_MODEL` | Optional model override for Referee Chat |
 | `REVEAL_AUTHORS` | off | Control arm: shows each answer's author to the agents |
 | `CLAUDE_BIN` | `~/.local/bin/claude`, else `claude` | Path to the CLI |
-| `LLM_BASE_URL` | unset | Use an OpenAI-compatible API instead of the Claude CLI (needs `AGENT_MODEL`) |
+| `LLM_PROVIDER` | required | Select the configured LLM provider |
+| `LLM_BASE_URL` | unset | Endpoint for the selected compatible provider; does not select a provider |
 | `LLM_API_KEY` | unset | Bearer token for `LLM_BASE_URL` |
 
 ## Output
@@ -127,13 +138,15 @@ To run it from the VS Code Vitest extension instead, add `"vitest.nodeEnv": { "A
 - `runs/<time>_<participants>.md`: the report. It has metrics (steps, new questions, edits, shares, re-shares, answered/seen, rejections, errors), the judge's scores and leaks, the agents' findings, the final questions with answers, and the full call log.
 - `<Name>/memory/<Other>.md`: one file containing that agent's current picture of one other person. It carries over between runs.
 
-**Reset**: stop Azurite, then delete `__azurite_db_table__.json` in the repo root, each Agent's `memory/` directory and `runs/`. Delete them together; otherwise agents remember things that Q3 no longer has.
+**Data retention**: normal runs retain existing Quest data, memory and Activity. Stage 7 does not reset or migrate the database. Use a separate disposable database and output directories for integration verification.
 
-**Cost per run**: up to 90 Haiku step calls (~4k input / ~200 output tokens each) and 1 Sonnet judge call. Fact-only memory uses no LLM call. A run typically takes about 6-8 minutes.
+**Historical Haiku/Sonnet cost example**: up to 90 Haiku step calls (~4k input / ~200 output tokens each) and 1 Sonnet judge call. Fact-only memory uses no LLM call. A run typically takes about 6-8 minutes.
 
 ## Results so far (Sept-Oct 2026, Haiku agents)
 
-**Anonymous answers are the main obstacle to getting to know each other.** Q3 hides who wrote each answer from everyone except the author. In every run, agents attached other people's answers to the wrong person. For example, Ian remembered Eric as "a Brisbane shark researcher", which is Bella. And Bella gave Eric Mike's Daejeon family.
+The observations below describe those historical runs, not the current API contract.
+
+**Anonymous answers were the main obstacle to getting to know each other.** Q3 hides who wrote each answer from everyone except the author. In every run, agents attached other people's answers to the wrong person. For example, Ian remembered Eric as "a Brisbane shark researcher", which is Bella. And Bella gave Eric Mike's Daejeon family.
 
 We ran a controlled A/B: same trio (Eric, Mike, Bella), same starting DB and memories, same harness. The only difference was whether answer authors were shown.
 
