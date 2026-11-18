@@ -64,6 +64,22 @@
       "name": "QFF",
       "path": "./module/QFF",
     },
+    {
+      "name": "QFFIdentity",
+      "path": "./module/QFF/QFFIdentity",
+    },
+    {
+      "name": "QFFModelling",
+      "path": "./module/QFF/QFFModelling",
+    },
+    {
+      "name": "QFFMatcher",
+      "path": "./module/QFF/QFFMatcher",
+    },
+    {
+      "name": "QFFViz",
+      "path": "./module/QFF/QFFViz",
+    },
   ],
   "launch": {
     "version": "0.2.0",

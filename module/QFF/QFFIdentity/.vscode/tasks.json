@@ -5,9 +5,6 @@
       "type": "shell",
       "command": "pnpm run dev",
       "isBackground": true,
-      "options": {
-        "cwd": "${workspaceFolder}/QFFViz"
-      },
       "problemMatcher": {
         "owner": "agent-viewer",
         "pattern": {

@@ -31,10 +31,10 @@ flowchart LR
 
   subgraph UIs["User interfaces"]
     AdminPortal["VSCode"]
-    IdentityUI["Identity UI<br/>(view/edit/approve selected profile)"]
+    IdentityUI["QFFIdentity<br/>(view/edit/approve selected profile)"]
     QFFViz["QFFViz<br/>(analytics)"]
-    ModelingUI["QFF Modelling UI"]
-    RequestUI["Matching UI"]
+    ModelingUI["QFFModelling"]
+    RequestUI["QFFMatcher"]
   end
 
   subgraph Services["Backend and repository APIs"]
@@ -70,25 +70,25 @@ flowchart LR
 
 | User | System | Interaction Description |
 | --- | --- | --- |
-| Identity user | Identity UI | In testing, select and impersonate a profile; in production, view, edit, and approve their own identity data. |
-| Identity user / match requester | Matching UI | Request a match and receive their own data or de-identified aggregate information permitted for that requester. |
+| Identity user | QFFIdentity | In testing, select and impersonate a profile; in production, view, edit, and approve their own identity data. |
+| Identity user / match requester | QFFMatcher | Request a match and receive their own data or de-identified aggregate information permitted for that requester. |
 | Data analyst | QFFViz | Analyze all identity and QFF data, and perform data cleansing or override editing. |
-| Data analyst / canonical modeler | QFF Modelling UI | Curate canonical concepts and mappings, and review or trigger modelling runs. |
+| Data analyst / canonical modeler | QFFModelling | Curate canonical concepts and mappings, and review or trigger modelling runs. |
 | QFF platform operator | Platform administration tooling | Administer the local development platform and its services. |
 
 ### UI-to-system-component interactions
 
 | UI | System Component | Interaction Description |
 | --- | --- | --- |
-| Identity UI | Identity Repository API | Read and update the selected test profile, or the production identity resolved to the caller's internal profile ID; submit customer preference approvals. |
-| Matching UI | Matcher service | Submit a match request and receive the requester's permitted result. |
+| QFFIdentity | Identity Repository API | Read and update the selected test profile, or the production identity resolved to the caller's internal profile ID; submit customer preference approvals. |
+| QFFMatcher | Matcher service | Submit a match request and receive the requester's permitted result. |
 | QFFViz | Identity Repository API | Read and cleanse identity data within the analyst's all-data authorization. |
 | QFFViz | QFF Repository API | Analyze QFF-owned data and save analyst-approved overrides. |
-| QFF Modelling UI | Identity Repository API | Read identity preferences as modelling inputs within analyst authorization. |
-| QFF Modelling UI | QFF Repository API | Read and update canonical concepts, mappings, and modelling run records. |
-| QFF Modelling UI | Semantic derivation service | Trigger and review semantic derivation runs. |
+| QFFModelling | Identity Repository API | Read identity preferences as modelling inputs within analyst authorization. |
+| QFFModelling | QFF Repository API | Read and update canonical concepts, mappings, and modelling run records. |
+| QFFModelling | Semantic derivation service | Trigger and review semantic derivation runs. |
 
-In the test environment, a user selects an internal profile ID and may impersonate any fixture profile; this supports simulation and is not a security control. In production, the Identity Repository resolves the authenticated MSAL `oid` through a separate lookup to an internal profile ID. Customers may access only their own data or de-identified aggregates, while analysts are authorized to access all identity data through approved APIs. QFFViz accesses identity data through Identity Repository API and QFF-owned data through QFF Repository API. Customers review and approve preferences in the Identity UI; the QFF Modelling UI is for analysts and cannot confirm preferences on a customer's behalf.
+In the test environment, a user selects an internal profile ID and may impersonate any fixture profile; this supports simulation and is not a security control. In production, the Identity Repository resolves the authenticated MSAL `oid` through a separate lookup to an internal profile ID. Customers may access only their own data or de-identified aggregates, while analysts are authorized to access all identity data through approved APIs. QFFViz accesses identity data through Identity Repository API and QFF-owned data through QFF Repository API. Customers review and approve preferences in the QFFIdentity; the QFFModelling is for analysts and cannot confirm preferences on a customer's behalf.
 
 ## Score terminology
 
@@ -113,7 +113,7 @@ The plan is deliberately incremental. Phase 0 decisions are recorded below; phas
 | Identity Repository | Define ownership of identity source JSON, GUID preference IDs, test profile selection, production MSAL `oid` lookup, revisions, and customer-confirmation contracts; do not implement the API yet. |
 | QFF Repository | Define ownership and API contracts for the active canonical model, derived data, vectors, runs, and match transactions; do not implement the repository yet. |
 | Semantic derivation service and Matcher | Specify their repository dependencies, scoring terminology, provenance, privacy, and transaction boundaries; do not implement either service yet. |
-| QFFViz, QFF Modelling UI, and Matching UI | Define each UI's user scope and API boundary; keep storage access and backend modeling out of the browser. |
+| QFFViz, QFFModelling, and QFFMatcher | Define each UI's user scope and API boundary; keep storage access and backend modeling out of the browser. |
 | CanonicalModels | Define its role for schemas, migrations, and seed/import artifacts, not as a second editable active catalogue. |
 
 #### Requirements
@@ -157,7 +157,7 @@ The plan is deliberately incremental. Phase 0 decisions are recorded below; phas
 9. **Data visibility:** analysts are authorized to access all data. Customers may access only their own data or de-identified aggregate data.
 10. **Revision/deletion handling:** source changes or deletions set the general staleness indicator. Apply recomputation on the next full update; do not track stale status on each derived record.
 11. **Initial scoring:** retain `embedding_similarity` as a retrieval/ranking signal and use a separately versioned heuristic combining directly supported evidence and typed ontology links. Keep persona affinity out of the primary semantic embedding; tune heuristic weights in Phase 2 simulation.
-12. **Customer confirmation surface:** customers check and approve proposed preferences in the Identity UI, not the analyst UI. Test users may impersonate profiles; production access must follow the MSAL OID-to-internal-ID lookup and customer data boundary above.
+12. **Customer confirmation surface:** customers check and approve proposed preferences in the QFFIdentity, not the analyst UI. Test users may impersonate profiles; production access must follow the MSAL OID-to-internal-ID lookup and customer data boundary above.
 
 Production hosting, authorization implementation details, retention, backup, and log forwarding remain future deployment decisions. Exact semantic-envelope wording, retrieval limits, heuristic weights, review thresholds, and probability calibration gates are deferred to their named phases rather than treated as resolved in Phase 0.
 
@@ -200,7 +200,7 @@ Production hosting, authorization implementation details, retention, backup, and
 | --- | --- |
 | Semantic derivation service | Build a headless pipeline that reads source through Identity Repository and writes envelopes, vectors, mappings, provenance, and run status through QFF Repository. |
 | Matcher | Build a separate Azure Functions service that reads through both repositories, computes explainable privacy-safe matches, persists a minimal QFF transaction, and returns a requester-scoped response. |
-| Identity UI and Identity Repository | Let the customer review and approve wording in the Identity UI; write each accepted wording as a new preference linked to its inference. The test UI accepts the selected profile ID; production uses the MSAL OID lookup. |
+| QFFIdentity and Identity Repository | Let the customer review and approve wording in the QFFIdentity; write each accepted wording as a new preference linked to its inference. The test UI accepts the selected profile ID; production uses the MSAL OID lookup. |
 | QFF Repository | Provide the APIs and persistence needed for derived vectors/mappings, run tracking, and match transactions; serialize writes and support idempotent requests. |
 
 #### Requirements
@@ -222,20 +222,20 @@ Production hosting, authorization implementation details, retention, backup, and
 - Build a headless derivation backend: read identity preferences through Identity Repository, regenerate preference/kind/concept vectors into QFF Repository, and persist mappings, provenance and run status there.
 - Build Matcher as a separate Node.js Azure Functions app. It reads permitted identity data through Identity Repository and QFF aggregates/vectors through QFF Repository, computes explainable concept-based matches, persists a minimal transaction through QFF Repository, and returns a requester-scoped response.
 - Retain direct preference-to-preference matching as an evaluation baseline. Keep kind, signed affinity and ontology relationship as distinct signals.
-- Implement customer confirmation through the Identity UI and Identity Repository: accepting proposed wording creates a new preference linked to its inference; keep the prior preference independent and allow it to be marked superseded. Analyst overrides never imply customer consent.
+- Implement customer confirmation through the QFFIdentity and Identity Repository: accepting proposed wording creates a new preference linked to its inference; keep the prior preference independent and allow it to be marked superseded. Analyst overrides never imply customer consent.
 - Use idempotent request/run identifiers and bounded operations so retries do not duplicate logical transactions. Avoid live Azure embedding calls in routine tests by using fixtures/cached vectors.
 - Add focused derivation and Matcher tests for provenance, score terminology, privacy-safe responses, repository persistence, retries, and failure handling.
 
-### Phase 3 — QFF Modelling UI MVP and API integration
+### Phase 3 — QFFModelling MVP and API integration
 
 #### Components and changes in this phase
 
 | System component | Change |
 | --- | --- |
-| QFF Modelling UI | Build a separate analyst SPA for model overview, concept editing, mapping review, derivation runs, and score distributions. |
-| Identity Repository and QFF Repository APIs | Expose only the analyst-authorized reads and edits needed by the UI; keep identity and QFF storage behind their respective APIs. Customer preference approvals remain in the Identity UI. |
+| QFFModelling | Build a separate analyst SPA for model overview, concept editing, mapping review, derivation runs, and score distributions. |
+| Identity Repository and QFF Repository APIs | Expose only the analyst-authorized reads and edits needed by the UI; keep identity and QFF storage behind their respective APIs. Customer preference approvals remain in the QFFIdentity. |
 | Semantic derivation service | Expose bounded run submission and status/results for the UI; keep execution on the backend. |
-| QFFViz and Matching UI | Keep QFFViz focused on analyst analytics/cleansing and analyst overrides through QFF Repository API. Keep customer matching in the Matching UI; neither UI becomes the customer preference-approval surface. |
+| QFFViz and QFFMatcher | Keep QFFViz focused on analyst analytics/cleansing and analyst overrides through QFF Repository API. Keep customer matching in the QFFMatcher; neither UI becomes the customer preference-approval surface. |
 
 #### Requirements
 
@@ -245,7 +245,7 @@ Production hosting, authorization implementation details, retention, backup, and
 - Use AG Grid for tabular reporting/editing and Plotly for graphs. Keep each non-dashboard page focused on one primary visualization.
 - Verify all pages use authorized APIs, do not access identity files or LanceDB directly, and keep modeling execution out of browser code. Do not add customer preference approval to the analyst UI.
 - Verify analyst edits preserve version/provenance, do not impersonate customer consent, and display similarity/confidence without implying probability.
-- Keep QFFViz analyst overrides distinct from customer confirmation; customer preference approval remains in the Identity UI.
+- Keep QFFViz analyst overrides distinct from customer confirmation; customer preference approval remains in the QFFIdentity.
 
 #### Technical implementation notes
 
@@ -266,8 +266,8 @@ Production hosting, authorization implementation details, retention, backup, and
 | --- | --- |
 | QFF Repository | Add version history, reversible review decisions, calibration metadata, and retained prior mappings as approved lifecycle needs emerge. Add Pub/Sub and batched updates after the serialized single-writer baseline is established. |
 | Semantic derivation service | Add unmatched-pattern discovery, clustering proposals, and version-aware remapping; never publish proposed concepts automatically. |
-| QFF Modelling UI | Add model comparisons, concept merge/split workflows, batch review, provenance, remapping impact, and calibration diagnostics when justified. |
-| Identity UI and Identity Repository | Keep customer preference review/approval in the Identity UI; acceptance creates a new preference with the accepted wording and never overwrites the old one. |
+| QFFModelling | Add model comparisons, concept merge/split workflows, batch review, provenance, remapping impact, and calibration diagnostics when justified. |
+| QFFIdentity and Identity Repository | Keep customer preference review/approval in the QFFIdentity; acceptance creates a new preference with the accepted wording and never overwrites the old one. |
 | Hosted identity storage, LanceDB hosting, and operations | Keep production hosting, isolation, encryption, backups, retention, and scale-out as separate deployment work; validate these before production use rather than assuming Phase 4 implements them. |
 
 #### Requirements
@@ -283,7 +283,7 @@ Production hosting, authorization implementation details, retention, backup, and
 - Add unmatched-pattern/clustering suggestions, version comparisons, compare/merge/split workflows, batch review, reversible overrides, provenance detail and remapping impact reports.
 - Add separate focused Plotly pages for model changes, concept coverage, mapping quality and (if justified) calibration diagnostics; use separate AG Grid pages for their records.
 - Recompute affected mappings when source/model/scoring/taxonomy changes, retaining prior versions and explaining the change.
-- Use the Identity UI to collect customer approval and write each accepted wording as a new preference through Identity Repository. The technical analyst UI may show aggregate confirmation status but cannot impersonate customer consent.
+- Use the QFFIdentity to collect customer approval and write each accepted wording as a new preference through Identity Repository. The technical analyst UI may show aggregate confirmation status but cannot impersonate customer consent.
 - Defer production identity isolation, hosted LanceDB, independent backups, encryption and operational scale-out until the hosted-solution phase.
 
 ### Phase 5 — Probability calibration review and updates
@@ -294,7 +294,7 @@ Production hosting, authorization implementation details, retention, backup, and
 | --- | --- |
 | QFF Repository | Store labelled evaluation outcomes and versioned calibration models with their dataset, relationship type, taxonomy, and scoring metadata. |
 | Semantic derivation service | Calibrate heuristic mapping scores against held-out reviewed outcomes and periodically reassess/update calibration as more labels become available. |
-| QFF Modelling UI | Add a calibration review workflow showing reliability curves, Brier score, sample coverage, and version comparisons; let authorized analysts approve or reject proposed calibration updates. |
+| QFFModelling | Add a calibration review workflow showing reliability curves, Brier score, sample coverage, and version comparisons; let authorized analysts approve or reject proposed calibration updates. |
 | Matcher | Consume only an approved calibration version when returning `probability`; otherwise continue returning similarity and heuristic confidence only. |
 
 #### Requirements
@@ -328,10 +328,10 @@ The following runtime components expand the business context diagram. Stakeholde
 
 | Component | Purpose |
 | --- | --- |
-| Identity UI | Lets customers view and edit preferences and check/approve proposed wording. In testing, the user selects an internal profile ID and may impersonate profiles; in production, access is limited to the caller's profile. |
-| Matching UI | Lets a customer submit a match request and see only their own data or permitted de-identified aggregate information. |
+| QFFIdentity | Lets customers view and edit preferences and check/approve proposed wording. In testing, the user selects an internal profile ID and may impersonate profiles; in production, access is limited to the caller's profile. |
+| QFFMatcher | Lets a customer submit a match request and see only their own data or permitted de-identified aggregate information. |
 | QFFViz | Provides analyst analytics and data cleansing across identity and QFF data. It reads through both repository APIs and saves analyst-approved QFF overrides through QFF Repository API. |
-| QFF Modelling UI | Lets analysts curate canonical concepts, review mappings, inspect runs and scores, and trigger backend derivation. It does not confirm preferences on a customer's behalf. |
+| QFFModelling | Lets analysts curate canonical concepts, review mappings, inspect runs and scores, and trigger backend derivation. It does not confirm preferences on a customer's behalf. |
 | VS Code platform administration | Provides the QFF platform operator's local development and service-administration tooling. |
 
 ### Backend services and repository APIs
