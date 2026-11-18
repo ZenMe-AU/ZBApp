@@ -23,7 +23,7 @@ import { getLlmModel, loadRuntimeSettings } from "../agentChat.llm.mjs";
 import { createRefereeContextBuilder } from "../agentChat.referee-context.mjs";
 import { sendLiveChat } from "../agentChat.live.mjs";
 import { createActivityRepository } from "../activity/activity-repository.mjs";
-import { answerResults } from "./results-chat.mjs";
+import { answerResults, readAgentMemory, greetingReply } from "./results-chat.mjs";
 import { answerRefereeChat } from "./referee-chat.mjs";
 
 const VIEWER_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -158,16 +158,21 @@ const spawnPnpm = (args: string[], cwd: string, env = CHILD_ENV) =>
 const isRunName = (name) => typeof name === "string" && path.basename(name) === name && name.endsWith(".chat.md");
 
 async function listRuns() {
+  const hasReport = (name: string) => stat(path.join(RUNS_DIR, name.replace(/\.chat\.md$/, ".md"))).then(() => true, () => false);
   const entries = await readdir(RUNS_DIR, { withFileTypes: true }).catch(() => []);
   const runs = await Promise.all(
     entries
       .filter((entry) => entry.isFile() && isRunName(entry.name))
-      .map(async (entry) => ({ name: entry.name, mtime: (await stat(path.join(RUNS_DIR, entry.name))).mtimeMs }))
+      .map(async (entry) => ({
+        name: entry.name,
+        mtime: (await stat(path.join(RUNS_DIR, entry.name))).mtimeMs,
+        completed: await hasReport(entry.name),
+      }))
   );
   const combined = new Map(runs.map((run) => [run.name, run]));
   for (const run of await activityRepository.listRuns()) {
     const current = combined.get(run.name);
-    if (!current || run.mtime > current.mtime) combined.set(run.name, run);
+    if (!current || run.mtime > current.mtime) combined.set(run.name, { ...run, completed: current?.completed ?? await hasReport(run.name) });
   }
   return [...combined.values()].sort((a, b) => b.mtime - a.mtime);
 }
@@ -269,7 +274,7 @@ async function answerAboutRun(run: string, message: string, history: unknown[], 
     const match = agentFile.replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
     if (!match) throw new Error(`Invalid agent profile for ${agent}`);
     const model = match[1].match(/^model:\s*(\S+)\s*$/m)?.[1] ?? "";
-    const memory = await readFile(path.join(DASHBOARD_DIR, agent, "memory.md"), "utf8").catch(() => "");
+    const memory = await readAgentMemory(path.join(DASHBOARD_DIR, agent));
     const report = await readFile(path.join(RUNS_DIR, run.replace(/\.chat\.md$/, ".md")), "utf8").catch(() => "");
     const legacyChat = await readFile(path.join(RUNS_DIR, run), "utf8").catch(() => "");
     const structuredEvents = legacyChat ? [] : await activityRepository.listByRun(run);
@@ -423,8 +428,11 @@ async function handle(request, response) {
       const message = typeof body.message === "string" ? body.message.trim() : "";
       if (!isRunName(run) || !runs.some((item) => item.name === run)) return sendJson(response, 404, { error: "Run not found" });
       if (!message || message.length > 1000) return sendJson(response, 400, { error: "Message must be 1-1000 characters" });
+      if (body.scope !== undefined && !["selected-run", "all-runs"].includes(body.scope)) return sendJson(response, 400, { error: "Invalid run scope" });
+      const greeting = greetingReply(message);
+      if (greeting) return sendJson(response, 200, { answer: greeting, evidence: { scope: body.scope ?? "selected-run", activity: [], memories: [], repository: [], api: [] } });
       refereeChatPending = true;
-      const context = await buildRefereeContext({ runId: run, question: message, apiRequests: NAMES.map((actor) => ({ actor, path: "/questions" })) });
+      const context = await buildRefereeContext({ runId: run, question: message, scope: body.scope, apiRequests: NAMES.map((actor) => ({ actor, path: "/questions" })) });
       const env = await localSettings();
       const result = await answerRefereeChat({ message, history: body.history, context, model: getLlmModel("REFEREE", env, env.JUDGE_MODEL ?? ""), env });
       return sendJson(response, 200, result);
@@ -446,6 +454,8 @@ async function handle(request, response) {
       if (!isRunName(run) || !runs.some((item) => item.name === run)) return sendJson(response, 404, { error: "Run not found" });
       if (agent && !AGENT_NAMES.has(agent)) return sendJson(response, 400, { error: "Unknown agent" });
       if (!message || message.length > 1000) return sendJson(response, 400, { error: "Message must be 1-1000 characters" });
+      const greeting = greetingReply(message);
+      if (greeting) return sendJson(response, 200, { answer: greeting });
       const result = await answerAboutRun(run, message, Array.isArray(body.history) ? body.history : [], agent);
       return sendJson(response, 200, { answer: result.answer });
     } catch (error) {

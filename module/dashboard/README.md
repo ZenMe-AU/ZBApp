@@ -114,6 +114,10 @@ For focused tests without real LLM calls, run from the repository root:
 pnpm exec vitest run module/dashboard/agentChat.test.mts module/dashboard/viewer/agent-operations.test.mts module/dashboard/activity/activity.test.mts module/quest3Tier/func/vitest/routeContract.test.mts module/quest3Tier/func/vitest/tableReadSideEffects.test.mts
 ```
 
+For browser regression checks, keep Dashboard running and run `node module/dashboard/viewer/browser-check.mjs` from the repository root. This uses the installed Chrome browser through the existing Playwright dependency. It checks header layout, human participant retention, question error recovery, Chat/Referee Chat, Activity rendering and slow polling at desktop/mobile widths. All API responses are fixtures; it does not start agent runs or write user data. Set `DASHBOARD_URL` if the viewer uses a different address.
+
+Chat and Referee Chat provide a Run selector grouped by Completed (a saved report exists) and Incomplete. Referee Chat additionally offers Select All Runs for Activity history; selecting a specific run restricts that history even if the prompt says "all history". This administrative scope does not change agent execution permissions or the existing memory/repository evidence sources. Ported from `josh-asad-merge-branch` commit `8eedb4ac`, retaining Dashboard's in-process Quest access and shared LLM settings.
+
 To run it from the VS Code Vitest extension instead, add `"vitest.nodeEnv": { "AGENT_RUN": "1" }` to your **user** settings. Then run only this test, and keep Continuous Run off: otherwise every file save starts a paid run. Only one run can be active at a time; a second one fails fast because of `runs/.lock`.
 
 ### Options (environment variables)

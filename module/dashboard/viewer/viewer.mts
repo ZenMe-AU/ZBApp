@@ -13,6 +13,7 @@ declare const agGrid: { createGrid(element: HTMLElement, options: Record<string,
 
 let activityGridApi;
 let questionRefreshPending = false;
+let updatePending = false;
 let expandedActivityId = "";
 const activityFilterSelections = new Map<string, Set<string>>();
 const activityFilterText = new Map<string, string>();
@@ -25,6 +26,7 @@ type RefereeEvidence = {
   api?: Array<{ actor: string; path: string }>;
 };
 type ChatMessage = { role: "user" | "assistant"; content: string; evidence?: RefereeEvidence };
+type RunOption = { name: string; mtime: number; completed: boolean };
 // Visible columns use fields shared by LanceDB events and legacy .chat.md logs.
 const activityColumns: any[] = [
   {
@@ -62,6 +64,8 @@ const activityColumns: any[] = [
 
 const state = {
   selectedRun: "",
+  refereeRunScope: "selected-run" as "selected-run" | "all-runs",
+  runs: [] as RunOption[],
   latestRun: "",
   renderedSignature: "",
   announcedRun: "",
@@ -357,6 +361,7 @@ async function refreshQuestions() {
     if (!questionsResponse.ok || (answersResponse && !answersResponse.ok)) return;
     if (state.activeView !== "questions" || state.activeAgent !== person || state.questionPerson !== person || state.selectedQuestionId !== questionId) return;
     state.questions = questionsBody.questions;
+    state.questionStatus = "ready";
     if (answersBody) {
       state.answers = answersBody.answers;
       state.questionActivity = presentActivityEvents(answersBody.activity ?? []);
@@ -464,12 +469,6 @@ function renderRefereeChatView() {
 }
 
 function renderProfiles(participants) {
-  const human = [...participants].find((name) => !AGENTS.includes(name));
-  elements.humanProfile.disabled = !human;
-  elements.humanProfile.dataset.profile = human ?? "";
-  elements.humanProfile.querySelector("span").textContent = human ?? "Human";
-  elements.humanProfile.setAttribute("aria-label", human ? `Open ${human} profile` : "Human profile is not available for this run");
-  elements.humanProfile.setAttribute("aria-pressed", String(Boolean(human && state.activeAgent === human)));
   renderProfileCards({
     activeProfile: state.activeAgent,
     container: elements.profileCards,
@@ -489,6 +488,7 @@ function renderProfiles(participants) {
 }
 
 function renderFeed() {
+  document.body.toggleAttribute("data-conversation", state.activeView === "chat" || state.activeView === "referee-chat");
   const view = VIEWS[state.activeView];
   if (state.activeView === "chat") return renderChatView(participantsFor(state.currentEvents));
   if (state.activeView === "referee-chat") return renderRefereeChatView();
@@ -577,6 +577,19 @@ function renderFeed() {
   renderInspector(events.find((event) => event.id === state.selectedEventId));
 }
 
+function chatStatus(text: string) {
+  const status = document.createElement("li");
+  status.className = "chat-message assistant chat-status-message";
+  status.setAttribute("aria-live", "polite");
+  status.textContent = text.replace(/…$/, "");
+  const dots = document.createElement("span");
+  dots.className = "thinking-dots";
+  dots.setAttribute("aria-hidden", "true");
+  dots.append(...Array.from({ length: 3 }, () => document.createElement("span")));
+  status.append(dots);
+  return status;
+}
+
 function renderChat() {
   if (!elements.chatMessages) return;
   const referee = state.activeView === "referee-chat";
@@ -591,13 +604,7 @@ function renderChat() {
       ? "Ask the Referee about agent behaviour, memory, activity or repository evidence."
       : "Ask about scores, answers, leaks or agent behaviour.";
     elements.chatMessages.replaceChildren(empty);
-    if (statusText) {
-      const status = document.createElement("li");
-      status.className = "chat-message assistant chat-status-message";
-      status.textContent = statusText;
-      status.setAttribute("aria-live", "polite");
-      elements.chatMessages.append(status);
-    }
+    if (statusText) elements.chatMessages.append(chatStatus(statusText));
     return;
   }
   const renderedMessages = messages.map((message, index) => {
@@ -612,13 +619,7 @@ function renderChat() {
     item.append(button);
     return item;
   });
-  if (statusText) {
-    const status = document.createElement("li");
-    status.className = "chat-message assistant chat-status-message";
-    status.textContent = statusText;
-    status.setAttribute("aria-live", "polite");
-    renderedMessages.push(status);
-  }
+  if (statusText) renderedMessages.push(chatStatus(statusText));
   elements.chatMessages.replaceChildren(...renderedMessages);
 }
 
@@ -681,6 +682,7 @@ async function loadRuns() {
   const response = await fetch("/api/runs", { cache: "no-store" });
   if (!response.ok) throw new Error("Could not list agent runs");
   const { runs } = await response.json();
+  state.runs = runs;
   const names = runs.map((run) => run.name);
   const newestRun = names[0] ?? "";
   if (!state.selectedRun || !names.includes(state.selectedRun) || state.selectedRun === state.latestRun) state.selectedRun = newestRun;
@@ -704,10 +706,77 @@ async function loadRuns() {
       })
     );
   }
+  renderRunScopeSelector();
   for (const item of elements.runList.querySelectorAll<HTMLElement>("[data-run]")) {
     item.classList.toggle("is-selected", item.dataset.run === state.selectedRun);
     item.setAttribute("aria-current", item.dataset.run === state.selectedRun ? "true" : "false");
   }
+}
+
+function renderRunScopeSelector() {
+  const referee = state.activeView === "referee-chat";
+  const all = document.createElement("option");
+  all.value = "__all__";
+  all.textContent = "Select All Runs";
+  const groups = [true, false].map((completed) => {
+    const group = document.createElement("optgroup");
+    group.label = completed ? "Completed" : "Incomplete";
+    group.append(...state.runs.filter((run) => run.completed === completed).map((run) => {
+      const details = detailsForRun(run.name);
+      const option = document.createElement("option");
+      option.value = run.name;
+      option.textContent = [details.title, details.agents].filter(Boolean).join(" / ");
+      return option;
+    }));
+    return group;
+  }).filter((group) => group.children.length);
+  elements.chatRunSelect.replaceChildren(...(referee ? [all, ...groups] : groups));
+  elements.chatRunLabel.textContent = referee ? "Run scope" : "Run";
+  elements.chatRunSelect.value = referee && state.refereeRunScope === "all-runs" ? "__all__" : state.selectedRun;
+  elements.chatRunSelect.disabled = !state.runs.length;
+}
+
+function selectRun(run: string) {
+  if (!run || run === state.selectedRun) return;
+  state.selectedRun = run;
+  state.renderedSignature = "";
+  state.announcedRun = "";
+  state.announcedCount = 0;
+  state.selectedEventId = null;
+  state.chatAgent = "";
+  state.chatMessages = [];
+  state.chatStatus = "";
+  state.refereeMessages = [];
+  state.selectedRefereeMessage = -1;
+  state.refereeStatus = "";
+  state.refereeEvidence = null;
+  renderChat();
+  renderRunScopeSelector();
+  void update();
+}
+
+function selectChatRun(value: string) {
+  if (state.activeView === "referee-chat" && value === "__all__") {
+    state.refereeRunScope = "all-runs";
+    state.refereeMessages = [];
+    state.selectedRefereeMessage = -1;
+    state.refereeStatus = "";
+    state.refereeEvidence = null;
+    renderChat();
+    return;
+  }
+  const scopeChanged = state.refereeRunScope !== "selected-run";
+  state.refereeRunScope = "selected-run";
+  if (scopeChanged && value === state.selectedRun) {
+    state.refereeMessages = [];
+    state.selectedRefereeMessage = -1;
+    state.refereeStatus = "";
+    state.refereeEvidence = null;
+    renderChat();
+    renderRunScopeSelector();
+    return;
+  }
+  selectRun(value);
 }
 
 async function loadRunState() {
@@ -728,6 +797,7 @@ async function loadRunState() {
 
 async function refreshLog() {
   if (!state.selectedRun) return render([], 0);
+  const run = state.selectedRun;
   const [response, reportResponse, networkResponse, agentsResponse] = await Promise.all([
     fetch(`/api/activity?run=${encodeURIComponent(state.selectedRun)}`, { cache: "no-store" }),
     fetch(`/api/report?run=${encodeURIComponent(state.selectedRun)}`, { cache: "no-store" }),
@@ -740,6 +810,7 @@ async function refreshLog() {
   const data = await response.json();
   const report = reportResponse.ok ? await reportResponse.json() : { text: "" };
   const network = networkResponse.ok ? await networkResponse.json() : { networks: {} };
+  if (state.selectedRun !== run) return;
   const signature = `${data.run}:${data.mtime}:${data.events?.length ?? 0}:${data.legacyText?.length ?? 0}:${report.text.length}:${JSON.stringify(network.networks)}:${JSON.stringify(oids)}`;
   if (signature === state.renderedSignature) return;
   state.renderedSignature = signature;
@@ -766,6 +837,8 @@ async function refreshAllActivity() {
 }
 
 async function update() {
+  if (updatePending) return;
+  updatePending = true;
   try {
     await Promise.all([loadRuns(), loadRunState()]);
     await refreshLog();
@@ -776,6 +849,9 @@ async function update() {
     elements.runStatus.dataset.state = "idle";
     elements.eventTitle.textContent = "Viewer could not read the run";
     elements.eventText.textContent = error instanceof Error ? error.message : String(error);
+  }
+  finally {
+    updatePending = false;
   }
 }
 
@@ -823,22 +899,9 @@ if (elements) {
   elements.runList.addEventListener("click", (event) => {
     const item = (event.target as Element).closest<HTMLElement>("[data-run]");
     if (!item) return;
-    state.selectedRun = item.dataset.run;
-    state.renderedSignature = "";
-    state.announcedRun = "";
-    state.announcedCount = 0;
-    state.selectedEventId = null;
-    state.chatAgent = "";
-    state.chatMessages = [];
-    state.chatStatus = "";
-    state.refereeMessages = [];
-    state.selectedRefereeMessage = -1;
-    state.refereeStatus = "";
-    state.refereeEvidence = null;
-    renderChat();
-    refreshLog();
-    loadRuns();
+    selectRun(item.dataset.run);
   });
+  elements.chatRunSelect.addEventListener("change", () => selectChatRun(elements.chatRunSelect.value));
   elements.viewTabs.addEventListener("click", (event) => {
     const tab = (event.target as Element).closest<HTMLElement>("[data-view]");
     if (!tab) return;
@@ -846,15 +909,8 @@ if (elements) {
     state.selectedEventId = null;
     for (const item of elements.viewTabs.querySelectorAll("[data-view]")) item.setAttribute("aria-pressed", String(item === tab));
     renderFeed();
-    if (state.activeView === "activity") void refreshAllActivity();
-  });
-  elements.humanProfile.addEventListener("click", () => {
-    const human = elements.humanProfile.dataset.profile;
-    if (!human) return;
-    state.activeAgent = state.activeAgent === human ? "" : human;
-    state.selectedEventId = null;
-    renderProfiles(participantsFor(state.currentEvents));
-    renderFeed();
+    renderRunScopeSelector();
+    if (state.activeView === "activity") void update();
   });
   elements.chatForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -876,7 +932,7 @@ if (elements) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(referee
-          ? { run: state.selectedRun, message, history: messages }
+          ? { run: state.selectedRun, scope: state.refereeRunScope, message, history: messages }
           : { run: state.selectedRun, agent: state.chatAgent, message, history: messages }),
       });
       const body = await response.json();

@@ -59,3 +59,14 @@ No further policy decision is needed before implementation. As specified in step
 - Q3 and Dashboard builds, Dashboard self-check, and six targeted Vitest files passed: 122 tests passed, one opt-in real-agent test skipped. Builds include the existing uncommitted SQL model typing fix; clean-checkout build portability is not established here.
 - With Q3 HTTP stopped, a disposable Table database passed Dashboard profile/friend setup, question/share/answer/edit/follow-up, access denial, credential revocation and viewer reads. The actual Agent Chat runner also completed three agent loops and report/memory/Activity writes using a local fake LLM. Existing user data was not reset or migrated.
 - Real human authenticated HTTP sharing, deployed Azure storage/hosting and live Ollama inference were not verified. The human share receiver-ID conversion remains a separate deferred fix.
+
+## UI refinement follow-up
+
+Preserve the existing Agent Lab styling and in-process Quest integration. Remove only the header's Human profile button, move the selected run date into the top bar, and compact the affected spacing. Human actor data and the separate Quest UI flow remain intact.
+
+Deferred requirements (not implemented):
+- Add an actor/entity name search or selector between the participant display and existing search filters, covering both AI and human actors.
+- Apply consistent actor filtering across Questions, Activity and Chat; define how it interacts with Referee Chat's existing administrative evidence scope before implementation.
+- Consider a separate QFF environment with a different model later. No QFF migration, new database or cloud dependency is part of this refinement.
+
+Stabilisation findings: serialize periodic viewer refreshes, discard responses for a previously selected run, and restore Questions' ready state after a successful retry. Post-run agent chat now reads current `memory/*.md` files and uses legacy `memory.md` only when no current Markdown files exist. Reads preserve files and propagate storage errors. These UI checks do not establish completion of every Stage 4 acceptance criterion or the real human HTTP flow.

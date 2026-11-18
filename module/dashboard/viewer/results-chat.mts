@@ -4,10 +4,31 @@
  */
 
 import { fork } from "node:child_process";
+import { readFile, readdir } from "node:fs/promises";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { LlmRequest } from "../llmProvider/contract.mjs";
 
 type Reply = { answer: string } | { error: string };
+
+export async function readAgentMemory(agentDirectory: string): Promise<string> {
+  const directory = path.join(agentDirectory, "memory");
+  const entries = await readdir(directory, { withFileTypes: true }).catch((error) => {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  });
+  const files = entries.filter(entry => entry.isFile() && entry.name.endsWith(".md")).map(entry => entry.name).sort();
+  if (files.length) return (await Promise.all(files.map(file => readFile(path.join(directory, file), "utf8")))).join("\n\n");
+  return readFile(path.join(agentDirectory, "memory.md"), "utf8").catch((error) => {
+    if (error.code === "ENOENT") return "";
+    throw error;
+  });
+}
+
+export function greetingReply(message: string): string | undefined {
+  if (!/^(?:hi|hello|hey|안녕|안녕하세요|안녕하십니까)[\s!.?~]*$/i.test(message.trim())) return undefined;
+  return /^안녕/.test(message.trim()) ? "안녕하세요! 무엇을 도와드릴까요?" : "Hi! What would you like to talk about?";
+}
 
 // This is only the post-run results assistant. Live participant chat stays in the harness.
 export async function answerResults(request: LlmRequest, env: NodeJS.ProcessEnv): Promise<{ answer: string }> {

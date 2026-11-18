@@ -15,6 +15,7 @@ test("keeps only bounded user and assistant history", () => {
 
 test("returns interpretation separately from its evidence inventory", async () => {
   const infer = vi.fn(async (request) => {
+    expect(request.options).toEqual({ effort: "low", thinking: false, maxTokens: 1200 });
     expect(request.systemPrompt).toContain("read-only Referee");
     expect(request.input.evidence.activity[0].events).toHaveLength(250);
     return { answer: "Ian missed the evidence." };
