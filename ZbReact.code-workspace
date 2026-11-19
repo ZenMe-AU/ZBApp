@@ -64,6 +64,30 @@
       "name": "QFF",
       "path": "./module/QFF",
     },
+    {
+      "name": "QFFIdentity",
+      "path": "./module/QFF/QFFIdentity",
+    },
+    {
+      "name": "QFFModeler",
+      "path": "./module/QFF/QFFModeler",
+    },
+    {
+      "name": "QFFMatcher",
+      "path": "./module/QFF/QFFMatcher",
+    },
+    {
+      "name": "QFFViz",
+      "path": "./module/QFF/QFFViz",
+    },
+    {
+      "name": "IdentityRepository",
+      "path": "./module/QFF/IdentityRepository",
+    },
+    {
+      "name": "QFFRepository",
+      "path": "./module/QFF/QFFRepository",
+    },
   ],
   "launch": {
     "version": "0.2.0",

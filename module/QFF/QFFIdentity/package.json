@@ -1,0 +1,17 @@
+{
+  "name": "qff-identity",
+  "version": "1.0.0",
+  "description": "QFF customer identity and preference UI",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm run typecheck && vite build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6"
+  }
+}

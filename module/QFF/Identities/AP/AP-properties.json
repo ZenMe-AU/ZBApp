@@ -1,0 +1,201 @@
+{
+  "identity_id": "AP",
+  "preferences": [
+    {
+      "keyword": "software architecture",
+      "kind": "interest",
+      "definition": "The structure of a software system and the way its components work together.",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "8a7ad807-41a6-46cf-b3c9-a4604d78e5d0"
+    },
+    {
+      "keyword": "artificial intelligence",
+      "kind": "interest",
+      "definition": "Computing methods that perform tasks such as learning, reasoning, or language generation.",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "557fc9d9-a911-420b-b095-acb0d8a8635d"
+    },
+    {
+      "keyword": "automation",
+      "kind": "interest",
+      "definition": "Using technology to carry out repeatable tasks with less manual effort.",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "e1dbcd20-bcd1-4d61-8aba-3aa37a96977a"
+    },
+    {
+      "keyword": "dishonesty",
+      "kind": "boundary",
+      "definition": "Intentionally misleading others or presenting information as true when it is not.",
+      "personas": [],
+      "preference_id": "e056c305-2e09-4f80-b6b7-ac4d502cb4c0"
+    },
+    {
+      "keyword": "moderate hiking",
+      "kind": "interest",
+      "definition": "Walking on trails at a manageable pace and difficulty, without extreme terrain or exertion.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "54d8c437-762a-431c-8e74-622f2c9fd088"
+    },
+    {
+      "keyword": "taking photographs",
+      "kind": "interest",
+      "definition": "Creating images to capture and preserve places, wildlife, or moments.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "d28a4a99-357c-4c46-ab3c-b0f4f70f56fd"
+    },
+    {
+      "keyword": "wildlife",
+      "kind": "interest",
+      "definition": "Wild animals observed in their natural environments.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "11deb6ba-5879-4466-bad4-b6d818a5d4b3"
+    },
+    {
+      "keyword": "walking",
+      "kind": "interest",
+      "definition": "Moving on foot for recreation, exercise, or conversation.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "c86a0862-66e6-4614-9048-ba36d8b6ce4e"
+    },
+    {
+      "keyword": "safety",
+      "kind": "want",
+      "definition": "Taking reasonable precautions to reduce avoidable risks during activities.",
+      "personas": [],
+      "preference_id": "6ea40f56-b250-43e9-b938-933936cb2120"
+    },
+    {
+      "keyword": "reckless or extreme activities",
+      "kind": "boundary",
+      "definition": "Activities that involve unnecessary danger or exceed agreed comfort and ability.",
+      "personas": [],
+      "preference_id": "a92abda5-4894-4699-8f32-8bd567a90c0e"
+    },
+    {
+      "keyword": "technology accessibility",
+      "kind": "interest",
+      "definition": "Designing technology so people with different abilities and needs can use it.",
+      "personas": [
+        {
+          "persona": "community volunteer",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "fe5c1cab-5850-43ed-a632-2bab9a6d6784"
+    },
+    {
+      "keyword": "education",
+      "kind": "interest",
+      "definition": "The process of teaching and learning knowledge and skills.",
+      "personas": [
+        {
+          "persona": "community volunteer",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "7746bc2a-61cc-4806-952d-c514b3c63535"
+    },
+    {
+      "keyword": "local initiatives",
+      "kind": "interest",
+      "definition": "Community-led efforts to address needs or improve life in a local area.",
+      "personas": [
+        {
+          "persona": "community volunteer",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "6a609576-3e38-482d-9d0d-10a058e644c4"
+    },
+    {
+      "keyword": "poor privacy practices",
+      "kind": "boundary",
+      "definition": "Careless handling, collection, or sharing of personal information.",
+      "personas": [],
+      "preference_id": "b2a6d879-f430-4fb0-ad03-f002905e33f0"
+    },
+    {
+      "keyword": "curiosity",
+      "definition": "An interest in asking questions and exploring new ideas to understand technology.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "77143656-a4aa-446d-bf34-0ea34a39a159"
+    },
+    {
+      "keyword": "competence",
+      "definition": "The knowledge and ability to handle technical work effectively.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "aa84630e-4657-4686-9810-c1681909ee2a"
+    },
+    {
+      "keyword": "service",
+      "definition": "Contributing time or skills to help other people or the community.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "b43d1815-ad23-4cb1-9923-5d7a1e5e05d5"
+    },
+    {
+      "keyword": "responsibility",
+      "definition": "Taking ownership of commitments, duties, and their consequences.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "c763124e-b884-4774-8af7-654dd7a469b1"
+    }
+  ]
+}

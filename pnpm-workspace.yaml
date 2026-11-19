@@ -5,6 +5,11 @@ packages:
   - module/*/func
   - module/dashboard
   - module/QFF/QFFViz
+  - module/QFF/QFFIdentity
+  - module/QFF/QFFModeler
+  - module/QFF/QFFMatcher
+  - module/QFF/IdentityRepository
+  - module/QFF/QFFRepository
   - deploy/corpSetup/c11cloudfront/source/authGuardLambdaEdge
   - deploy/corpSetup/c11cloudfront/source/msalSpa
 allowBuilds:

@@ -164,7 +164,7 @@ The [Identities](Identities) directory contains six fictional identities with th
 | MR | Marcus Reed | Melbourne sport friend; community volunteer; outdoor activity friend |
 | ET | Emma Thompson | Technology peer; Christian friend; culture and photography friend |
 
-Each identity's directory contains four JSON files, prefixed with its `identity_id`:
+Each fixture directory is named after its internal `identity_id` (for example, [`Identities/AP`](Identities/AP)). The Identity Repository resolves that ID directly to the directory without scanning files. The directory contains four JSON files prefixed with the same ID:
 
 - `XX-identity.json`: biographical details.
 - `XX-personas.json`: persona narratives under entries in `personas`, covering goals, contributions, expectations, interests, communication, boundaries, and initial disclosure.
@@ -234,6 +234,12 @@ Secondary measures may include:
 - whether the connection remains mutually valuable after more information is shared
 
 ## Design decisions
+
+### Test locations
+
+- Put Vitest tests in the owning workspace's `vitest/` folder, or `QFF/vitest/` for tests owned by QFF itself. Use `*.test.ts` (or `*.test.mts`), as matched by the [root Vitest config](../../vitest.config.ts). The folder name follows the other workspaces; Vitest discovers tests by filename.
+- Put Playwright browser tests in the component's `pwtests/` folder and name them `*.spec.ts`. The [root Playwright config](../../playwright.config.ts) matches `*.spec.ts` and `*.setup.ts` (and their `.mts` equivalents) under `pwtests/`.
+- Existing QFFViz browser checks in `tests/` use `node:test` to launch Playwright and are not discovered by the root Playwright runner. Follow the folder convention when replacing those checks during the redesign.
 
 ### Embedding text changes invalidate vectors
 

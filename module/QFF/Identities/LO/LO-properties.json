@@ -1,0 +1,538 @@
+{
+  "identity_id": "LO",
+  "preferences": [
+    {
+      "keyword": "watching Australian rules football",
+      "kind": "interest",
+      "definition": "Following an Australian rules football match as a spectator.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "d709e7ce-8649-4b36-958f-78c997cd31d4"
+    },
+    {
+      "keyword": "watching cricket",
+      "kind": "interest",
+      "definition": "Following a cricket match as a spectator.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "cfaaad68-f506-4a09-babe-5430a160aea6"
+    },
+    {
+      "keyword": "playing social tennis",
+      "kind": "interest",
+      "definition": "Playing tennis recreationally in a relaxed, non-competitive setting.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.5
+        }
+      ],
+      "preference_id": "8fdbea1d-bb8d-40ba-8b46-9b23cd77239a"
+    },
+    {
+      "keyword": "watching tennis",
+      "kind": "interest",
+      "definition": "Following a tennis match as a spectator.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "c09a8c03-6372-4113-a496-e3aac973de66"
+    },
+    {
+      "keyword": "attending the Australian Open",
+      "kind": "interest",
+      "definition": "Watching the Australian Open tennis tournament in person.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "4935a49b-2acf-4182-b301-b0ad6bb26eba"
+    },
+    {
+      "keyword": "casual cycling",
+      "kind": "interest",
+      "definition": "Riding a bicycle for recreation at a comfortable, non-competitive pace.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.5
+        },
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.6
+        }
+      ],
+      "preference_id": "74e67df9-a467-4160-9df6-ee8051d60666"
+    },
+    {
+      "keyword": "walking",
+      "kind": "interest",
+      "definition": "Moving on foot for recreation, exercise, or conversation.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.5
+        },
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "3866109a-d2c5-46fe-88b8-4eaf9aba525e"
+    },
+    {
+      "keyword": "Melbourne sporting history",
+      "kind": "interest",
+      "definition": "Past events, people, teams, and venues that have shaped sport in Melbourne.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "b49d844b-4c08-42d0-9cb9-213664b2546f"
+    },
+    {
+      "keyword": "aggressive supporter behaviour",
+      "kind": "boundary",
+      "definition": "Hostile or intimidating conduct by sports fans toward others.",
+      "personas": [],
+      "preference_id": "f7d39f90-c5e6-404e-ba57-8a54b902dd64"
+    },
+    {
+      "keyword": "gambling pressure",
+      "kind": "boundary",
+      "definition": "Pressuring someone to bet or gamble as part of a social activity.",
+      "personas": [],
+      "preference_id": "2e25b1f9-b764-4f8e-b759-42a001da4f70"
+    },
+    {
+      "keyword": "abusive language toward players or officials",
+      "kind": "boundary",
+      "definition": "Insults, threats, or degrading language directed at players or officials.",
+      "personas": [],
+      "preference_id": "7ec79aaa-5f0f-41a9-8261-569d9cc85021"
+    },
+    {
+      "keyword": "repeated last-minute cancellations",
+      "kind": "boundary",
+      "definition": "Frequently cancelling agreed plans shortly before they are due to happen.",
+      "personas": [],
+      "preference_id": "3e72d08b-35d6-4572-ba5b-135ee2b1ed32"
+    },
+    {
+      "keyword": "Melbourne neighbourhoods",
+      "kind": "interest",
+      "definition": "The distinct local areas, streets, and communities that make up Melbourne.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "a83cec9e-856d-4fc1-9097-5e137f4aac8c"
+    },
+    {
+      "keyword": "attending live music",
+      "kind": "interest",
+      "definition": "Going to a performance where musicians play in person.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "841f2e85-0c07-4fd7-b751-6243d039eaf4"
+    },
+    {
+      "keyword": "watching live comedy",
+      "kind": "interest",
+      "definition": "Attending an in-person performance by comedians.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "7ff31081-4eb7-4226-88b5-ac7a49099262"
+    },
+    {
+      "keyword": "food",
+      "kind": "interest",
+      "definition": "Meals, cuisine, and the experiences of discovering and sharing them.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "802238f3-d799-4288-b6a4-e17132f877b2"
+    },
+    {
+      "keyword": "coffee",
+      "kind": "interest",
+      "definition": "The brewed drink and relaxed cafe experience enjoyed in social settings.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "32952663-57ea-492e-b076-9c37d90f1503"
+    },
+    {
+      "keyword": "independent cafes",
+      "kind": "interest",
+      "definition": "Locally owned cafes that operate independently of large chains.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "edf7f28c-b7c7-43a1-87a3-b3c275b622fb"
+    },
+    {
+      "keyword": "food markets",
+      "kind": "interest",
+      "definition": "Markets where vendors sell fresh produce, prepared food, and local specialties.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "f44249a0-fcd4-45eb-957e-9ceb64586933"
+    },
+    {
+      "keyword": "visiting galleries",
+      "kind": "interest",
+      "definition": "Viewing exhibitions of art and other creative work in a gallery.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.6
+        }
+      ],
+      "preference_id": "664b5bd8-7c0d-4b0e-831c-ad458e0ee1de"
+    },
+    {
+      "keyword": "visiting museums",
+      "kind": "interest",
+      "definition": "Exploring collections and exhibits about subjects such as history, art, or science.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.6
+        }
+      ],
+      "preference_id": "7347bfed-8cfa-49f0-bbaa-f36bbdb0798e"
+    },
+    {
+      "keyword": "architecture",
+      "kind": "interest",
+      "definition": "The design, structure, and style of buildings and other built spaces.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.6
+        }
+      ],
+      "preference_id": "7afbc391-75b8-472c-a818-e4cf8e1d1617"
+    },
+    {
+      "keyword": "local history",
+      "kind": "interest",
+      "definition": "Past events, people, and places that have shaped a local area.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "fb81b852-77ee-43bc-89fe-6aac5fe6a603"
+    },
+    {
+      "keyword": "local events",
+      "kind": "interest",
+      "definition": "Community or cultural activities taking place in a local area.",
+      "personas": [
+        {
+          "persona": "melbourne culture friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "d832bf75-4ce0-42b4-ac1b-08d42bba1fe4"
+    },
+    {
+      "keyword": "inclusion",
+      "kind": "want",
+      "definition": "Welcoming people with different backgrounds and enabling them to participate.",
+      "personas": [],
+      "preference_id": "8ecc9bca-5c36-4b62-992f-32fa5d5b37cb"
+    },
+    {
+      "keyword": "snobbery about taste, suburb or income",
+      "kind": "boundary",
+      "definition": "Treating people as inferior because of their tastes, neighbourhood, or wealth.",
+      "personas": [],
+      "preference_id": "d6d55ff8-0623-4f1f-8fbb-cb8b208ecfa1"
+    },
+    {
+      "keyword": "pressure to drink alcohol",
+      "kind": "boundary",
+      "definition": "Pressuring someone to consume alcoholic drinks when they do not want to.",
+      "personas": [],
+      "preference_id": "624a58aa-36dc-4163-89c8-d563dcace45a"
+    },
+    {
+      "keyword": "disrespectful behaviour toward hospitality or venue staff",
+      "kind": "boundary",
+      "definition": "Rude or dismissive treatment of people working at cafes, restaurants, or venues.",
+      "personas": [],
+      "preference_id": "e476d3e3-93ab-4fd5-86b2-a9444114f38e"
+    },
+    {
+      "keyword": "one-sided planning",
+      "kind": "boundary",
+      "definition": "Planning where one person consistently makes decisions without considering others’ preferences.",
+      "personas": [],
+      "preference_id": "e0561265-1b08-4c91-9cbb-a4aa0c2566ce"
+    },
+    {
+      "keyword": "moderate hiking",
+      "kind": "interest",
+      "definition": "Walking on trails at a manageable pace and difficulty, without extreme terrain or exertion.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "a07c3e55-40e3-4241-b5ca-c0c1c987c2ba"
+    },
+    {
+      "keyword": "travel",
+      "kind": "interest",
+      "definition": "Going beyond one’s usual surroundings to visit and explore other places.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "b8754561-ec17-4f0f-ad96-0f7c74effa98"
+    },
+    {
+      "keyword": "regional day trips",
+      "kind": "interest",
+      "definition": "Short visits to nearby destinations that begin and end on the same day.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "4e1262ad-3cfc-4daf-8f45-1ce9c6e0ecf8"
+    },
+    {
+      "keyword": "coastal scenery",
+      "kind": "interest",
+      "definition": "The visible landscapes and natural features along a coast.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "4543f2e1-b122-4ffb-882c-8cb0b44260ec"
+    },
+    {
+      "keyword": "wildlife",
+      "kind": "interest",
+      "definition": "Wild animals observed in their natural environments.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "307437cb-0c78-4328-865c-b281652019ce"
+    },
+    {
+      "keyword": "taking photographs",
+      "kind": "interest",
+      "definition": "Creating images to capture and preserve places, wildlife, or moments.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "9894ff57-c1a0-49b4-b418-08c4a4b1bb26"
+    },
+    {
+      "keyword": "safety",
+      "kind": "want",
+      "definition": "Taking reasonable precautions to reduce avoidable risks during activities.",
+      "personas": [],
+      "preference_id": "3c33cc7d-4fb5-457c-a873-f27928fb4536"
+    },
+    {
+      "keyword": "reckless or extreme activities",
+      "kind": "boundary",
+      "definition": "Activities that involve unnecessary danger or exceed agreed comfort and ability.",
+      "personas": [],
+      "preference_id": "f842b4ae-72c3-4500-a79e-3ac7ac495d1f"
+    },
+    {
+      "keyword": "ignoring weather or safety warnings",
+      "kind": "boundary",
+      "definition": "Disregarding forecasts or guidance about hazardous conditions.",
+      "personas": [],
+      "preference_id": "440f3829-c56e-4aa3-bf5c-69fafccb8e26"
+    },
+    {
+      "keyword": "pressure to exceed agreed difficulty",
+      "kind": "boundary",
+      "definition": "Pushing someone to take on more strenuous activity than agreed or comfortable.",
+      "personas": [],
+      "preference_id": "79142a93-ba7f-4022-aaf5-a2b703f26d81"
+    },
+    {
+      "keyword": "repeated unreliability",
+      "kind": "boundary",
+      "definition": "Frequently failing to keep plans or follow through on commitments.",
+      "personas": [],
+      "preference_id": "a7caa715-68e6-43a3-bed5-230e485866cc"
+    },
+    {
+      "keyword": "sharing precise routines or locations without consent",
+      "kind": "boundary",
+      "definition": "Revealing someone’s exact schedule or whereabouts without their permission.",
+      "personas": [],
+      "preference_id": "0ce10947-767e-4828-8037-7a67b86e64bc"
+    },
+    {
+      "keyword": "high-intensity guided hiking",
+      "kind": "interest",
+      "definition": "Strenuous hikes led by a guide, often involving demanding pace, distance, or terrain.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": -0.8
+        }
+      ],
+      "preference_id": "8119998f-8f88-46bf-b85d-bb70934ca4dd"
+    },
+    {
+      "keyword": "loyalty",
+      "definition": "Being dependable and standing by teammates, friends, or a team.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "18ff7dbd-e61f-431f-9bc0-ec175f363365"
+    },
+    {
+      "keyword": "humour",
+      "definition": "The ability to appreciate or share amusement in a friendly way.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.6
+        }
+      ],
+      "preference_id": "982f445c-5eff-4e5a-95bc-d6124914048a"
+    },
+    {
+      "keyword": "sportsmanship",
+      "definition": "Playing fairly and treating teammates, opponents, and officials with respect.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "974f0885-dcdf-4665-ac84-18734ca1404c"
+    },
+    {
+      "keyword": "curiosity",
+      "definition": "An interest in discovering local places, culture, and new experiences.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "b0157032-4de7-4c54-b9a0-bf955cb2665e"
+    },
+    {
+      "keyword": "authenticity",
+      "definition": "Being sincere and genuine rather than presenting a false or performative self.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "b4dc45d3-fa35-41f4-8ce9-76e92d604782"
+    },
+    {
+      "keyword": "reliability",
+      "definition": "Following through on plans and commitments consistently.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "ddb6e887-16e7-453f-b6d4-984681964adf"
+    },
+    {
+      "keyword": "curiosity",
+      "definition": "An interest in exploring and learning about places, activities, and nature.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.6
+        }
+      ],
+      "preference_id": "1d3c24b1-297c-4885-968e-aa371198effe"
+    },
+    {
+      "keyword": "consideration",
+      "definition": "Taking other people’s comfort, needs, and limits into account.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "fe3cf913-3cbb-4bf2-b711-a550f9251fe0"
+    }
+  ]
+}
