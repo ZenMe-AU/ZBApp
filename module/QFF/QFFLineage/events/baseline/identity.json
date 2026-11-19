@@ -1,0 +1,43 @@
+{
+  "eventTime": "2026-11-19T01:42:35Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "identity-repository",
+    "name": "<id>-identity.json",
+    "facets": {
+      "qff_lineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageDatasetFacet.json",
+        "source": { "namespace": "identity-repository-api", "name": "identity" },
+        "mapping": "direct-copy"
+      },
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "identity_id", "type": "string" },
+          { "name": "name", "type": "string" },
+          { "name": "age", "type": "number" },
+          { "name": "gender", "type": "string" },
+          { "name": "location", "type": "string" },
+          { "name": "occupation", "type": "string" },
+          { "name": "summary", "type": "string" },
+          {
+            "name": "personas",
+            "type": "array",
+            "description": "Inferred personas approved by the identity user.",
+            "fields": [{
+              "name": "_element",
+              "type": "object",
+              "fields": [
+                { "name": "name", "type": "string" },
+                { "name": "description", "type": "string", "description": "One AI-generated text summarizing the persona inferred from preferences and approved by the user." }
+              ]
+            }]
+          }
+        ]
+      }
+    }
+  }
+}

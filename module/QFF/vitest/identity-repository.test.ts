@@ -7,7 +7,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { createProfile, profileIds, readProfile, resolveProfileFolder, updatePreference } from "../IdentityRepository/src/repository.ts";
+import { createFixtureProfile, createProfile, profileIds, readProfile, resolveFixtureIdentityId, resolveProfileFolder, updatePreference } from "../IdentityRepository/src/repository.ts";
 
 const temporaryRoots: string[] = [];
 
@@ -34,6 +34,26 @@ function profile(id: string) {
 }
 
 describe("Identity Repository file lifecycle", () => {
+  it("uses the fixture external ID to select the internal files without persisting the login ID", async () => {
+    const root = await newRoot();
+    const input = {
+      external_id: "NEW",
+      identity: { name: "Test User" },
+      relations: { relations: [] },
+      properties: { preferences: [] },
+    };
+    await expect(createFixtureProfile({ ...input, external_id: undefined }, root)).rejects.toMatchObject({ status: 400 });
+    await expect(createFixtureProfile({ ...input, identity: { identity_id: "OTHER" } }, root)).rejects.toMatchObject({ status: 400 });
+    expect(await profileIds(root)).toEqual([]);
+    await expect(createFixtureProfile(input, root)).resolves.toBe("NEW");
+    const identityId = resolveFixtureIdentityId(input.external_id);
+    const folder = await resolveProfileFolder(identityId, root);
+    for (const [kind, document] of Object.entries({ identity: input.identity, properties: input.properties, relations: input.relations })) {
+      expect(JSON.parse(await readFile(join(folder, `${identityId}-${kind}.json`), "utf8")))
+        .toEqual({ ...document, identity_id: "NEW" });
+    }
+  });
+
   it("creates a profile, assigns a stable preference ID, and reads and updates its files", async () => {
     const root = await newRoot();
     const id = "NEW";

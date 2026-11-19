@@ -15,7 +15,7 @@ This document turns [the evolutionary semantic ontology proposal](evolutionary-s
 - Preserve the matching privacy contract: analysts are authorized to access all identity data; customers may access only their own data and de-identified aggregate data. A customer's use of matching must not expose another customer's preference details, affinities, or uniquely identifying inferred evidence.
 - A customer's acceptance of proposed wording creates a new preference; it does not rewrite the existing preference. The customer may keep, replace, supersede, or contradict preferences. Analyst approval of a concept or mapping is not customer confirmation.
 - The current six identity fixtures are simulated, non-production data and may be updated by agents. Git-tracked stores and development security are not production controls.
-- In the test environment, users may choose an internal profile ID and impersonate profiles as needed. This is not a production authorization model. In production, resolve the external MSAL `oid` through a separate lookup to the internal profile ID; do not use the external ID as the internal ID.
+- Identity users identify themselves through a provider-scoped `external_id` from Entra ID or social login. Resolve verified login claims to the stable internal `identity_id` before selecting repository files. Test users may impersonate fixture profiles; with no authentication provider, the simulated external ID and internal ID have the same value.
 
 ## Business context
 
@@ -88,7 +88,7 @@ flowchart LR
 | QFFModeler | QFF Repository API | Read and update canonical concepts, mappings, and modelling run records. |
 | QFFModeler | Semantic derivation service | Trigger and review semantic derivation runs. |
 
-In the test environment, a user selects an internal profile ID and may impersonate any fixture profile; this supports simulation and is not a security control. In production, the Identity Repository resolves the authenticated MSAL `oid` through a separate lookup to an internal profile ID. Customers may access only their own data or de-identified aggregates, while analysts are authorized to access all identity data through approved APIs. QFFViz accesses identity data through Identity Repository API and QFF-owned data through QFF Repository API. Customers review and approve preferences in the QFFIdentity; QFFModeler is for analysts and cannot confirm preferences on a customer's behalf.
+The Identity Repository API resolves `external_id` to `identity_id` at the API boundary. In fixture mode only, users may select any fixture with a simulated external ID equal to its internal ID. In production, use a separate lookup keyed by verified tenant and object ID for Entra ID, or verified issuer and subject for social login. Customers may access only their own data or de-identified aggregates, while analysts are authorized to access all identity data through approved APIs. QFFViz accesses identity data through Identity Repository API and QFF-owned data through QFF Repository API. Customers review and approve preferences in the QFFIdentity; QFFModeler is for analysts and cannot confirm preferences on a customer's behalf.
 
 ## Score terminology
 
@@ -122,13 +122,13 @@ The plan is deliberately incremental; phases remain requirements and proposed im
 - Establish persistent IDs and remove embeddings from identity-owned JSON without changing source preference meaning.
 - Establish QFF Repository ownership over QFF data only, including vectors, and ensure development state can be rebuilt/reviewed from Git.
 - Verify the migration preserves identity and preference source fields and stable IDs, removes vector-only identity fields, and rebuilds/restores the QFF-owned LanceDB dataset from tracked development inputs.
-- Verify repository boundaries: test profile impersonation works through the selected internal profile ID; production customer and analyst access rules are enforced by approved APIs; only QFF Repository accesses LanceDB at runtime.
+- Verify repository boundaries: test profile impersonation works through the simulated `external_id`; production customer and analyst access rules are enforced by approved APIs; only QFF Repository accesses LanceDB at runtime.
 
 #### Technical implementation notes
 
 - Create workspace folders for `CanonicalModels/`, `IdentityRepository/`, and `QFFRepository/`. Store schemas, migrations and seed/import artifacts in `CanonicalModels/`; do not maintain a second editable active catalogue there.
 - Implement Identity Repository as a TypeScript/Node.js Azure Functions app with a development adapter over the existing Git-tracked identity JSON files. Keep its API separate from storage implementation so deployed file hosting can be swapped later.
-- Preserve existing valid internal profile IDs. Add opaque GUID `preference_id` values once; ensure IDs survive edits to text, affinity, persona membership, or order. The test UI accepts a selected profile ID; production OID-to-profile lookup is a separate concern.
+- Preserve existing valid internal `identity_id` values. Add opaque GUID `preference_id` values once; ensure IDs survive edits to text, affinity, persona membership, or order. The test UI accepts a simulated `external_id`; the production lookup is a separate concern.
 - Remove `embedding`, `kind_vectors`, `embedding_model`, and other vector-only fields from identity source files, while preserving keywords, definitions, kinds, affinities and source provenance.
 - Implement the QFF Repository function app and initial LanceDB dataset. Store only QFF-owned canonical state, aggregates/references, vector records, derivation runs and matcher transactions; link identity records by IDs.
 - Make the QFF Repository the active catalogue authority. Treat its development LanceDB dataset as disposable and rebuild it from tracked source and seed inputs; do not create backup or retention obligations for test data.
@@ -138,7 +138,7 @@ The plan is deliberately incremental; phases remain requirements and proposed im
 #### Running the Phase 1 foundations locally
 
 - In separate PowerShell terminals, set `$env:FUNCTIONS_WORKER_RUNTIME = "node"` and `$env:QFF_FIXTURE_MODE = "1"`, then run `pnpm --filter qff-identity-repository start` (7181) or `pnpm --filter qff-repository start` (7182). Use synthetic data only. Production authentication and hosting are not implemented.
-- Identity API: `GET /api/v1/profiles`, `GET /api/v1/profiles/{profileId}`, and `PUT /api/v1/profiles/{profileId}/preferences/{preferenceId}`. For the edit, send the profile response's `revision` in `If-Match` and provide `keyword`, `definition`, `kind`, and `personas`. A stale revision returns `412`; reload before retrying.
+- Fixture identity API: `GET /api/v1/profiles`, `GET /api/v1/profiles/{externalId}`, and `PUT /api/v1/profiles/{externalId}/preferences/{preferenceId}`. Creation via `POST /api/v1/profiles` takes a top-level `external_id` and assigns internal IDs to the documents. For an edit, send the profile response's `revision` in `If-Match` and provide `keyword`, `definition`, `kind`, and `personas`. A stale revision returns `412`; reload before retrying.
 - Fixture migration: `pnpm --filter qff-identity-repository migrate:fixtures` assigns missing GUIDs and removes preference vectors. It is safe to rerun. If a process crashes mid-write, verify that no writer is active before deleting any leftover per-file `.lock` or `.tmp` files.
 - QFF API: `GET /api/v1/catalogue` initializes the local LanceDB dataset from the versioned schema and seed in `CanonicalModels/` and reads the active catalogue. The initial catalogue has no reviewed concepts. The dataset in `QFFRepository/.data/` is disposable; a fresh dataset starts with empty derived tables.
 - QFFViz uses the Identity Repository for local profile reads. Legacy identity writes and vector features are paused rather than supported by a temporary storage path. [Phase 6](#phase-6--qffviz-redesign) records the impact and collects redesign work.
@@ -151,7 +151,7 @@ The plan is deliberately incremental; phases remain requirements and proposed im
 | --- | --- |
 | Semantic derivation service | Build a headless pipeline that reads source through Identity Repository and writes envelopes, vectors, mappings, provenance, and run status through QFF Repository. |
 | Matcher | Build a separate Azure Functions service that reads through both repositories, computes explainable privacy-safe matches, persists a minimal QFF transaction, and returns a requester-scoped response. |
-| QFFIdentity and Identity Repository | Let the customer review and approve wording in the QFFIdentity; write each accepted wording as a new preference linked to its inference. The test UI accepts the selected profile ID; production uses the MSAL OID lookup. |
+| QFFIdentity and Identity Repository | Let the customer review and approve wording in the QFFIdentity; write each accepted wording as a new preference linked to its inference. The test UI accepts a simulated `external_id`; production resolves the authenticated provider ID. |
 | QFF Repository | Provide the APIs and persistence needed for derived vectors/mappings, run tracking, and match transactions; serialize writes and support idempotent requests. |
 
 #### Requirements
@@ -276,6 +276,7 @@ QFFViz does not need to remain operational before Phase 6. Do not block earlier 
 | Identity fixtures | Assigned stable GUIDs to 162 preferences across six profiles. Removed preference and kind vectors and embedding metadata without changing the other source fields. Legacy vector views no longer have data in the identity JSON. |
 | Profile reads and edits | QFFViz's local `GET /api/files` now adapts Identity Repository API responses for existing profile views. `PUT /api/files` returns `405`, so the Raw JSON and preference editors can no longer save through that route. The Identity Repository already exposes revision-checked preference updates. |
 | Vector tools | The legacy `/api/embeddings` routes return `503`. The old refresh/status tools, heatmaps, similarity plots, keyword maps, and match preview are disabled or lack data. These are examples of the impact, not a feature restoration checklist. |
+| Relations | Remove the legacy `source` field from QFFViz relation types, the editable Source column, and new relation drafts. The identity fixtures and lineage schemas no longer include it. |
 
 #### Work item: Support profiles without scripted personas
 
@@ -314,7 +315,7 @@ The following runtime components expand the business context diagram. Stakeholde
 
 | Component | Purpose |
 | --- | --- |
-| QFFIdentity | Lets customers view and edit preferences and check/approve proposed wording. In testing, the user selects an internal profile ID and may impersonate profiles; in production, access is limited to the caller's profile. |
+| QFFIdentity | Lets customers view and edit preferences and check/approve proposed wording. In testing, the user selects a simulated external ID and may impersonate profiles; in production, access is limited to the caller's profile. |
 | QFFMatcher | Lets a customer submit a match request and see only their own data or permitted de-identified aggregate information. |
 | QFFViz | Provides analyst analytics and data cleansing across identity and QFF data. It reads through both repository APIs and saves analyst-approved QFF overrides through QFF Repository API. |
 | [QFFLineage](QFFLineage/readme.md) | On-demand local viewer for OpenLineage jobs, runs, and dataset dependencies. Reads repository-managed event JSON files; does not open either runtime data store. |
@@ -325,7 +326,7 @@ The following runtime components expand the business context diagram. Stakeholde
 
 | Component | Purpose and ownership |
 | --- | --- |
-| Identity Repository API | The sole API for identity-owned source JSON. It reads/writes each identity repository and handles preference updates and customer approvals. Test requests may select an internal profile ID; production resolves the external MSAL `oid` through a separate lookup to the internal profile ID. |
+| Identity Repository API | The sole API for identity-owned source JSON. It reads/writes each identity repository and handles preference updates and customer approvals. It resolves a test selector or verified provider ID to the internal `identity_id` before accessing files. |
 | QFF Repository API | The sole runtime API for QFF-owned data and the only component that opens LanceDB. It owns the active canonical model, derived mappings/vectors, run metadata, and match transactions. Writes begin serialized with one active writer; Pub/Sub and batching are later enhancements. |
 | Matcher service | A Node.js Azure Functions service that reads the minimum required identity and QFF data through their APIs, computes an explainable match, persists its transaction through QFF Repository API, and returns a requester-scoped response. |
 | Semantic derivation service | A headless backend that reads source preferences through Identity Repository API and writes semantic representations, vectors, mappings, provenance, and run status through QFF Repository API. |
@@ -341,7 +342,7 @@ The following runtime components expand the business context diagram. Stakeholde
 
 `CanonicalModels/` contains schemas, migrations, and seed/import artifacts used to initialize or evolve the active model. It is not a second editable runtime catalogue; the active reviewed model is owned by QFF Repository.
 
-`QFFLineage/events/` stores one editable OpenLineage `RunEvent` per JSON file. The viewer builds its graph in memory; no ingestion API, database, or running QFF service is required. Keep lineage metadata separate from private identity data.
+`QFFLineage/events/` stores one editable OpenLineage event per JSON file. The [initial baseline](QFFLineage/events/baseline/) uses standalone `DatasetEvent` records for existing file schemas in `identity-repository` and placeholder datasets for the other system and stakeholder namespaces, without jobs or runs. Dataset cards display recorded OpenLineage schema fields. The viewer builds its graph in memory; no ingestion API, database, or running QFF service is required. Keep lineage metadata separate from private identity data.
 
 ### Technical guidance
 

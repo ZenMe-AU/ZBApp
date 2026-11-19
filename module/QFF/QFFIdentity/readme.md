@@ -23,11 +23,11 @@ flowchart LR
 
 - Let customers view and edit their own preferences and review suggested wording before accepting it.
 - Save accepted wording as a new preference linked to the inference. Keep the original preference; the customer may mark it as superseded.
-- In the test environment only, let users select an internal profile ID and act as that simulated customer.
+- In the test environment only, let users select a simulated `external_id` and act as that customer. The fixture API uses the same value as the internal `identity_id`.
 
 ## Application Architecture
 
-The browser reads and saves preferences through the Identity Repository API, which owns the source records. In production, the backend resolves the signed-in user's MSAL `oid` to a separate internal profile ID and limits access to that profile.
+The browser reads and saves preferences through the Identity Repository API, which owns the source records. In production, the backend resolves the verified Entra ID or social login identity to a separate internal `identity_id` and limits access to that profile.
 
 ## Technical Guidance
 

@@ -4,7 +4,7 @@
  */
 
 import { app, type HttpHandler } from "@azure/functions";
-import { createProfile, profileIds, readProfile, RequestError, resolveProfileFolder, updatePreference } from "./repository.ts";
+import { createFixtureProfile, profileIds, readProfile, RequestError, resolveFixtureIdentityId, resolveProfileFolder, updatePreference } from "./repository.ts";
 
 async function readJsonBody(request: Parameters<HttpHandler>[0]) {
   if (!request.body) throw new RequestError(400, "A JSON request body is required.");
@@ -54,11 +54,11 @@ app.http("listProfiles", {
 });
 
 app.http("readProfile", {
-  route: "v1/profiles/{profileId}",
+  route: "v1/profiles/{externalId}",
   methods: ["GET"],
   authLevel: "anonymous",
   handler: fixtureOnly(async (request) => {
-    const id = request.params.profileId;
+    const id = resolveFixtureIdentityId(request.params.externalId);
     const folder = await resolveProfileFolder(id);
     return { jsonBody: await readProfile(folder, id) };
   }),
@@ -69,27 +69,21 @@ app.http("createProfile", {
   methods: ["POST"],
   authLevel: "anonymous",
   handler: fixtureOnly(async (request) => {
-    const input = await readJsonBody(request);
-    if (typeof input !== "object" || input === null || Array.isArray(input) || !("identity" in input)
-      || typeof input.identity !== "object" || input.identity === null || Array.isArray(input.identity)
-      || !("identity_id" in input.identity) || typeof input.identity.identity_id !== "string") {
-      throw new RequestError(400, "Supply an identity object with an identity_id.");
-    }
-    const id = input.identity.identity_id;
-    await createProfile(id, input);
+    const id = await createFixtureProfile(await readJsonBody(request));
     return { status: 201, jsonBody: { profile_id: id } };
   }),
 });
 
 app.http("updatePreference", {
-  route: "v1/profiles/{profileId}/preferences/{preferenceId}",
+  route: "v1/profiles/{externalId}/preferences/{preferenceId}",
   methods: ["PUT"],
   authLevel: "anonymous",
   handler: fixtureOnly(async (request) => {
-    const { profileId, preferenceId } = request.params;
-    const folder = await resolveProfileFolder(profileId);
+    const { externalId, preferenceId } = request.params;
+    const identityId = resolveFixtureIdentityId(externalId);
+    const folder = await resolveProfileFolder(identityId);
     const input = await readJsonBody(request);
-    const revision = await updatePreference(folder, profileId, preferenceId, request.headers.get("if-match"), input);
+    const revision = await updatePreference(folder, identityId, preferenceId, request.headers.get("if-match"), input);
     return { jsonBody: { revision } };
   }),
 });

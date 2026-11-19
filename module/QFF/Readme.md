@@ -166,10 +166,10 @@ The [Identities](Identities) directory contains six fictional identities, with t
 
 Each fixture directory is named after its internal `identity_id` (for example, [`Identities/AP`](Identities/AP)). The Identity Repository resolves that ID directly to the directory without scanning files. The three source files and optional test context use the same ID prefix:
 
-- `XX-identity.json`: biographical details.
-- `XX-test-context.json` (optional): scripted persona narratives for simulation and baseline comparison, not required input or evidence for matching or semantic derivation.
+- `XX-identity.json`: biographical details and approved `personas`. Each entry has a `name` matching a named preference affinity and one AI-generated `description` inferred from preferences. The synthetic profiles assume approval for the persona names in their legacy test context.
+- `XX-test-context.json` (optional, legacy): scripted persona narratives kept for existing consumers and baseline comparisons, outside the identity lineage model. They are not required input or evidence for matching or semantic derivation.
 - `XX-properties.json`: identity-owned preferences (kinds `interest`, `want`, `value`, `boundary`). An affinity entry with `"persona": ""` applies to the identity as a whole; named entries preserve context-specific affinities and the scripted baseline. An empty `personas` array records no scoped affinity. Derived embeddings and model metadata belong to the QFF Repository, not identity source files.
-- `XX-relations.json`: known contacts referenced by their identity IDs, with `topics_shared` and `topics_private` lists and `source: "simulation"`.
+- `XX-relations.json`: known contacts referenced by their identity IDs, with `topics_shared` and `topics_private` lists.
 
 Initials are readable fixture identifiers used consistently across files and references. Production identifiers remain opaque. Concept and kind embeddings are generated with Azure AI Foundry `text-embedding-3-small`; see [persona_preference_embedding_model.md](persona_preference_embedding_model.md).
 

@@ -1,0 +1,18 @@
+{
+  "eventTime": "2026-11-19T23:17:21Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/JobEvent",
+  "job": {
+    "namespace": "QFFIdentity",
+    "name": "capture-profile",
+    "facets": {
+      "qff_lineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
+        "actions": ["Save profile edits", "Approve an inferred persona"]
+      }
+    }
+  },
+  "inputs": [{ "namespace": "IdentityUser", "name": "identity-profile" }],
+  "outputs": [{ "namespace": "QFFIdentity", "name": "identity-profile" }]
+}

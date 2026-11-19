@@ -3,17 +3,14 @@
   "relations": [{
       "contact_ref": "DM",
       "topics_shared": ["software architecture", "artificial intelligence", "moderate hiking"],
-      "topics_private": ["family disagreements"],
-      "source": "simulation"
+      "topics_private": ["family disagreements"]
     }, {
       "contact_ref": "MR",
       "topics_shared": ["local initiatives", "education", "moderate hiking"],
-      "topics_private": ["client project details"],
-      "source": "simulation"
+      "topics_private": ["client project details"]
     }, {
       "contact_ref": "ET",
       "topics_shared": ["technology accessibility", "product design", "photography"],
-      "topics_private": ["personal finances"],
-      "source": "simulation"
+      "topics_private": ["personal finances"]
     }]
 }

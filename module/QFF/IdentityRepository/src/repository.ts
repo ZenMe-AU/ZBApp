@@ -26,6 +26,33 @@ export class RequestError extends Error {
   }
 }
 
+export function resolveFixtureIdentityId(externalId: unknown, status = 404) {
+  if (typeof externalId !== "string" || !profileIdPattern.test(externalId)) {
+    throw new RequestError(status, status === 404 ? "Profile not found." : "Supply a valid external_id.");
+  }
+  return externalId;
+}
+
+export async function createFixtureProfile(input: unknown, root = fixtureRoot) {
+  if (!isRecord(input)) throw new RequestError(400, "Supply a profile object.");
+  const identityId = resolveFixtureIdentityId(input.external_id, 400);
+  const documents: Record<string, unknown> = {};
+  const keys = ["identity", "relations", "properties"];
+  if (Object.hasOwn(input, "personas")) keys.push("personas");
+  for (const key of keys) {
+    const document = input[key];
+    if (!isRecord(document) || Object.hasOwn(document, "external_id")) {
+      throw new RequestError(400, `Supply a ${key} object; external_id belongs at the request root.`);
+    }
+    if (Object.hasOwn(document, "identity_id") && document.identity_id !== identityId) {
+      throw new RequestError(400, `The ${key} identity_id must match the resolved identity ID.`);
+    }
+    documents[key] = { ...document, identity_id: identityId };
+  }
+  await createProfile(identityId, documents, root);
+  return identityId;
+}
+
 export async function profileIds(root = fixtureRoot) {
   const entries = await readdir(root, { withFileTypes: true });
   return entries.filter(entry => entry.isDirectory() && profileIdPattern.test(entry.name)).map(entry => entry.name).sort();

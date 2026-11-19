@@ -1,0 +1,37 @@
+{
+  "eventTime": "2026-11-19T01:42:35Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "identity-repository",
+    "name": "<id>-relations.json",
+    "facets": {
+      "qff_lineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageDatasetFacet.json",
+        "source": { "namespace": "identity-repository-api", "name": "relations" },
+        "mapping": "direct-copy"
+      },
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "identity_id", "type": "string" },
+          {
+            "name": "relations",
+            "type": "array",
+            "fields": [{
+              "name": "_element",
+              "type": "object",
+              "fields": [
+                { "name": "contact_ref", "type": "string" },
+                { "name": "topics_shared", "type": "array", "fields": [{ "name": "_element", "type": "string" }] },
+                { "name": "topics_private", "type": "array", "fields": [{ "name": "_element", "type": "string" }] }
+              ]
+            }]
+          }
+        ]
+      }
+    }
+  }
+}

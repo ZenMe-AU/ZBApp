@@ -7,11 +7,15 @@
   </head>
   <body>
     <main>
-      <header><h1>QFFLineage</h1><p>Explore inputs, outputs, and runs recorded in local OpenLineage files.</p></header>
+      <div>Trace jobs and datasets from local OpenLineage files.</div>
+      <div id="viewport" role="region" aria-label="Lineage graph"></div>
       <section id="errors" role="status" hidden></section>
-      <label>Job <select id="jobs"></select></label>
-      <section id="view" aria-label="Lineage view"></section>
     </main>
+    <aside id="details-panel" aria-label="Selected node details" hidden>
+      <button id="details-resize" class="resize-strip" type="button" aria-label="Resize details panel"></button>
+      <button id="details-close" type="button">Close details</button>
+      <div id="inspect"></div>
+    </aside>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,9 +1,0 @@
-{
-  "eventType": "COMPLETE",
-  "eventTime": "2026-11-19T00:01:01Z",
-  "run": { "runId": "3fa426bf-12d5-470c-bffd-dcbeefacc83e" },
-  "job": { "namespace": "qff:example", "name": "index-preferences" },
-  "outputs": [{ "namespace": "qff:example", "name": "identity_preference_refs" }],
-  "producer": "urn:qff:lineage:example",
-  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
-}

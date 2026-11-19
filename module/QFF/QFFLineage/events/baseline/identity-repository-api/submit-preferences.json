@@ -1,0 +1,26 @@
+{
+  "eventTime": "2026-11-19T23:33:57Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/JobEvent",
+  "job": {
+    "namespace": "QFFIdentity",
+    "name": "submit-preferences",
+    "facets": {
+      "qff_lineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
+        "actions": ["Flatten grouped preferences by kind", "Send preferences to the API", "Resolve external ID at the API boundary"],
+        "mapping": "flatten-by-kind",
+        "resolveIdentity": true,
+        "kindByGroup": {
+          "interests": "interest",
+          "wants": "want",
+          "values": "value",
+          "boundaries": "boundary"
+        }
+      }
+    }
+  },
+  "inputs": [{ "namespace": "QFFIdentity", "name": "preferences" }],
+  "outputs": [{ "namespace": "identity-repository-api", "name": "properties" }]
+}

@@ -1,9 +1,0 @@
-{
-  "eventType": "START",
-  "eventTime": "2026-11-19T00:00:00Z",
-  "run": { "runId": "053cb2cb-8920-45fc-b589-402118a2818e" },
-  "job": { "namespace": "qff:example", "name": "migrate-fixtures" },
-  "inputs": [{ "namespace": "qff:example", "name": "legacy-identity-fixtures" }],
-  "producer": "urn:qff:lineage:example",
-  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
-}

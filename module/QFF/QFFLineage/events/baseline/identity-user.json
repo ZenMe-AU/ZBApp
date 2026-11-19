@@ -1,0 +1,37 @@
+{
+  "eventTime": "2026-11-19T03:16:40Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "IdentityUser",
+    "name": "identity-profile",
+    "facets": {
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "external_id", "type": "string", "description": "Login identity from Entra ID or a social provider; simulated in fixture mode." },
+          { "name": "name", "type": "string" },
+          { "name": "age", "type": "number" },
+          { "name": "gender", "type": "string" },
+          { "name": "location", "type": "string" },
+          { "name": "occupation", "type": "string" },
+          { "name": "summary", "type": "string" },
+          {
+            "name": "personas",
+            "type": "array",
+            "description": "Inferred personas approved by the identity user.",
+            "fields": [{
+              "name": "_element",
+              "type": "object",
+              "fields": [
+                { "name": "name", "type": "string" },
+                { "name": "description", "type": "string", "description": "One AI-generated text summarizing the persona inferred from preferences and approved by the user." }
+              ]
+            }]
+          }
+        ]
+      }
+    }
+  }
+}
