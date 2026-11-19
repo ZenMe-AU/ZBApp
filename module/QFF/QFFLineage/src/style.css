@@ -1,0 +1,18 @@
+:root { color-scheme: light dark; font: 1rem/1.5 system-ui, sans-serif; }
+body { margin: 0; }
+main { max-width: 75rem; margin: auto; padding: 1.5rem; }
+h1, h2, h3 { line-height: 1.25; }
+header { border-bottom: 1px solid GrayText; margin-bottom: 1.25rem; }
+select, button { font: inherit; max-width: 100%; }
+label { display: block; }
+.lineage { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.75rem; margin: 1rem 0; }
+.lineage section { position: relative; border: 1px solid GrayText; border-radius: .5rem; padding: 1rem; overflow-wrap: anywhere; }
+.lineage section:not(:last-child)::after { content: "\2192"; position: absolute; left: 100%; width: 1.75rem; top: 50%; text-align: center; }
+.lineage button { display: block; text-align: left; overflow-wrap: anywhere; margin-bottom: .5rem; }
+details { border-bottom: 1px solid GrayText; padding: .5rem 0; overflow-wrap: anywhere; }
+pre { overflow: auto; max-height: 24rem; }
+#errors { border: 1px solid GrayText; padding: 0 1rem; margin-bottom: 1rem; overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  .lineage { grid-template-columns: 1fr; }
+  .lineage section:not(:last-child)::after { content: "\2193"; top: 100%; left: calc(50% - .875rem); }
+}

@@ -81,6 +81,10 @@
       "path": "./module/QFF/QFFViz",
     },
     {
+      "name": "QFFLineage",
+      "path": "./module/QFF/QFFLineage",
+    },
+    {
       "name": "IdentityRepository",
       "path": "./module/QFF/IdentityRepository",
     },

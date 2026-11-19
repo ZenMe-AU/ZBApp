@@ -317,6 +317,7 @@ The following runtime components expand the business context diagram. Stakeholde
 | QFFIdentity | Lets customers view and edit preferences and check/approve proposed wording. In testing, the user selects an internal profile ID and may impersonate profiles; in production, access is limited to the caller's profile. |
 | QFFMatcher | Lets a customer submit a match request and see only their own data or permitted de-identified aggregate information. |
 | QFFViz | Provides analyst analytics and data cleansing across identity and QFF data. It reads through both repository APIs and saves analyst-approved QFF overrides through QFF Repository API. |
+| [QFFLineage](QFFLineage/readme.md) | On-demand local viewer for OpenLineage jobs, runs, and dataset dependencies. Reads repository-managed event JSON files; does not open either runtime data store. |
 | QFFModeler | Lets analysts curate canonical concepts, review mappings, inspect runs and scores, and trigger backend derivation. It does not confirm preferences on a customer's behalf. |
 | VS Code platform administration | Provides the QFF platform operator's local development and service-administration tooling. |
 
@@ -339,6 +340,8 @@ The following runtime components expand the business context diagram. Stakeholde
 ### Design-time assets
 
 `CanonicalModels/` contains schemas, migrations, and seed/import artifacts used to initialize or evolve the active model. It is not a second editable runtime catalogue; the active reviewed model is owned by QFF Repository.
+
+`QFFLineage/events/` stores one editable OpenLineage `RunEvent` per JSON file. The viewer builds its graph in memory; no ingestion API, database, or running QFF service is required. Keep lineage metadata separate from private identity data.
 
 ### Technical guidance
 

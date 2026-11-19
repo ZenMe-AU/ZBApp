@@ -1,0 +1,16 @@
+{
+  "name": "qff-lineage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5188 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm run typecheck && vite build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6"
+  }
+}
