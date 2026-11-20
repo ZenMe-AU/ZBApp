@@ -6,10 +6,17 @@
     "namespace": "QFFIdentity",
     "name": "capture-relations",
     "facets": {
-      "qff_lineage": {
+      "jobType": {
         "_producer": "urn:qff:lineage:baseline",
-        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
-        "actions": ["Submit relation edits"]
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Submit relation edits.",
+        "contentType": "text/plain"
       }
     }
   },

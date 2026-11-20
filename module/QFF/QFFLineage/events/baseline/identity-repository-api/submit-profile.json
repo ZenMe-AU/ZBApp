@@ -6,16 +6,45 @@
     "namespace": "QFFIdentity",
     "name": "submit-profile",
     "facets": {
-      "qff_lineage": {
+      "jobType": {
         "_producer": "urn:qff:lineage:baseline",
-        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
-        "operation": "command",
-        "actions": ["Send profile data to the API", "Resolve external ID at the API boundary"],
-        "mapping": "direct-copy",
-        "resolveIdentity": true
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF",
+        "jobType": "COMMAND"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Send profile data to the API.\nResolve external ID at the API boundary.",
+        "contentType": "text/plain"
       }
     }
   },
   "inputs": [{ "namespace": "QFFIdentity", "name": "identity-profile" }],
-  "outputs": [{ "namespace": "identity-repository-api", "name": "identity" }]
+  "outputs": [{
+    "namespace": "identity-repository-api",
+    "name": "identity",
+    "facets": {
+      "columnLineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json",
+        "fields": {
+          "identity_id": {
+            "inputFields": [{
+              "namespace": "QFFIdentity", "name": "identity-profile", "field": "external_id",
+              "transformations": [{ "type": "DIRECT", "subtype": "TRANSFORMATION", "description": "Resolve the external ID to the internal identity ID at the API boundary. The IDs are equal only in fixture mode.", "masking": false }]
+            }]
+          },
+          "name": { "inputFields": [{ "namespace": "QFFIdentity", "name": "identity-profile", "field": "name", "transformations": [{ "type": "DIRECT", "subtype": "IDENTITY", "masking": false }] }] },
+          "age": { "inputFields": [{ "namespace": "QFFIdentity", "name": "identity-profile", "field": "age", "transformations": [{ "type": "DIRECT", "subtype": "IDENTITY", "masking": false }] }] },
+          "gender": { "inputFields": [{ "namespace": "QFFIdentity", "name": "identity-profile", "field": "gender", "transformations": [{ "type": "DIRECT", "subtype": "IDENTITY", "masking": false }] }] },
+          "location": { "inputFields": [{ "namespace": "QFFIdentity", "name": "identity-profile", "field": "location", "transformations": [{ "type": "DIRECT", "subtype": "IDENTITY", "masking": false }] }] },
+          "occupation": { "inputFields": [{ "namespace": "QFFIdentity", "name": "identity-profile", "field": "occupation", "transformations": [{ "type": "DIRECT", "subtype": "IDENTITY", "masking": false }] }] },
+          "summary": { "inputFields": [{ "namespace": "QFFIdentity", "name": "identity-profile", "field": "summary", "transformations": [{ "type": "DIRECT", "subtype": "IDENTITY", "masking": false }] }] },
+          "personas": { "inputFields": [{ "namespace": "QFFIdentity", "name": "identity-profile", "field": "personas", "transformations": [{ "type": "DIRECT", "subtype": "IDENTITY", "masking": false }] }] }
+        }
+      }
+    }
+  }]
 }

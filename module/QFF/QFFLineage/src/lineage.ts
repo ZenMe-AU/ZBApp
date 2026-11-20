@@ -33,12 +33,16 @@ type JobEvent = {
 type RunEvent = JobEvent & { eventType: string, run: { runId: string } };
 type Source = { path: string, raw: string, event: RunEvent };
 export type Run = { id: string, sources: Source[], inputs: Entity[], outputs: Entity[] };
+type Transformation = { type: string, subtype?: string, description?: string };
+export type ColumnLineage = {
+  dataset: Entity;
+  fields: { field: string, inputs: { dataset: Entity, field: string, transformations: Transformation[] }[] }[];
+};
 type JobDefinition = {
   event: JobEvent;
-  actions: string[];
-  mapping?: Mapping;
+  description?: string;
   operation?: "query" | "command";
-  queryParameters?: string[];
+  columnLineage: ColumnLineage[];
 };
 type Job = { entity: Entity, runs: Map<string, Run>, definition?: JobDefinition };
 type NodeKind = "job" | "dataset";
@@ -70,6 +74,43 @@ function readMapping(facet: Record<string, unknown>): Mapping | undefined {
   if (facet.mapping === "flatten-by-kind" && isKindByGroup(facet.kindByGroup)) {
     return { mapping: facet.mapping, kindByGroup: facet.kindByGroup, resolveIdentity };
   }
+}
+
+function readColumnLineage(output: Dataset): ColumnLineage | undefined | null {
+  if (!isRecord(output.facets) || !("columnLineage" in output.facets)) return;
+  const facet = output.facets.columnLineage;
+  if (!isRecord(facet) || !isRecord(facet.fields)) return null;
+  const fields: ColumnLineage["fields"] = [];
+  for (const [field, value] of Object.entries(facet.fields)) {
+    if (!isRecord(value) || !Array.isArray(value.inputFields)) return null;
+    const inputs: ColumnLineage["fields"][number]["inputs"] = [];
+    for (const input of value.inputFields) {
+      if (!isEntity(input) || !hasText((input as Record<string, unknown>).field)) return null;
+      const { field: inputField, transformations = [] } = input as Entity & { field: string, transformations?: unknown };
+      if (!Array.isArray(transformations) || !transformations.every(isTransformation)) return null;
+      inputs.push({
+        dataset: { namespace: input.namespace, name: input.name },
+        field: inputField,
+        transformations: transformations.map(({ type, subtype, description }) => ({ type, subtype, description })),
+      });
+    }
+    fields.push({ field, inputs });
+  }
+  return { dataset: { namespace: output.namespace, name: output.name }, fields };
+}
+
+function isTransformation(value: unknown): value is Transformation {
+  return isRecord(value) && hasText(value.type)
+    && (value.subtype === undefined || typeof value.subtype === "string")
+    && (value.description === undefined || typeof value.description === "string");
+}
+
+export function columnLineageLines({ fields }: ColumnLineage) {
+  return fields.flatMap(({ field, inputs }) => inputs.map(({ dataset, field: inputField, transformations }) => {
+    const how = transformations.map(({ type, subtype, description }) =>
+      [[type, subtype].filter(Boolean).join(" "), description].filter(Boolean).join(": ")).join("; ");
+    return `${field} ← ${dataset.namespace} / ${dataset.name}.${inputField}${how ? ` (${how})` : ""}`;
+  }));
 }
 
 function isSchemaField(value: unknown): value is SchemaField {
@@ -157,28 +198,34 @@ export function readLineage(files: Record<string, string>) {
       run.sources.push({ path, raw, event });
       job.runs.set(run.id, run);
     } else if (!("run" in event) && !("eventType" in event)) {
-      const facet = isRecord(event.job.facets) ? event.job.facets.qff_lineage : undefined;
-      const { operation, queryParameters } = isRecord(facet) ? facet : {};
-      if ((operation !== undefined && operation !== "query" && operation !== "command")
-        || (queryParameters !== undefined && (operation !== "query" || !Array.isArray(queryParameters)
-          || !queryParameters.length || !queryParameters.every(hasText)))) {
-        errors.push(`${path}: invalid job operation or query parameters; declaration skipped.`);
+      const facets = isRecord(event.job.facets) ? event.job.facets : {};
+      const { jobType, documentation } = facets;
+      if (jobType !== undefined && !(isRecord(jobType) && hasText(jobType.integration) && hasText(jobType.processingType)
+        && (jobType.jobType === undefined || hasText(jobType.jobType)))) {
+        errors.push(`${path}: invalid jobType facet; declaration skipped.`);
         continue;
       }
+      const jobKind = isRecord(jobType) && typeof jobType.jobType === "string" ? jobType.jobType.toUpperCase() : undefined;
+      const operation = jobKind === "QUERY" ? "query" : jobKind === "COMMAND" ? "command" : undefined;
       const readsStorage = event.inputs?.some(dataset => dataset.namespace === "identity-repository");
       const writesStorage = event.outputs?.some(dataset => dataset.namespace === "identity-repository");
       if ((readsStorage && operation !== "query") || (writesStorage && operation !== "command")) {
         errors.push(`${path}: CQRS violation; only queries may read identity storage and only commands may write it. Declaration skipped.`);
         continue;
       }
-      const actions = isRecord(facet) && hasText(facet._producer) && hasText(facet._schemaURL)
-        && Array.isArray(facet.actions) && facet.actions.length && facet.actions.every(hasText) ? facet.actions : [];
-      const hasMapping = isRecord(facet) && ("mapping" in facet || "resolveIdentity" in facet || "kindByGroup" in facet);
-      const mapping = hasMapping && actions.length ? readMapping(facet) : undefined;
-      if (facet !== undefined && !actions.length) errors.push(`${path}: invalid qff_lineage job facet; job retained.`);
-      else if (hasMapping && !mapping) errors.push(`${path}: invalid qff_lineage job mapping; job retained.`);
+      const validDocumentation = isRecord(documentation) && hasText(documentation.description);
+      if (documentation !== undefined && !validDocumentation) errors.push(`${path}: invalid documentation facet; job retained.`);
+      const columnLineage: ColumnLineage[] = [];
+      for (const output of event.outputs ?? []) {
+        const lineage = readColumnLineage(output);
+        if (lineage) columnLineage.push(lineage);
+        else if (lineage === null) errors.push(`${path}: invalid columnLineage facet for ${output.namespace} / ${output.name}; lineage ignored.`);
+      }
       if (!job.definition || Date.parse(event.eventTime) >= Date.parse(job.definition.event.eventTime)) {
-        job.definition = { event, actions, mapping, operation, queryParameters };
+        job.definition = {
+          event, operation, columnLineage,
+          description: validDocumentation ? documentation.description as string : undefined,
+        };
       }
     } else {
       errors.push(`${path}: expected a valid OpenLineage RunEvent.`);

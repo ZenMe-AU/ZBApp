@@ -6,16 +6,39 @@
     "namespace": "QFFIdentity",
     "name": "submit-relations",
     "facets": {
-      "qff_lineage": {
+      "jobType": {
         "_producer": "urn:qff:lineage:baseline",
-        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
-        "operation": "command",
-        "actions": ["Send relations to the API", "Resolve external ID at the API boundary"],
-        "mapping": "direct-copy",
-        "resolveIdentity": true
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF",
+        "jobType": "COMMAND"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Send relations to the API.\nResolve external ID at the API boundary.",
+        "contentType": "text/plain"
       }
     }
   },
   "inputs": [{ "namespace": "QFFIdentity", "name": "relations" }],
-  "outputs": [{ "namespace": "identity-repository-api", "name": "relations" }]
+  "outputs": [{
+    "namespace": "identity-repository-api",
+    "name": "relations",
+    "facets": {
+      "columnLineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json",
+        "fields": {
+          "identity_id": {
+            "inputFields": [{
+              "namespace": "QFFIdentity", "name": "relations", "field": "external_id",
+              "transformations": [{ "type": "DIRECT", "subtype": "TRANSFORMATION", "description": "Resolve the external ID to the internal identity ID at the API boundary. The IDs are equal only in fixture mode.", "masking": false }]
+            }]
+          },
+          "relations": { "inputFields": [{ "namespace": "QFFIdentity", "name": "relations", "field": "relations", "transformations": [{ "type": "DIRECT", "subtype": "IDENTITY", "masking": false }] }] }
+        }
+      }
+    }
+  }]
 }

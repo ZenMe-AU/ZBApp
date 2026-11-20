@@ -6,22 +6,44 @@
     "namespace": "QFFIdentity",
     "name": "submit-preferences",
     "facets": {
-      "qff_lineage": {
+      "jobType": {
         "_producer": "urn:qff:lineage:baseline",
-        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
-        "operation": "command",
-        "actions": ["Flatten grouped preferences by kind", "Send preferences to the API", "Resolve external ID at the API boundary"],
-        "mapping": "flatten-by-kind",
-        "resolveIdentity": true,
-        "kindByGroup": {
-          "interests": "interest",
-          "wants": "want",
-          "values": "value",
-          "boundaries": "boundary"
-        }
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF",
+        "jobType": "COMMAND"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Flatten grouped preferences by kind.\nSend preferences to the API.\nResolve external ID at the API boundary.",
+        "contentType": "text/plain"
       }
     }
   },
   "inputs": [{ "namespace": "QFFIdentity", "name": "preferences" }],
-  "outputs": [{ "namespace": "identity-repository-api", "name": "properties" }]
+  "outputs": [{
+    "namespace": "identity-repository-api",
+    "name": "properties",
+    "facets": {
+      "columnLineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json",
+        "fields": {
+          "identity_id": {
+            "inputFields": [{
+              "namespace": "QFFIdentity", "name": "preferences", "field": "external_id",
+              "transformations": [{ "type": "DIRECT", "subtype": "TRANSFORMATION", "description": "Resolve the external ID to the internal identity ID at the API boundary. The IDs are equal only in fixture mode.", "masking": false }]
+            }]
+          },
+          "preferences": {
+            "inputFields": [{
+              "namespace": "QFFIdentity", "name": "preferences", "field": "preferences",
+              "transformations": [{ "type": "DIRECT", "subtype": "TRANSFORMATION", "description": "Flatten the interests, wants, values and boundaries groups into preferences[], setting kind to interest, want, value and boundary respectively.", "masking": false }]
+            }]
+          }
+        }
+      }
+    }
+  }]
 }

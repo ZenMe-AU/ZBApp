@@ -6,15 +6,18 @@
     "namespace": "identity-repository-api",
     "name": "commit-preference-approval",
     "facets": {
-      "qff_lineage": {
+      "jobType": {
         "_producer": "urn:qff:lineage:baseline",
-        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
-        "operation": "command",
-        "actions": [
-          "Resolve the identity and atomically apply the approval against the expected revision",
-          "Commit the new active preference and supersession marks together without changing prior wording",
-          "Return success or conflict only"
-        ]
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF",
+        "jobType": "COMMAND"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Resolve the identity and atomically apply the approval against the expected revision.\nCommit the new active preference and supersession marks together without changing prior wording.\nReturn success or conflict only.",
+        "contentType": "text/plain"
       }
     }
   },

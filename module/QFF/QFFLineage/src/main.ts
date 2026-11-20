@@ -3,7 +3,7 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-import { baselineProducer, dependencyGraph, displaySchemaField, edgeKey, entityKey, namespaceLayout, readLineage, type Entity, type LineageNode, type Mapping, type Run, type SchemaField } from "./lineage.ts";
+import { baselineProducer, columnLineageLines, dependencyGraph, displaySchemaField, edgeKey, entityKey, namespaceLayout, readLineage, type ColumnLineage, type Entity, type LineageNode, type Mapping, type Run, type SchemaField } from "./lineage.ts";
 import "./style.css";
 
 const files = import.meta.glob<string>("../events/**/*.json", { eager: true, query: "?raw", import: "default" });
@@ -99,8 +99,7 @@ function renderGraph() {
         ["Inputs", entities(graph.upstream.get(id)).map(entity => entity.name)],
         ["Outputs", entities(graph.downstream.get(id)).map(entity => entity.name)],
       ];
-      if (definition?.queryParameters?.length) sections.unshift(["Query parameters", definition.queryParameters]);
-      if (definition?.actions.length) sections.push(["Actions", definition.actions]);
+      if (definition?.description) sections.push(["Documentation", definition.description.split("\n")]);
       for (const [title, items] of sections) {
         const list = document.createElement("span");
         list.className = "node-content node-actions";
@@ -316,6 +315,16 @@ function showMapping(mapping: Mapping) {
   }
 }
 
+function showColumnLineage(lineages: ColumnLineage[]) {
+  for (const lineage of lineages) {
+    const lines = columnLineageLines(lineage);
+    if (!lines.length) continue;
+    const list = document.createElement("ul");
+    list.append(...lines.map(line => text("li", line)));
+    inspect.append(text("h3", `Column lineage: ${label(lineage.dataset)}`), list);
+  }
+}
+
 function showDetails(node: LineageNode) {
   panel.hidden = false;
   inspect.scrollTop = 0;
@@ -323,6 +332,9 @@ function showDetails(node: LineageNode) {
   if (node.kind === "dataset") {
     const fields = schemas.get(entityKey(node.entity))?.fields;
     inspect.append(text("h3", "Schema"), fields?.length ? fieldList(fields, true) : text("p", schemaLabel(fields)));
+    // Job column lineage and a dataset's declared mapping may overlap; both are shown for the designer to reconcile.
+    showColumnLineage([...jobs.values()].flatMap(({ definition }) =>
+      definition?.columnLineage.filter(({ dataset }) => entityKey(dataset) === entityKey(node.entity)) ?? []));
     for (const [title, adjacency] of [["Produced by", graph.upstream], ["Consumed by", graph.downstream]] as const) {
       const neighbors = [...(adjacency.get(node.id) ?? [])].map(id => graph.nodes.get(id)!);
       const names = neighbors.filter(neighbor => neighbor.kind === "job").map(neighbor => {
@@ -344,15 +356,14 @@ function showDetails(node: LineageNode) {
   }
   const job = jobs.get(entityKey(node.entity))!;
   if (job.definition) {
-    const { event, actions, mapping, operation, queryParameters } = job.definition;
+    const { event, description, columnLineage, operation } = job.definition;
     inspect.append(text("h3", operation ? `Declared ${operation}` : "Declared job"), text("p", "Planned lineage, not runtime telemetry."));
-    if (queryParameters?.length) inspect.append(text("p", `Query parameters: ${queryParameters.join(", ")}`));
-    if (actions.length) {
+    if (description) {
       const list = document.createElement("ul");
-      list.append(...actions.map(action => text("li", action)));
-      inspect.append(text("h3", "Actions"), list);
+      list.append(...description.split("\n").map(line => text("li", line)));
+      inspect.append(text("h3", "Documentation"), list);
     }
-    if (mapping) showMapping(mapping);
+    showColumnLineage(columnLineage);
     for (const [title, entities] of [["Inputs", event.inputs], ["Outputs", event.outputs]] as const) {
       inspect.append(text("p", `${title}: ${entities?.map(label).join(", ") || "None recorded"}`));
     }

@@ -6,10 +6,17 @@
     "namespace": "QFFIdentity",
     "name": "capture-preference-approval",
     "facets": {
-      "qff_lineage": {
+      "jobType": {
         "_producer": "urn:qff:lineage:baseline",
-        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
-        "actions": ["Review suggested wording and its source preferences", "Approve the system-generated preference using the active profile and editor revision"]
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Review suggested wording and its source preferences.\nApprove the system-generated preference using the active profile and editor revision.",
+        "contentType": "text/plain"
       }
     }
   },

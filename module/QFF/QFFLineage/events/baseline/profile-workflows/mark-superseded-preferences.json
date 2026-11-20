@@ -6,13 +6,17 @@
     "namespace": "QFFIdentity",
     "name": "mark-superseded-preferences",
     "facets": {
-      "qff_lineage": {
+      "jobType": {
         "_producer": "urn:qff:lineage:baseline",
-        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
-        "actions": [
-          "Mark each source preference as superseded without rewriting its wording",
-          "Submit the accepted wording as a new preference linked to its inference"
-        ]
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Mark each source preference as superseded without rewriting its wording.\nSubmit the accepted wording as a new preference linked to its inference.",
+        "contentType": "text/plain"
       }
     }
   },

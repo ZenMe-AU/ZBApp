@@ -5,7 +5,7 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { dependencyGraph, displaySchemaField, edgeKey, entityKey, namespaceLayout, nodeKey, readLineage, type Entity } from "../src/lineage.ts";
+import { columnLineageLines, dependencyGraph, displaySchemaField, edgeKey, entityKey, namespaceLayout, nodeKey, readLineage, type Entity } from "../src/lineage.ts";
 
 const source = { namespace: "qff", name: "source" };
 const dataset = { namespace: "qff", name: "references" };
@@ -131,9 +131,9 @@ it("maps user data through QFFIdentity and the API into repository files", () =>
   const user = [profile, preferences, relations];
   const ui = user.map(({ name }) => ({ namespace: "QFFIdentity", name }));
   const actions = [
-    ["capture-profile", ["Save profile edits", "Approve an inferred persona"]],
-    ["capture-preferences", ["Save preference edits"]],
-    ["capture-relations", ["Submit relation edits"]],
+    ["capture-profile", "Save profile edits.\nApprove an inferred persona."],
+    ["capture-preferences", "Save preference edits."],
+    ["capture-relations", "Submit relation edits."],
   ] as const;
   const uiJobs = actions.map(([name]) => ({ namespace: "QFFIdentity", name }));
   const submissions = ["submit-profile", "submit-preferences", "submit-relations"]
@@ -166,13 +166,17 @@ it("maps user data through QFFIdentity and the API into repository files", () =>
       .toMatchObject({ mapping: "direct-copy", source: input });
     const submission = jobs.get(entityKey(submissions[i]));
     expect(submission?.definition?.operation).toBe("command");
-    expect(submission?.definition?.mapping).toMatchObject({
-      mapping: i === 1 ? "flatten-by-kind" : "direct-copy", resolveIdentity: true,
-    });
-    expect(submission?.definition?.actions).toContain("Resolve external ID at the API boundary");
+    const lineage = submission?.definition?.columnLineage[0];
+    expect(lineage?.dataset).toEqual(api[i]);
+    expect(lineage?.fields.map(({ field }) => field)).toEqual(schemas.get(entityKey(api[i]))?.fields.map(({ name }) => name));
+    expect(lineage?.fields.find(({ field }) => field === "identity_id")?.inputs).toEqual([{
+      dataset: ui[i], field: "external_id",
+      transformations: [expect.objectContaining({ type: "DIRECT", subtype: "TRANSFORMATION" })],
+    }]);
+    expect(submission?.definition?.description).toContain("Resolve external ID at the API boundary.");
     expect(submission?.runs.size).toBe(0);
     const job = jobs.get(entityKey(uiJobs[i]));
-    expect(job?.definition?.actions).toEqual(actions[i][1]);
+    expect(job?.definition?.description).toEqual(actions[i][1]);
     expect(job?.runs.size).toBe(0);
     const userFields = schemas.get(entityKey(user[i]))?.fields;
     expect(schemas.get(entityKey(ui[i]))?.fields).toEqual(userFields);
@@ -191,8 +195,9 @@ it("maps user data through QFFIdentity and the API into repository files", () =>
     .toEqual(schemas.get(entityKey(expected[2]))?.fields.filter(field => field.name !== "identity_id"));
 
   const kindByGroup = { interests: "interest", wants: "want", values: "value", boundaries: "boundary" };
-  expect(jobs.get(entityKey(submissions[1]))?.definition?.mapping)
-    .toMatchObject({ mapping: "flatten-by-kind", kindByGroup });
+  const flatten = jobs.get(entityKey(submissions[1]))?.definition?.columnLineage[0].fields
+    .find(({ field }) => field === "preferences")?.inputs[0].transformations[0];
+  for (const kind of Object.values(kindByGroup)) expect(flatten?.description).toContain(kind);
   const propertyFields = schemas.get(entityKey(expected[1]))?.fields[1].fields?.[0].fields;
   expect(propertyFields).toContainEqual(expect.objectContaining({ name: "kind", type: "string" }));
   const groups = schemas.get(entityKey(preferences))?.fields[1].fields;
@@ -224,7 +229,8 @@ it("shows one profile query with no selector edge and a separate write-only appr
     "submit-preferences", "mark-superseded-preferences",
   ]));
   expect(groups[2].lanes.right.map(node => node.entity.name)).toContain("read-profile");
-  expect(jobs.get(entityKey(query))?.definition).toMatchObject({ operation: "query", queryParameters: ["external_id"] });
+  expect(jobs.get(entityKey(query))?.definition).toMatchObject({ operation: "query" });
+  expect(jobs.get(entityKey(query))?.definition?.description).toContain("Query parameters: external_id.");
   expect(jobs.get(entityKey(commit))?.definition?.operation).toBe("command");
   expect(graph.nodes.has(nodeKey("dataset", ui("profile-selection")))).toBe(false);
   expect(jobs.has(entityKey(ui("hydrate-profile-editor")))).toBe(false);
@@ -255,8 +261,9 @@ it("rejects declared storage edges that violate CQRS without dropping observed r
   const stored = { namespace: "identity-repository", name: "<id>-properties.json" };
   const declaration = (operation: "query" | "command", inputs: Entity[], outputs: Entity[]) => JSON.stringify({
     eventTime: "2026-11-19T01:00:00Z",
-    job: { ...producer, facets: { qff_lineage: {
-      _producer: "urn:test", _schemaURL: "https://example.com/facet.json", operation, actions: ["Test operation"],
+    job: { ...producer, facets: { jobType: {
+      _producer: "urn:test", _schemaURL: "https://example.com/facet.json",
+      integration: "QFF", processingType: "SERVICE", jobType: operation.toUpperCase(),
     } } },
     inputs, outputs,
   });
@@ -271,6 +278,32 @@ it("rejects declared storage edges that violate CQRS without dropping observed r
   ]);
   expect(jobs.get(entityKey(producer))?.definition).toBeUndefined();
   expect(namespaceLayout(dependencyGraph(jobs)).edges).toHaveLength(2);
+});
+
+it("warns about a malformed jobType or columnLineage facet without losing the job", () => {
+  const declaration = (facets: object, outputs: unknown[] = []) => JSON.stringify({
+    eventTime: "2026-11-19T01:00:00Z", job: { ...producer, facets }, inputs: [source], outputs,
+  });
+  const base = { _producer: "urn:test", _schemaURL: "https://example.com/facet.json" };
+  const bad = readLineage({ "type.json": declaration({ jobType: { ...base, integration: "QFF" } }) });
+  expect(bad.errors).toEqual([expect.stringMatching(/^type\.json: invalid jobType facet/)]);
+  expect(bad.jobs.size).toBe(0);
+  const lineage = readLineage({
+    "lineage.json": declaration(
+      { documentation: { ...base, description: "Copy.\nCheck." } },
+      [{ ...dataset, facets: { columnLineage: { ...base, fields: { id: { inputFields: [{ ...source }] } } } } }],
+    ),
+  });
+  expect(lineage.errors).toEqual([expect.stringMatching(/^lineage\.json: invalid columnLineage facet/)]);
+  expect(lineage.jobs.get(entityKey(producer))?.definition)
+    .toMatchObject({ description: "Copy.\nCheck.", columnLineage: [] });
+});
+
+it("describes each column lineage input with its transformations", () => {
+  expect(columnLineageLines({
+    dataset,
+    fields: [{ field: "id", inputs: [{ dataset: source, field: "key", transformations: [{ type: "DIRECT", subtype: "IDENTITY" }] }] }],
+  })).toEqual(["id ← qff / source.key (DIRECT IDENTITY)"]);
 });
 
 it("keeps a declared job and its observed run distinct when they share an edge", () => {

@@ -6,16 +6,18 @@
     "namespace": "identity-repository-api",
     "name": "read-profile",
     "facets": {
-      "qff_lineage": {
+      "jobType": {
         "_producer": "urn:qff:lineage:baseline",
-        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
-        "operation": "query",
-        "queryParameters": ["external_id"],
-        "actions": [
-          "Resolve the external ID to the internal identity (fixture mode supports simulated profile selection)",
-          "Read the identity, preferences and relations into the editor snapshot",
-          "Include the preference revision for conditional writes; reuse this query to reload after a conflict"
-        ]
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF",
+        "jobType": "QUERY"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Resolve the external ID to the internal identity (fixture mode supports simulated profile selection).\nRead the identity, preferences and relations into the editor snapshot.\nInclude the preference revision for conditional writes; reuse this query to reload after a conflict.\nQuery parameters: external_id.",
+        "contentType": "text/plain"
       }
     }
   },

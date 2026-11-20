@@ -92,6 +92,10 @@
       "name": "QFFRepository",
       "path": "./module/QFF/QFFRepository",
     },
+    {
+      "name": "openlineage-visualizer",
+      "path": "./external/openlineage-visualizer",
+    },
   ],
   "launch": {
     "version": "0.2.0",
