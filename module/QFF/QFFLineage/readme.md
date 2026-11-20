@@ -12,11 +12,15 @@ Use the [lineage authoring guide](./lineage-authoring-guide.md) to turn QFF busi
 
 ## Scope
 
-The [profile workflows](./events/baseline/profile-workflows/) also show profile selection, reading the editor's starting state, and approving a generated preference that supersedes one or more previous preferences. Approval uses logical datasets, not an implemented API contract.
+The [profile workflows](./events/baseline/profile-workflows/) show one profile query from repository files through the API to the editor snapshot, and a separate planned approval command that supersedes one or more previous preferences. Query parameters appear on the card, not as arrows. The conditional approval write is modeled, not implemented.
 
-The graph shows all recorded jobs and datasets, including disconnected flows. Purple cards are datasets and green cards are jobs. Solid arrows come from run events; dashed arrows show declared dataset mappings or job dependencies without asserting a run. The graph starts at the left page gutter and uses the available width. Scroll the page to explore larger graphs. Select a card to open the floating details panel on the right, and drag the panel's left edge to resize it. Close the panel to uncover the graph. Filtering is not yet available.
+The graph groups cards left to right by namespace: IdentityUser, QFFIdentity, Identity Repository API, then repository files. A boundary job sits next to the system it talks to, regardless of which way data moves. For example, QFFIdentity's right side holds both API submissions and response handling; arrowheads show the direction. Namespaces with only unconnected placeholders appear below the graph.
 
-Dataset cards show the field hierarchy from the latest valid OpenLineage `facets.schema` for that namespace and name. Arrays have a `[]` suffix, with item fields shown directly underneath rather than under a synthetic `_element` row. Select a dataset to see field descriptions where available. If no schema has been recorded, the card says so rather than guessing. Declared job cards list their actions below the job name, including [submission steps at the API boundary](./events/baseline/identity-repository-api/).
+Purple cards are datasets and green cards are jobs. Solid arrows come from run events; dashed arrows show declared dataset mappings or job dependencies without asserting a run. Scroll the page to explore larger graphs. Select a card to open the floating details panel on the right, and drag the panel's left edge to resize it. Close the panel to uncover the graph. Filtering is not yet available.
+
+Hover over an arrow to bring it to the front with a bright white 4 px stroke and a thin outline. Its dash pattern stays the same, and it stays in front at its normal colour and thickness when you move away. Selecting a card highlights its incoming and outgoing arrows and adds a shadow behind the card and those arrows until you select another card or close the details panel.
+
+Dataset cards show the field hierarchy from the latest valid OpenLineage `facets.schema` for that namespace and name. Arrays have a `[]` suffix, with item fields shown directly underneath rather than under a synthetic `_element` row. Select a dataset to see field descriptions where available. If no schema has been recorded, the card says so rather than guessing. Job cards list input and output datasets, and declared jobs also show their actions and Query or Command labels where applicable.
 
 Hover over a card's right edge to reveal the 5 px resize strip, then drag it. You can also tab to the resize control and press Left or Right. Cards can shrink to 40 px, and field names wrap to fit.
 

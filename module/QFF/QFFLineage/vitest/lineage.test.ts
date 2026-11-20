@@ -5,7 +5,7 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { dependencyGraph, displaySchemaField, edgeKey, entityKey, graphLayout, nodeKey, readLineage } from "../src/lineage.ts";
+import { dependencyGraph, displaySchemaField, edgeKey, entityKey, namespaceLayout, nodeKey, readLineage, type Entity } from "../src/lineage.ts";
 
 const source = { namespace: "qff", name: "source" };
 const dataset = { namespace: "qff", name: "references" };
@@ -70,13 +70,14 @@ it("lays out the full graph, including disconnected flows and isolated jobs", ()
   const derive = nodeKey("job", consumer);
   const output = nodeKey("dataset", consumer);
   const input = nodeKey("dataset", source);
-  const { layers, edges } = graphLayout(graph);
+  const { groups, edges } = namespaceLayout(graph);
   const otherInput = nodeKey("dataset", otherDataset);
   const otherConsumer = nodeKey("job", otherJob);
-  expect(layers).toEqual(new Map([
-    [input, 0], [index, 1], [shared, 2], [derive, 3], [output, 4],
-    [otherInput, 0], [otherConsumer, 1], [nodeKey("job", isolated), 0],
-  ]));
+  expect(groups.map(({ namespace, lanes }) => [namespace, new Set(lanes.middle.map(node => node.id))])).toEqual([
+    ["isolated", new Set([nodeKey("job", isolated)])],
+    ["other", new Set([otherInput, otherConsumer])],
+    ["qff", new Set([input, index, shared, derive, output])],
+  ]);
   expect(new Set(edges)).toEqual(new Set([
     { from: input, to: index }, { from: index, to: shared }, { from: shared, to: derive },
     { from: derive, to: output }, { from: otherInput, to: otherConsumer },
@@ -89,9 +90,9 @@ it("renders a dataset read and written by the same job as one node with two dire
   const graph = dependencyGraph(jobs);
   const job = nodeKey("job", producer);
   const shared = nodeKey("dataset", dataset);
-  const { layers, edges } = graphLayout(graph);
-  expect(new Set(layers.keys())).toEqual(new Set([job, shared]));
-  expect(edges).toEqual([{ from: job, to: shared }, { from: shared, to: job }]);
+  const { groups, edges } = namespaceLayout(graph);
+  expect(new Set(groups[0].lanes.middle.map(node => node.id))).toEqual(new Set([job, shared]));
+  expect(new Set(edges)).toEqual(new Set([{ from: job, to: shared }, { from: shared, to: job }]));
 });
 
 it("keeps the latest valid schema per namespaced dataset without losing edges on malformed facets", () => {
@@ -149,7 +150,7 @@ it("maps user data through QFFIdentity and the API into repository files", () =>
     ...namespaces.map(namespace => nodeKey("dataset", { namespace, name: "placeholder" })),
     ...[...uiJobs, ...submissions].map(entity => nodeKey("job", entity)),
   ]));
-  const edges = graphLayout(graph).edges;
+  const edges = namespaceLayout(graph).edges;
   expect(new Set(edges)).toEqual(new Set(expected.flatMap((repository, i) => [
     { from: nodeKey("dataset", user[i]), to: nodeKey("job", uiJobs[i]) },
     { from: nodeKey("job", uiJobs[i]), to: nodeKey("dataset", ui[i]) },
@@ -164,6 +165,7 @@ it("maps user data through QFFIdentity and the API into repository files", () =>
     expect(declared.find(link => entityKey(link.destination) === entityKey(expected[i])))
       .toMatchObject({ mapping: "direct-copy", source: input });
     const submission = jobs.get(entityKey(submissions[i]));
+    expect(submission?.definition?.operation).toBe("command");
     expect(submission?.definition?.mapping).toMatchObject({
       mapping: i === 1 ? "flatten-by-kind" : "direct-copy", resolveIdentity: true,
     });
@@ -201,23 +203,38 @@ it("maps user data through QFFIdentity and the API into repository files", () =>
   }
 });
 
-it("connects profile reads and approvals to their API and repository datasets without recording runs", () => {
+it("shows one profile query with no selector edge and a separate write-only approval command", () => {
   const { jobs, datasets, errors, schemas, declared } = readLineage(Object.fromEntries(baselineFiles()));
   const graph = dependencyGraph(jobs, datasets.values(), declared);
   const ui = (name: string) => ({ namespace: "QFFIdentity", name });
   const api = (name: string) => ({ namespace: "identity-repository-api", name });
   const repo = (name: string) => ({ namespace: "identity-repository", name });
   const decision = { namespace: "IdentityUser", name: "preference-approval-decision" };
-  const profile = { namespace: "IdentityUser", name: "identity-profile" };
   const command = api("preference-approval-command");
-  const result = repo("committed-preference-approval");
+  const properties = repo("<id>-properties.json");
+  const query = api("read-profile");
+  const commit = api("commit-preference-approval");
+  const { groups } = namespaceLayout(graph);
+  expect(groups.map(group => group.namespace)).toEqual([
+    "IdentityUser", "QFFIdentity", "identity-repository-api", "identity-repository",
+  ]);
+  expect(groups[1].lanes.left.map(node => node.entity.name)).toContain("capture-preference-approval");
+  expect(groups[1].lanes.middle.map(node => node.entity.name)).toContain("profile-editor-snapshot");
+  expect(groups[1].lanes.right.map(node => node.entity.name)).toEqual(expect.arrayContaining([
+    "submit-preferences", "mark-superseded-preferences",
+  ]));
+  expect(groups[2].lanes.right.map(node => node.entity.name)).toContain("read-profile");
+  expect(jobs.get(entityKey(query))?.definition).toMatchObject({ operation: "query", queryParameters: ["external_id"] });
+  expect(jobs.get(entityKey(commit))?.definition?.operation).toBe("command");
+  expect(graph.nodes.has(nodeKey("dataset", ui("profile-selection")))).toBe(false);
+  expect(jobs.has(entityKey(ui("hydrate-profile-editor")))).toBe(false);
+  expect(jobs.has(entityKey(ui("select-profile")))).toBe(false);
+  expect(graph.nodes.has(nodeKey("dataset", api("profile-read-response")))).toBe(false);
   const expected = [
-    [ui("select-profile"), [profile], ui("profile-selection")],
-    [ui("read-profile"), [ui("profile-selection"), repo("<id>-identity.json"), repo("<id>-properties.json"), repo("<id>-relations.json")], api("profile-read-response")],
-    [ui("hydrate-profile-editor"), [api("profile-read-response")], ui("profile-editor-snapshot")],
-    [ui("capture-preference-approval"), [decision, ui("preference-suggestion"), ui("profile-editor-snapshot"), ui("profile-selection")], ui("approved-preference-draft")],
+    [query, [repo("<id>-identity.json"), properties, repo("<id>-relations.json")], ui("profile-editor-snapshot")],
+    [ui("capture-preference-approval"), [decision, ui("preference-suggestion"), ui("profile-editor-snapshot")], ui("approved-preference-draft")],
     [ui("mark-superseded-preferences"), [ui("approved-preference-draft")], command],
-    [api("commit-preference-approval"), [command, repo("<id>-properties.json")], result],
+    [commit, [command], properties],
   ] as const;
   expect(errors).toEqual([]);
   for (const [job, inputs, output] of expected) {
@@ -232,10 +249,28 @@ it("connects profile reads and approvals to their API and repository datasets wi
     expect.objectContaining({ name: "superseded_preference_ids", type: "array" }),
     expect.objectContaining({ name: "revision", type: "string" }),
   ]));
-  expect(schemas.get(entityKey(result))?.fields).toEqual(expect.arrayContaining([
-    expect.objectContaining({ name: "active_preference_id", type: "string" }),
-    expect.objectContaining({ name: "superseded_preference_ids", type: "array" }),
-  ]));
+});
+
+it("rejects declared storage edges that violate CQRS without dropping observed runs", () => {
+  const stored = { namespace: "identity-repository", name: "<id>-properties.json" };
+  const declaration = (operation: "query" | "command", inputs: Entity[], outputs: Entity[]) => JSON.stringify({
+    eventTime: "2026-11-19T01:00:00Z",
+    job: { ...producer, facets: { qff_lineage: {
+      _producer: "urn:test", _schemaURL: "https://example.com/facet.json", operation, actions: ["Test operation"],
+    } } },
+    inputs, outputs,
+  });
+  const { jobs, errors } = readLineage({
+    "command.json": declaration("command", [stored], [dataset]),
+    "query.json": declaration("query", [source], [stored]),
+    "observed.json": event({ inputs: [stored], outputs: [stored] }),
+  });
+  expect(errors).toEqual([
+    expect.stringMatching(/^command\.json: CQRS violation/),
+    expect.stringMatching(/^query\.json: CQRS violation/),
+  ]);
+  expect(jobs.get(entityKey(producer))?.definition).toBeUndefined();
+  expect(namespaceLayout(dependencyGraph(jobs)).edges).toHaveLength(2);
 });
 
 it("keeps a declared job and its observed run distinct when they share an edge", () => {
@@ -278,7 +313,7 @@ it("warns about an invalid direct-copy facet without dropping the destination da
   const graph = dependencyGraph(jobs, datasets.values(), declared);
   expect(errors).toEqual([expect.stringMatching(/^bad\.json: invalid qff_lineage facet/)]);
   expect(graph.nodes.has(nodeKey("dataset", dataset))).toBe(true);
-  expect(graphLayout(graph).edges).toEqual([]);
+  expect(namespaceLayout(graph).edges).toEqual([]);
 });
 
 it("rejects a grouped preference mapping without a valid group-to-kind lookup", () => {

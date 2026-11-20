@@ -33,7 +33,14 @@ type JobEvent = {
 type RunEvent = JobEvent & { eventType: string, run: { runId: string } };
 type Source = { path: string, raw: string, event: RunEvent };
 export type Run = { id: string, sources: Source[], inputs: Entity[], outputs: Entity[] };
-type Job = { entity: Entity, runs: Map<string, Run>, definition?: { event: JobEvent, actions: string[], mapping?: Mapping } };
+type JobDefinition = {
+  event: JobEvent;
+  actions: string[];
+  mapping?: Mapping;
+  operation?: "query" | "command";
+  queryParameters?: string[];
+};
+type Job = { entity: Entity, runs: Map<string, Run>, definition?: JobDefinition };
 type NodeKind = "job" | "dataset";
 export type LineageNode = { id: string, kind: NodeKind, entity: Entity };
 export const nodeKey = (kind: NodeKind, entity: Entity) => `${kind}:${entityKey(entity)}`;
@@ -151,6 +158,19 @@ export function readLineage(files: Record<string, string>) {
       job.runs.set(run.id, run);
     } else if (!("run" in event) && !("eventType" in event)) {
       const facet = isRecord(event.job.facets) ? event.job.facets.qff_lineage : undefined;
+      const { operation, queryParameters } = isRecord(facet) ? facet : {};
+      if ((operation !== undefined && operation !== "query" && operation !== "command")
+        || (queryParameters !== undefined && (operation !== "query" || !Array.isArray(queryParameters)
+          || !queryParameters.length || !queryParameters.every(hasText)))) {
+        errors.push(`${path}: invalid job operation or query parameters; declaration skipped.`);
+        continue;
+      }
+      const readsStorage = event.inputs?.some(dataset => dataset.namespace === "identity-repository");
+      const writesStorage = event.outputs?.some(dataset => dataset.namespace === "identity-repository");
+      if ((readsStorage && operation !== "query") || (writesStorage && operation !== "command")) {
+        errors.push(`${path}: CQRS violation; only queries may read identity storage and only commands may write it. Declaration skipped.`);
+        continue;
+      }
       const actions = isRecord(facet) && hasText(facet._producer) && hasText(facet._schemaURL)
         && Array.isArray(facet.actions) && facet.actions.length && facet.actions.every(hasText) ? facet.actions : [];
       const hasMapping = isRecord(facet) && ("mapping" in facet || "resolveIdentity" in facet || "kindByGroup" in facet);
@@ -158,7 +178,7 @@ export function readLineage(files: Record<string, string>) {
       if (facet !== undefined && !actions.length) errors.push(`${path}: invalid qff_lineage job facet; job retained.`);
       else if (hasMapping && !mapping) errors.push(`${path}: invalid qff_lineage job mapping; job retained.`);
       if (!job.definition || Date.parse(event.eventTime) >= Date.parse(job.definition.event.eventTime)) {
-        job.definition = { event, actions, mapping };
+        job.definition = { event, actions, mapping, operation, queryParameters };
       }
     } else {
       errors.push(`${path}: expected a valid OpenLineage RunEvent.`);
@@ -216,27 +236,33 @@ export function dependencyGraph(jobs: Map<string, Job>, datasets: Iterable<Entit
   return { nodes, upstream, downstream, declaredEdges };
 }
 
-export function graphLayout({ nodes, upstream, downstream }: ReturnType<typeof dependencyGraph>) {
-  const pending = new Map([...nodes.keys()].map(id => [id, upstream.get(id)?.size ?? 0]));
-  const ready = [...pending].filter(([, count]) => count === 0).map(([id]) => id);
-  const layers = new Map<string, number>();
-  const edges: { from: string, to: string }[] = [];
-
-  for (let i = 0; pending.size; i++) {
-    // ponytail: break cycles in file order for layout only; keep every arrow.
-    const from = ready[i] ?? pending.keys().next().value!;
-    if (i === ready.length) ready.push(from);
-    pending.delete(from);
-    const layer = layers.get(from) ?? 0;
-    layers.set(from, layer);
-    for (const to of downstream.get(from) ?? []) {
-      edges.push({ from, to });
-      const count = pending.get(to);
-      if (count === undefined) continue;
-      layers.set(to, Math.max(layers.get(to) ?? 0, layer + 1));
-      pending.set(to, count - 1);
-      if (count === 1) ready.push(to);
+export function namespaceLayout({ nodes, upstream, downstream }: ReturnType<typeof dependencyGraph>) {
+  const primary = ["IdentityUser", "QFFIdentity", "identity-repository-api", "identity-repository"];
+  const namespaces = new Map<string, LineageNode[]>();
+  const placeholders: LineageNode[] = [];
+  for (const node of nodes.values()) {
+    if (node.kind === "dataset" && node.entity.name === "placeholder" && !upstream.has(node.id) && !downstream.has(node.id)) {
+      placeholders.push(node);
+      continue;
     }
+    const namespace = node.entity.namespace;
+    if (!namespaces.has(namespace)) namespaces.set(namespace, []);
+    namespaces.get(namespace)!.push(node);
   }
-  return { layers, edges };
+  const order = [...primary.filter(namespace => namespaces.has(namespace)),
+    ...[...namespaces.keys()].filter(namespace => !primary.includes(namespace)).sort()];
+  const indices = new Map(order.map((namespace, i) => [namespace, i]));
+  const groups = order.map((namespace, index) => {
+    const lanes = { left: [] as LineageNode[], middle: [] as LineageNode[], right: [] as LineageNode[] };
+    for (const node of namespaces.get(namespace)!.sort((a, b) => a.entity.name.localeCompare(b.entity.name))) {
+      const neighbors = node.kind === "job" ? [...upstream.get(node.id) ?? [], ...downstream.get(node.id) ?? []] : [];
+      const sides = neighbors.map(id => indices.get(nodes.get(id)!.entity.namespace)! - index);
+      // Keep a job that touches both boundaries on the repository-facing side.
+      lanes[sides.some(side => side > 0) ? "right" : sides.some(side => side < 0) ? "left" : "middle"].push(node);
+    }
+    return { namespace, lanes };
+  });
+  const edges = [...downstream].flatMap(([from, targets]) => [...targets].map(to => ({ from, to })));
+  placeholders.sort((a, b) => a.entity.namespace.localeCompare(b.entity.namespace));
+  return { groups, placeholders, edges };
 }

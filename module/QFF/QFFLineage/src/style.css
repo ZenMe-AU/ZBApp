@@ -23,10 +23,26 @@ label { display: block; }
 }
 #viewport > p { padding: 0 1rem; }
 .stage { position: relative; }
-.stage svg { position: absolute; inset: 0; pointer-events: none; }
-.stage svg > path { fill: none; stroke: #a7b2d1; stroke-width: 1.5; }
-#arrow path { fill: #a7b2d1; }
-.node-frame { position: absolute; }
+.stage svg { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.stage .front-lines { z-index: 3; }
+.connection { fill: none; stroke: #a7b2d1; stroke-width: 1.5; }
+.connection:is(.is-hovered, .is-connected) { stroke: white; stroke-width: 4; filter: url(#connection-outline); }
+.connection.is-connected { filter: url(#connection-outline) drop-shadow(0 3px 4px #000); }
+#connection-outline feFlood { flood-color: #080a12; }
+.connection-hit { fill: none; stroke: black; stroke-width: 10; opacity: 0; pointer-events: stroke; }
+#arrow path { fill: #a7b2d1; fill: context-stroke; }
+.namespace-group {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid #59617b;
+  border-radius: .55rem;
+  background: #1b203044;
+}
+.namespace-group h2, .namespace-placeholders h2 { margin: 0; padding: .5rem .75rem; font-size: 1rem; }
+.node-frame { position: absolute; z-index: 2; }
+.namespace-placeholders { max-width: 75rem; margin: 1.5rem; }
+.namespace-placeholders > div { display: flex; flex-wrap: wrap; gap: 1rem; }
+.namespace-placeholders .node-frame { position: relative; }
 .node {
   display: grid;
   width: 100%;
@@ -60,7 +76,7 @@ label { display: block; }
   margin-inline-start: .2rem;
   padding-inline-start: .5rem;
 }
-.node[aria-pressed="true"] { box-shadow: 0 0 0 2px #f0f3ff; }
+.node[aria-pressed="true"] { box-shadow: 0 0 0 2px #f0f3ff, 0 4px 12px #000c; }
 .node:hover { filter: brightness(1.2); }
 .node:focus-visible { outline: 2px solid #ffdb86; outline-offset: 4px; }
 .resize-strip {
@@ -77,7 +93,7 @@ label { display: block; }
 .resize-strip:focus-visible { outline: 2px solid #ffdb86; }
 #details-panel:not([hidden]) {
   position: fixed;
-  z-index: 1;
+  z-index: 4;
   inset: 1rem 1rem auto auto;
   display: flex;
   flex-direction: column;
@@ -99,7 +115,7 @@ pre { overflow: auto; max-height: 24rem; }
 #errors { border: 1px solid GrayText; padding: 0 1rem; margin-bottom: 1rem; overflow-wrap: anywhere; }
 @media (forced-colors: active) {
   .resize-strip:hover { background: Highlight; }
-  .stage svg > path { stroke: CanvasText; }
-  #arrow path { fill: CanvasText; }
+  .connection, .connection:is(.is-hovered, .is-connected) { stroke: CanvasText; }
+  #connection-outline feFlood { flood-color: Canvas; }
   .node[aria-pressed="true"] { border: 3px double Highlight; }
 }

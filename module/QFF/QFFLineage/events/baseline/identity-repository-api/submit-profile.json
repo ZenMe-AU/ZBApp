@@ -9,6 +9,7 @@
       "qff_lineage": {
         "_producer": "urn:qff:lineage:baseline",
         "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
+        "operation": "command",
         "actions": ["Send profile data to the API", "Resolve external ID at the API boundary"],
         "mapping": "direct-copy",
         "resolveIdentity": true

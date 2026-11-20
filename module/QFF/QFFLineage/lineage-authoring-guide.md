@@ -5,12 +5,12 @@ Start with the [QFF business context and system interactions](../plan-canonical-
 ## Translate an interaction into lineage
 
 - **Job:** Name the repeatable operation, not the person, screen, or button. For example, an identity user saving a preference in QFFIdentity triggers `capture-preference`; the Identity Repository validates the submission and persists it. The user is the trigger, not a dataset.
-- **Datasets:** Name the logical data read or produced, using the same namespace and name wherever it appears. A submitted form can be a logical input dataset even if it is not stored separately. Include existing preferences as an input if the operation reads them to apply an edit. Do not model ordinary navigation or a service-to-service call as a transformation unless it has a meaningful data dependency.
+- **Datasets:** Name the logical data read or produced, using the same namespace and name wherever it appears. A submitted form can be a logical input dataset even if it is not stored separately. Do not model ordinary navigation or a service-to-service call as a transformation unless it has a meaningful data dependency.
 - **Run:** A save, match request, or batch is one execution of a job. A workflow can run repeatedly in response to user actions without being a continuously running process. For a genuinely continuous workflow, use meaningful execution boundaries such as committed batches or checkpoint windows; do not emit a run for each click or invent periodic runs.
 
 | Business action | Job | Inputs | Outputs |
 | --- | --- | --- | --- |
-| Identity user saves a preference | `capture-preference` | Preference submission; existing identity preferences when editing | Committed identity preferences |
+| Identity user saves a preference | `submit-preferences` | Preference submission | API properties object mapped to stored preferences |
 | Analyst triggers semantic derivation (planned) | `derive-semantics` | Identity preferences and the canonical catalogue | Derived vectors and mappings |
 | Customer requests a match (planned) | `compute-match` | Match request and the authorized data used by the matcher | Minimal match transaction and requester-scoped result |
 
@@ -26,8 +26,10 @@ The [initial baseline](./events/baseline/) declares the planned write path throu
 
 Use an OpenLineage `JobEvent` with named input and output datasets. Put the custom [LineageJobFacet](./schemas/1-0-0/LineageJobFacet.json) under `job.facets.qff_lineage` and list the actions in `actions`. [capture-preferences](./events/baseline/qff-identity/capture-preferences.json) models ordinary edits; suggestion approval is a separate workflow.
 
-- [Profile loading](./events/baseline/profile-workflows/read-profile.json) starts with the user's profile selection. QFFIdentity reads through the API and loads an editor snapshot with the preference revision. Reloading after a stale revision reuses this read path; it does not automatically retry the write.
-- [Preference approval](./events/baseline/profile-workflows/capture-preference-approval.json) captures explicit consent for a suggestion. The [supersession job](./events/baseline/profile-workflows/mark-superseded-preferences.json) prepares one approval command for the API. The repository commits a new active preference linked to the inference and marks its source preferences superseded without rewriting their wording. The [committed result](./events/baseline/profile-workflows/committed-preference-approval.json) is a logical view of the changes in the properties document, not another file. Suggestion delivery and the approval API contract are not defined by this graph.
+- Use one job for a synchronous query, not separate cards for sending the request and receiving its result. Record selectors under `queryParameters` on the job facet, not as input datasets. Arrows trace data dependencies, not HTTP requests or execution order.
+- Label declared storage operations with `operation: "query"` or `operation: "command"`. The viewer rejects declared inputs in `identity-repository` unless the job is a query, and rejects outputs there unless it is a command. UI-only preparation jobs need neither label. This check applies to declarations, not observed runs or API runtime behavior.
+- [Profile loading](./events/baseline/profile-workflows/read-profile.json) reads the repository files through the API into one editor snapshot with the preference revision. `external_id` selects the profile without adding an arrow. Reloading after a stale revision reuses this query; it does not automatically retry the write.
+- [Preference approval](./events/baseline/profile-workflows/capture-preference-approval.json) captures explicit consent for a suggestion. The [supersession job](./events/baseline/profile-workflows/mark-superseded-preferences.json) prepares one approval command for the API. The planned [commit](./events/baseline/profile-workflows/commit-preference-approval.json) is an atomic conditional write against the expected revision: it creates a new active preference and marks its sources superseded without rewriting their wording or reading the properties file as a job input. The command returns success or conflict only. The runtime approval API is not implemented.
 
 ## Declare a dataset mapping without recording a run
 

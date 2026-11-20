@@ -3,7 +3,7 @@
  * @license SPDX-License-Identifier: MIT
  */
 
-import { baselineProducer, dependencyGraph, displaySchemaField, edgeKey, entityKey, graphLayout, readLineage, type Entity, type LineageNode, type Mapping, type Run, type SchemaField } from "./lineage.ts";
+import { baselineProducer, dependencyGraph, displaySchemaField, edgeKey, entityKey, namespaceLayout, readLineage, type Entity, type LineageNode, type Mapping, type Run, type SchemaField } from "./lineage.ts";
 import "./style.css";
 
 const files = import.meta.glob<string>("../events/**/*.json", { eager: true, query: "?raw", import: "default" });
@@ -17,6 +17,7 @@ const panelGrip = document.querySelector<HTMLButtonElement>("#details-resize")!;
 const warnings = document.querySelector<HTMLElement>("#errors")!;
 let selected: HTMLButtonElement | undefined;
 const label = (entity: Entity) => `${entity.namespace} / ${entity.name}`;
+const operationLabel = (operation: "query" | "command") => operation === "query" ? "Query" : "Command";
 const schemaLabel = (fields: SchemaField[] | undefined) => fields ? "No fields recorded" : "Schema not recorded";
 const isBaseline = (run: Run) => run.sources.some(({ event }) => event.producer === baselineProducer);
 
@@ -65,149 +66,236 @@ function resizeWith(grip: HTMLButtonElement, target: HTMLElement, direction: 1 |
 resizeWith(panelGrip, panel, -1, width => {
   panel.style.width = `${Math.max(240, width)}px`;
 });
-document.querySelector("#details-close")!.addEventListener("click", () => {
-  panel.hidden = true;
-  selected?.setAttribute("aria-pressed", "false");
-  selected?.focus({ preventScroll: true });
-  selected = undefined;
-});
-
 function renderGraph() {
-  const { layers, edges } = graphLayout(graph);
-  const hasRuns = [...jobs.values()].some(job => job.runs.size > 0);
-  const columns = new Map<number, LineageNode[]>();
-  const standalone: LineageNode[] = [];
-  for (const [id, layer] of layers) {
-    const node = graph.nodes.get(id)!;
-    if (!hasRuns && !graph.upstream.has(id) && !graph.downstream.has(id)) {
-      standalone.push(node);
-      continue;
-    }
-    const column = columns.get(layer) ?? [];
-    column.push(node);
-    columns.set(layer, column);
-  }
-  if (standalone.length) {
-    standalone.sort((a, b) => label(a.entity).localeCompare(label(b.entity)));
-    const rows = Math.ceil(standalone.length / 5);
-    const start = Math.max(-1, ...columns.keys()) + 1;
-    for (let i = 0; i < standalone.length; i += rows) columns.set(start + i, standalone.slice(i, i + rows));
-  }
-  const ordered = [...columns].sort(([a], [b]) => a - b);
+  const { groups, placeholders, edges } = namespaceLayout(graph);
   const cardWidth = 184, minWidth = 40, maxWidth = 560, columnGap = 42, gap = 20, padding = 24;
   const stage = document.createElement("div");
   stage.className = "stage";
-  viewport.replaceChildren(stage);
+  viewport.replaceChildren();
+  if (groups.length) viewport.append(stage);
 
-  // ponytail: fixed columns; switch layout engines if dense graphs need obstacle avoidance.
-  const cards = ordered.map(([, column]) => {
-    column.sort((a, b) => label(a.entity).localeCompare(label(b.entity)));
-    return column.map(node => {
-      const { id, kind, entity } = node;
-      const frame = document.createElement("div");
-      frame.className = "node-frame";
-      frame.style.width = `${cardWidth}px`;
-      const card = document.createElement("button");
-      card.className = `node ${kind}`;
-      card.setAttribute("aria-pressed", "false");
-      card.setAttribute("aria-label", kind === "job" ? `Job: ${label(entity)}` : label(entity));
-      card.title = label(entity);
-      card.append(text("small", kind === "job" ? `job · ${entity.namespace}` : entity.namespace), text("strong", entity.name));
-      if (kind === "dataset") {
-        const fields = schemas.get(entityKey(entity))?.fields;
+  function makeCard(node: LineageNode) {
+    const { id, kind, entity } = node;
+    const frame = document.createElement("div");
+    frame.className = "node-frame";
+    frame.style.width = `${cardWidth}px`;
+    const card = document.createElement("button");
+    card.className = `node ${kind}`;
+    card.setAttribute("aria-pressed", "false");
+    card.setAttribute("aria-label", kind === "job" ? `Job: ${label(entity)}` : label(entity));
+    card.title = label(entity);
+    const definition = kind === "job" ? jobs.get(entityKey(entity))?.definition : undefined;
+    const heading = definition?.operation ? operationLabel(definition.operation) : "Job";
+    card.append(text("small", kind === "job" ? `${heading} · ${entity.namespace}` : entity.namespace), text("strong", entity.name));
+    if (kind === "dataset") {
+      const fields = schemas.get(entityKey(entity))?.fields;
+      const list = document.createElement("span");
+      list.className = "node-content";
+      list.append(fields?.length ? fieldList(fields) : text("span", schemaLabel(fields)));
+      card.append(list);
+    } else {
+      const entities = (ids?: Set<string>) => [...ids ?? []].map(id => graph.nodes.get(id)!.entity);
+      const sections: [string, string[]][] = [
+        ["Inputs", entities(graph.upstream.get(id)).map(entity => entity.name)],
+        ["Outputs", entities(graph.downstream.get(id)).map(entity => entity.name)],
+      ];
+      if (definition?.queryParameters?.length) sections.unshift(["Query parameters", definition.queryParameters]);
+      if (definition?.actions.length) sections.push(["Actions", definition.actions]);
+      for (const [title, items] of sections) {
         const list = document.createElement("span");
-        list.className = "node-content";
-        list.append(fields?.length ? fieldList(fields) : text("span", schemaLabel(fields)));
+        list.className = "node-content node-actions";
+        list.append(text("b", title), ...(items.length ? items : ["None recorded"]).map(item => text("span", item)));
         card.append(list);
-      } else {
-        const actions = jobs.get(entityKey(entity))?.definition?.actions;
-        if (actions?.length) {
-          const list = document.createElement("span");
-          list.className = "node-content node-actions";
-          list.append(...actions.map(action => text("span", action)));
-          card.setAttribute("aria-description", `Actions: ${actions.join("; ")}`);
-          card.append(list);
-        }
       }
-      card.addEventListener("click", () => {
-        selected?.setAttribute("aria-pressed", "false");
-        selected = card;
-        card.setAttribute("aria-pressed", "true");
-        showDetails(node);
-      });
-      const grip = document.createElement("button");
-      grip.className = "resize-strip node-resize";
-      grip.setAttribute("aria-label", `Resize ${label(entity)}`);
-      resizeWith(grip, frame, 1, width => {
-        frame.style.width = `${Math.max(minWidth, Math.min(maxWidth, width))}px`;
-        layout();
-      });
-      frame.append(card, grip);
-      stage.append(frame);
-      return { id, frame };
+      card.setAttribute("aria-description", [heading, ...sections.map(([title, items]) =>
+        `${title}: ${items.join("; ") || "None recorded"}`)].join(". "));
+    }
+    card.addEventListener("click", () => {
+      selected?.setAttribute("aria-pressed", "false");
+      selected = card;
+      card.setAttribute("aria-pressed", "true");
+      highlightConnections(id);
+      showDetails(node);
     });
+    const grip = document.createElement("button");
+    grip.className = "resize-strip node-resize";
+    grip.setAttribute("aria-label", `Resize ${label(entity)}`);
+    resizeWith(grip, frame, 1, width => {
+      frame.style.width = `${Math.max(minWidth, Math.min(maxWidth, width))}px`;
+      layout();
+    });
+    frame.append(card, grip);
+    return { id, frame };
+  }
+
+  const sections = groups.map(({ namespace, lanes }) => {
+    const section = document.createElement("section");
+    section.className = "namespace-group";
+    section.setAttribute("aria-label", namespace);
+    section.append(text("h2", namespace));
+    const columns = Object.entries(lanes).filter(([, nodes]) => nodes.length).map(([lane, nodes]) => {
+      const cards = nodes.map(makeCard);
+      for (const { frame } of cards) {
+        frame.dataset.lane = lane;
+        section.append(frame);
+      }
+      return cards;
+    });
+    stage.append(section);
+    return { section, columns };
   });
+  if (placeholders.length) {
+    const section = document.createElement("section");
+    section.className = "namespace-placeholders";
+    const cards = document.createElement("div");
+    cards.append(...placeholders.map(node => makeCard(node).frame));
+    section.append(text("h2", "Namespaces without recorded datasets"), cards);
+    viewport.append(section);
+  }
 
   const lines = svg("svg");
   lines.setAttribute("aria-hidden", "true");
+  const frontLines = svg("svg");
+  frontLines.classList.add("front-lines");
+  frontLines.setAttribute("aria-hidden", "true");
   const defs = svg("defs");
   const arrow = svg("marker");
   arrow.id = "arrow";
   arrow.setAttribute("viewBox", "0 0 8 8");
-  arrow.setAttribute("markerWidth", "7");
-  arrow.setAttribute("markerHeight", "7");
+  arrow.setAttribute("markerUnits", "userSpaceOnUse");
+  arrow.setAttribute("markerWidth", "10.5");
+  arrow.setAttribute("markerHeight", "10.5");
   arrow.setAttribute("refX", "8");
   arrow.setAttribute("refY", "4");
   arrow.setAttribute("orient", "auto");
   const tip = svg("path");
   tip.setAttribute("d", "M0 0 L8 4 L0 8 Z");
   arrow.append(tip);
-  defs.append(arrow);
-  lines.append(defs);
+  const outline = svg("filter");
+  outline.id = "connection-outline";
+  outline.setAttribute("color-interpolation-filters", "sRGB");
+  outline.setAttribute("filterUnits", "userSpaceOnUse");
+  outline.setAttribute("x", "0");
+  outline.setAttribute("y", "0");
+  outline.setAttribute("width", "100%");
+  outline.setAttribute("height", "100%");
+  const expand = svg("feMorphology");
+  expand.setAttribute("in", "SourceAlpha");
+  expand.setAttribute("operator", "dilate");
+  expand.setAttribute("radius", "1");
+  expand.setAttribute("result", "expanded");
+  const tint = svg("feFlood");
+  const mask = svg("feComposite");
+  mask.setAttribute("in2", "expanded");
+  mask.setAttribute("operator", "in");
+  const paint = svg("feComposite");
+  paint.setAttribute("in", "SourceGraphic");
+  paint.setAttribute("operator", "over");
+  outline.append(expand, tint, mask, paint);
+  defs.append(arrow, outline);
+  const basePaths = svg("g");
+  const hitPaths = svg("g");
+  lines.append(defs, basePaths, hitPaths);
   const paths = edges.map(edge => {
     const path = svg("path");
+    path.classList.add("connection");
     path.setAttribute("marker-end", "url(#arrow)");
     if (graph.declaredEdges.has(edgeKey(edge.from, edge.to))) {
       path.setAttribute("stroke-dasharray", "5 4");
     }
-    lines.append(path);
-    return { ...edge, path };
+    const hit = svg("path");
+    hit.classList.add("connection-hit");
+    const connection = { ...edge, path, hit, raised: false };
+    hit.addEventListener("pointerenter", () => {
+      connection.raised = true;
+      frontLines.append(path);
+      path.classList.add("is-hovered");
+    });
+    hit.addEventListener("pointerleave", () => path.classList.remove("is-hovered"));
+    basePaths.append(path);
+    hitPaths.append(hit);
+    return connection;
   });
   stage.prepend(lines);
+  stage.append(frontLines);
+
+  function highlightConnections(id?: string) {
+    for (const { from, to, path, raised } of paths) {
+      const connected = from === id || to === id;
+      path.classList.toggle("is-connected", connected);
+      if (connected && !raised) frontLines.append(path);
+      if (!connected && !raised && path.parentNode === frontLines) basePaths.append(path);
+    }
+  }
+
+  document.querySelector("#details-close")!.addEventListener("click", () => {
+    panel.hidden = true;
+    selected?.setAttribute("aria-pressed", "false");
+    selected?.focus({ preventScroll: true });
+    selected = undefined;
+    highlightConnections();
+  });
 
   function layout() {
-    const measured = cards.map(column => column.map(item => ({
-      ...item, width: item.frame.offsetWidth, height: item.frame.offsetHeight,
-    })));
-    const widths = measured.map(column => Math.max(...column.map(item => item.width)));
-    const heights = measured.map(column => column.reduce((sum, item) => sum + item.height, 0) + gap * (column.length - 1));
-    const width = padding * 2 + widths.reduce((sum, value) => sum + value, 0) + columnGap * (widths.length - 1);
-    const height = Math.max(280, padding * 2 + Math.max(...heights));
+    if (!sections.length) return;
+    const columns = sections.flatMap(({ columns }) => columns);
+    const byNode = new Map(columns.flatMap((cards, index) => cards.map(({ id }) => [id, index] as const)));
+    const routes = paths.map(({ from, to, path, hit }) => ({ path, hit, from, to, delta: byNode.get(to)! - byNode.get(from)! }));
+    const sectionTop = padding + 6 * routes.filter(({ delta }) => Math.abs(delta) > 1).length;
+    const positions = new Map<string, { left: number, right: number, y: number, columnLeft: number, columnRight: number }>();
+    let x = padding;
+    let height = 280;
+    for (const { section, columns } of sections) {
+      const start = x;
+      const widths = columns.map(cards => Math.max(cardWidth, ...cards.map(({ frame }) => frame.offsetWidth)));
+      section.style.width = `${widths.reduce((sum, width) => sum + width, 24) + (widths.length - 1) * columnGap}px`;
+      const header = section.querySelector("h2")!;
+      let sectionHeight = 0;
+      for (const [index, cards] of columns.entries()) {
+        const columnWidth = widths[index];
+        let y = header.offsetHeight + 20;
+        for (const { id, frame } of cards) {
+          frame.style.left = `${x - start + 11}px`;
+          frame.style.top = `${y}px`;
+          positions.set(id, {
+            left: x + 12, right: x + 12 + frame.offsetWidth, y: sectionTop + 1 + y + frame.offsetHeight / 2,
+            columnLeft: x + 12, columnRight: x + 12 + columnWidth,
+          });
+          y += frame.offsetHeight + gap;
+        }
+        sectionHeight = Math.max(sectionHeight, y);
+        x += columnWidth + columnGap;
+      }
+      section.style.left = `${start}px`;
+      section.style.top = `${sectionTop}px`;
+      section.style.height = `${sectionHeight}px`;
+      height = Math.max(height, sectionTop + sectionHeight + padding);
+      x += 24;
+    }
+    const width = x - columnGap + padding;
     stage.style.width = `${width}px`;
     stage.style.height = `${height}px`;
-    lines.setAttribute("width", String(width));
-    lines.setAttribute("height", String(height));
-    const positions = new Map<string, { x: number, y: number, right: number, column: number }>();
-    let x = padding;
-    measured.forEach((column, index) => {
-      let top = hasRuns ? (height - heights[index]) / 2 : padding;
-      for (const { id, frame, width, height } of column) {
-        frame.style.left = `${x}px`;
-        frame.style.top = `${top}px`;
-        positions.set(id, { x, y: top + height / 2, right: x + width, column: index });
-        top += height + gap;
-      }
-      x += widths[index] + columnGap;
-    });
-    for (const { from, to, path } of paths) {
+    for (const layer of [lines, frontLines]) {
+      layer.setAttribute("width", String(width));
+      layer.setAttribute("height", String(height));
+    }
+    // ponytail: long links use overhead tracks; use obstacle-aware routing if dense graphs need it.
+    let track = 12;
+    for (const { from, to, path, hit, delta } of routes) {
       const a = positions.get(from)!;
       const b = positions.get(to)!;
-      const bend = a.x + widths[a.column] + columnGap / 2;
-      const route = b.column === a.column + 1
-        ? `M${a.right} ${a.y} C${bend} ${a.y} ${bend} ${b.y} ${b.x} ${b.y}`
-        : a.column === b.column ? `M${a.right} ${a.y} H${bend} V${b.y} H${b.right}`
-        : `M${a.right} ${a.y} H${bend} V14 H${b.x - 18} V${b.y} H${b.x}`;
+      const rightward = delta > 0;
+      const ay = a.y + (rightward ? -7 : 7);
+      const by = b.y + (rightward ? -7 : 7);
+      const exit = rightward || !delta ? a.right : a.left;
+      const entry = rightward ? b.left : b.right;
+      const route = !delta
+        ? `M${exit} ${a.y - 7} H${a.columnRight + (a.y < b.y ? 12 : 20)} V${by} H${entry}`
+        : Math.abs(delta) === 1
+          ? `M${exit} ${ay} H${rightward ? a.columnRight + 12 : a.columnLeft - 12} V${by} H${entry}`
+          : `M${exit} ${ay} H${rightward ? a.columnRight + 12 : a.columnLeft - 12} V${track += 6} H${rightward ? b.columnLeft - 20 : b.columnRight + 20} V${by} H${entry}`;
       path.setAttribute("d", route);
+      hit.setAttribute("d", route);
     }
   }
   layout();
@@ -256,8 +344,9 @@ function showDetails(node: LineageNode) {
   }
   const job = jobs.get(entityKey(node.entity))!;
   if (job.definition) {
-    const { event, actions, mapping } = job.definition;
-    inspect.append(text("h3", "Declared job"), text("p", "Planned lineage, not runtime telemetry."));
+    const { event, actions, mapping, operation, queryParameters } = job.definition;
+    inspect.append(text("h3", operation ? `Declared ${operation}` : "Declared job"), text("p", "Planned lineage, not runtime telemetry."));
+    if (queryParameters?.length) inspect.append(text("p", `Query parameters: ${queryParameters.join(", ")}`));
     if (actions.length) {
       const list = document.createElement("ul");
       list.append(...actions.map(action => text("li", action)));

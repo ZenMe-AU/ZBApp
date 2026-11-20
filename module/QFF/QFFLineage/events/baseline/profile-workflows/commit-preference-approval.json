@@ -9,17 +9,15 @@
       "qff_lineage": {
         "_producer": "urn:qff:lineage:baseline",
         "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
+        "operation": "command",
         "actions": [
-          "Resolve the identity and check the preference revision",
-          "Commit a new active preference and all supersession marks together",
-          "Preserve the previous preferences and their wording"
+          "Resolve the identity and atomically apply the approval against the expected revision",
+          "Commit the new active preference and supersession marks together without changing prior wording",
+          "Return success or conflict only"
         ]
       }
     }
   },
-  "inputs": [
-    { "namespace": "identity-repository-api", "name": "preference-approval-command" },
-    { "namespace": "identity-repository", "name": "<id>-properties.json" }
-  ],
-  "outputs": [{ "namespace": "identity-repository", "name": "committed-preference-approval" }]
+  "inputs": [{ "namespace": "identity-repository-api", "name": "preference-approval-command" }],
+  "outputs": [{ "namespace": "identity-repository", "name": "<id>-properties.json" }]
 }
