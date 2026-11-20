@@ -24,7 +24,10 @@ The [initial baseline](./events/baseline/) declares the planned write path throu
 
 ## Declare UI actions without recording a run
 
-Use an OpenLineage `JobEvent` with named input and output datasets. Put the custom [LineageJobFacet](./schemas/1-0-0/LineageJobFacet.json) under `job.facets.qff_lineage` and list the user actions that trigger the same data handoff in `actions`. For example, [capture-preferences](./events/baseline/qff-identity/capture-preferences.json) takes a preference submission and produces QFFIdentity's grouped preference data, whether the user saved an edit or approved suggested wording. This models the submission, not proposal generation or a committed save. Leave ordinary navigation and read-only views out of the write path.
+Use an OpenLineage `JobEvent` with named input and output datasets. Put the custom [LineageJobFacet](./schemas/1-0-0/LineageJobFacet.json) under `job.facets.qff_lineage` and list the actions in `actions`. [capture-preferences](./events/baseline/qff-identity/capture-preferences.json) models ordinary edits; suggestion approval is a separate workflow.
+
+- [Profile loading](./events/baseline/profile-workflows/read-profile.json) starts with the user's profile selection. QFFIdentity reads through the API and loads an editor snapshot with the preference revision. Reloading after a stale revision reuses this read path; it does not automatically retry the write.
+- [Preference approval](./events/baseline/profile-workflows/capture-preference-approval.json) captures explicit consent for a suggestion. The [supersession job](./events/baseline/profile-workflows/mark-superseded-preferences.json) prepares one approval command for the API. The repository commits a new active preference linked to the inference and marks its source preferences superseded without rewriting their wording. The [committed result](./events/baseline/profile-workflows/committed-preference-approval.json) is a logical view of the changes in the properties document, not another file. Suggestion delivery and the approval API contract are not defined by this graph.
 
 ## Declare a dataset mapping without recording a run
 

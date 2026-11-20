@@ -110,11 +110,16 @@ it("keeps the latest valid schema per namespaced dataset without losing edges on
   expect(dependencyGraph(jobs).downstream.get(nodeKey("dataset", dataset))).toContain(nodeKey("job", producer));
 });
 
-it("maps user data through QFFIdentity and the API into repository files", () => {
+function baselineFiles() {
   const dir = new URL("../events/baseline/", import.meta.url);
-  const files = Object.fromEntries(readdirSync(dir, { recursive: true }).filter(name => name.endsWith(".json"))
-    .map(name => [name, readFileSync(new URL(name.replaceAll("\\", "/"), dir), "utf8")]));
-  const { jobs, datasets, errors, schemas, declared } = readLineage(files);
+  return readdirSync(dir, { recursive: true }).filter(name => name.endsWith(".json"))
+    .map(name => [name.replaceAll("\\", "/"), readFileSync(new URL(name.replaceAll("\\", "/"), dir), "utf8")] as const);
+}
+
+it("maps user data through QFFIdentity and the API into repository files", () => {
+  const { jobs, datasets, errors, schemas, declared } = readLineage(Object.fromEntries(
+    baselineFiles().filter(([name]) => !name.startsWith("profile-workflows/")),
+  ));
   const graph = dependencyGraph(jobs, datasets.values(), declared);
   const kinds = ["identity", "properties", "relations"];
   const expected = kinds.map(kind => ({ namespace: "identity-repository", name: `<id>-${kind}.json` }));
@@ -126,7 +131,7 @@ it("maps user data through QFFIdentity and the API into repository files", () =>
   const ui = user.map(({ name }) => ({ namespace: "QFFIdentity", name }));
   const actions = [
     ["capture-profile", ["Save profile edits", "Approve an inferred persona"]],
-    ["capture-preferences", ["Save preference edits", "Approve suggested preference wording"]],
+    ["capture-preferences", ["Save preference edits"]],
     ["capture-relations", ["Submit relation edits"]],
   ] as const;
   const uiJobs = actions.map(([name]) => ({ namespace: "QFFIdentity", name }));
@@ -194,6 +199,43 @@ it("maps user data through QFFIdentity and the API into repository files", () =>
     expect(group.type).toBe("array");
     expect(group.fields?.[0].fields).toEqual(propertyFields?.filter(field => field.name !== "kind"));
   }
+});
+
+it("connects profile reads and approvals to their API and repository datasets without recording runs", () => {
+  const { jobs, datasets, errors, schemas, declared } = readLineage(Object.fromEntries(baselineFiles()));
+  const graph = dependencyGraph(jobs, datasets.values(), declared);
+  const ui = (name: string) => ({ namespace: "QFFIdentity", name });
+  const api = (name: string) => ({ namespace: "identity-repository-api", name });
+  const repo = (name: string) => ({ namespace: "identity-repository", name });
+  const decision = { namespace: "IdentityUser", name: "preference-approval-decision" };
+  const profile = { namespace: "IdentityUser", name: "identity-profile" };
+  const command = api("preference-approval-command");
+  const result = repo("committed-preference-approval");
+  const expected = [
+    [ui("select-profile"), [profile], ui("profile-selection")],
+    [ui("read-profile"), [ui("profile-selection"), repo("<id>-identity.json"), repo("<id>-properties.json"), repo("<id>-relations.json")], api("profile-read-response")],
+    [ui("hydrate-profile-editor"), [api("profile-read-response")], ui("profile-editor-snapshot")],
+    [ui("capture-preference-approval"), [decision, ui("preference-suggestion"), ui("profile-editor-snapshot"), ui("profile-selection")], ui("approved-preference-draft")],
+    [ui("mark-superseded-preferences"), [ui("approved-preference-draft")], command],
+    [api("commit-preference-approval"), [command, repo("<id>-properties.json")], result],
+  ] as const;
+  expect(errors).toEqual([]);
+  for (const [job, inputs, output] of expected) {
+    const id = nodeKey("job", job);
+    expect(graph.upstream.get(id)).toEqual(new Set(inputs.map(input => nodeKey("dataset", input))));
+    expect(graph.downstream.get(id)).toEqual(new Set([nodeKey("dataset", output)]));
+    expect(graph.declaredEdges.has(edgeKey(id, nodeKey("dataset", output)))).toBe(true);
+    expect(schemas.has(entityKey(output))).toBe(true);
+    expect(jobs.get(entityKey(job))?.runs.size).toBe(0);
+  }
+  expect(schemas.get(entityKey(command))?.fields).toEqual(expect.arrayContaining([
+    expect.objectContaining({ name: "superseded_preference_ids", type: "array" }),
+    expect.objectContaining({ name: "revision", type: "string" }),
+  ]));
+  expect(schemas.get(entityKey(result))?.fields).toEqual(expect.arrayContaining([
+    expect.objectContaining({ name: "active_preference_id", type: "string" }),
+    expect.objectContaining({ name: "superseded_preference_ids", type: "array" }),
+  ]));
 });
 
 it("keeps a declared job and its observed run distinct when they share an edge", () => {

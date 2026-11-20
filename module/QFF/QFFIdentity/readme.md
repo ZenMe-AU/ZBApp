@@ -22,7 +22,7 @@ flowchart LR
 ## Functional Requirements
 
 - Let customers view and edit their own preferences and review suggested wording before accepting it.
-- Save accepted wording as a new preference linked to the inference. Keep the original preference; the customer may mark it as superseded.
+- Save an approved system-generated preference as a new active preference linked to its inference. On approval, QFFIdentity prepares supersession marks for the one or more source preferences used by the inference. Submit the new preference and the marks as one change; preserve the original wording.
 - In the test environment only, let users select a simulated `external_id` and act as that customer. The fixture API uses the same value as the internal `identity_id`.
 
 ## Application Architecture

@@ -1,0 +1,20 @@
+{
+  "eventTime": "2026-11-19T23:40:28Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "QFFIdentity",
+    "name": "preference-suggestion",
+    "facets": {
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "inference_ref", "type": "string" },
+          { "name": "proposed_wording", "type": "string" },
+          { "name": "source_preference_ids", "type": "array", "description": "One or more old preferences used to infer the suggested wording.", "fields": [{ "name": "_element", "type": "string" }] }
+        ]
+      }
+    }
+  }
+}

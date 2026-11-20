@@ -1,0 +1,27 @@
+{
+  "eventTime": "2026-11-19T23:40:28Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "identity-repository-api",
+    "name": "profile-read-response",
+    "facets": {
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "revision", "type": "string", "description": "Opaque preference revision used for conditional writes." },
+          {
+            "name": "profile",
+            "type": "object",
+            "fields": [
+              { "name": "identity", "type": "object" },
+              { "name": "properties", "type": "object" },
+              { "name": "relations", "type": "object" }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

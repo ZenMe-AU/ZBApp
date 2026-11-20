@@ -12,6 +12,8 @@ Use the [lineage authoring guide](./lineage-authoring-guide.md) to turn QFF busi
 
 ## Scope
 
+The [profile workflows](./events/baseline/profile-workflows/) also show profile selection, reading the editor's starting state, and approving a generated preference that supersedes one or more previous preferences. Approval uses logical datasets, not an implemented API contract.
+
 The graph shows all recorded jobs and datasets, including disconnected flows. Purple cards are datasets and green cards are jobs. Solid arrows come from run events; dashed arrows show declared dataset mappings or job dependencies without asserting a run. The graph starts at the left page gutter and uses the available width. Scroll the page to explore larger graphs. Select a card to open the floating details panel on the right, and drag the panel's left edge to resize it. Close the panel to uncover the graph. Filtering is not yet available.
 
 Dataset cards show the field hierarchy from the latest valid OpenLineage `facets.schema` for that namespace and name. Arrays have a `[]` suffix, with item fields shown directly underneath rather than under a synthetic `_element` row. Select a dataset to see field descriptions where available. If no schema has been recorded, the card says so rather than guessing. Declared job cards list their actions below the job name, including [submission steps at the API boundary](./events/baseline/identity-repository-api/).

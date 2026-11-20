@@ -1,0 +1,23 @@
+{
+  "eventTime": "2026-11-19T23:40:28Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/JobEvent",
+  "job": {
+    "namespace": "QFFIdentity",
+    "name": "read-profile",
+    "facets": {
+      "qff_lineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageJobFacet.json",
+        "actions": ["Request the selected profile from the API", "Resolve the external ID to the internal identity", "Reload after a stale preference revision before retrying"]
+      }
+    }
+  },
+  "inputs": [
+    { "namespace": "QFFIdentity", "name": "profile-selection" },
+    { "namespace": "identity-repository", "name": "<id>-identity.json" },
+    { "namespace": "identity-repository", "name": "<id>-properties.json" },
+    { "namespace": "identity-repository", "name": "<id>-relations.json" }
+  ],
+  "outputs": [{ "namespace": "identity-repository-api", "name": "profile-read-response" }]
+}
