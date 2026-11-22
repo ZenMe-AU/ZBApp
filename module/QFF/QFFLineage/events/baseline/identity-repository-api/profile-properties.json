@@ -1,0 +1,44 @@
+{
+  "eventTime": "2026-11-19T14:02:01Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "identity-repository-api",
+    "name": "properties",
+    "facets": {
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "identity_id", "type": "string" },
+          {
+            "name": "preferences",
+            "type": "array",
+            "fields": [{
+              "name": "_element",
+              "type": "object",
+              "fields": [
+                { "name": "preference_id", "type": "string" },
+                { "name": "keyword", "type": "string" },
+                { "name": "kind", "type": "string", "description": "Preference category: interest, want, value, or boundary." },
+                { "name": "definition", "type": "string" },
+                {
+                  "name": "personas",
+                  "type": "array",
+                  "fields": [{
+                    "name": "_element",
+                    "type": "object",
+                    "fields": [
+                      { "name": "persona", "type": "string" },
+                      { "name": "affinity", "type": "number" }
+                    ]
+                  }]
+                }
+              ]
+            }]
+          }
+        ]
+      }
+    }
+  }
+}

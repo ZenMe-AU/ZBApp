@@ -1,0 +1,206 @@
+{
+  "identity_id": "ET",
+  "preferences": [
+    {
+      "keyword": "product design",
+      "kind": "interest",
+      "definition": "Shaping a product’s purpose, features, usability, and overall experience.",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "aafa05fc-59ad-4bb5-a963-d1faf59ad14c"
+    },
+    {
+      "keyword": "technology accessibility",
+      "kind": "interest",
+      "definition": "Designing technology so people with different abilities and needs can use it.",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "ddfe6607-85ed-4955-a94c-d7e66036c7c5"
+    },
+    {
+      "keyword": "artificial intelligence",
+      "kind": "interest",
+      "definition": "Computing methods that perform tasks such as learning, reasoning, or language generation.",
+      "personas": [
+        {
+          "persona": "technology peer",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "8988ff84-0971-4127-9882-5cb58b61a2b0"
+    },
+    {
+      "keyword": "persistent exaggeration",
+      "kind": "boundary",
+      "definition": "Repeatedly overstating claims or results beyond what the evidence supports.",
+      "personas": [],
+      "preference_id": "112bc5e1-fb96-4300-85e6-1cbc4cc219ea"
+    },
+    {
+      "keyword": "Christianity",
+      "kind": "interest",
+      "definition": "The religion centered on the life and teachings of Jesus Christ.",
+      "personas": [
+        {
+          "persona": "christian friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "caf06aac-0efb-4601-8c45-db87839a76da"
+    },
+    {
+      "keyword": "theology",
+      "kind": "interest",
+      "definition": "The study and reasoned discussion of God, religious belief, and Christian teaching.",
+      "personas": [
+        {
+          "persona": "christian friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "488d349e-a611-4ab8-8d7a-51734e67b859"
+    },
+    {
+      "keyword": "hostility toward beliefs",
+      "kind": "boundary",
+      "definition": "Treating Christian beliefs or those who hold them with aggression or contempt.",
+      "personas": [],
+      "preference_id": "36b8d2fe-36f0-4388-9384-3922611c721d"
+    },
+    {
+      "keyword": "taking photographs",
+      "kind": "interest",
+      "definition": "Creating images to capture and preserve places, wildlife, or moments.",
+      "personas": [
+        {
+          "persona": "culture and photography friend",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "2ec526d6-671e-4b08-a128-0046d16fa59d"
+    },
+    {
+      "keyword": "visiting galleries",
+      "kind": "interest",
+      "definition": "Viewing exhibitions of art and other creative work in a gallery.",
+      "personas": [
+        {
+          "persona": "culture and photography friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "d54dc12d-6173-4ea1-a74b-470b9e68e478"
+    },
+    {
+      "keyword": "attending live music",
+      "kind": "interest",
+      "definition": "Going to a performance where musicians play in person.",
+      "personas": [
+        {
+          "persona": "culture and photography friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "6c8b18fe-2f28-4f7a-b578-a21d3b9c2bcf"
+    },
+    {
+      "keyword": "coffee",
+      "kind": "interest",
+      "definition": "The brewed drink and relaxed cafe experience enjoyed in social settings.",
+      "personas": [
+        {
+          "persona": "culture and photography friend",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "7a598fac-eda2-4586-b34d-1106c4a1ed06"
+    },
+    {
+      "keyword": "pressure to drink alcohol",
+      "kind": "boundary",
+      "definition": "Pressuring someone to consume alcoholic drinks when they do not want to.",
+      "personas": [],
+      "preference_id": "70327599-4827-4aca-b576-cd389303a4ac"
+    },
+    {
+      "keyword": "openness",
+      "definition": "Willingness to consider different ideas, evidence, and perspectives.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "91afd5e5-6a23-4caf-9c2c-1f6278c727e4"
+    },
+    {
+      "keyword": "curiosity",
+      "definition": "An interest in asking questions and exploring new ideas to understand technology.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "434012dd-fb66-4124-af83-7db2f2cf1c1f"
+    },
+    {
+      "keyword": "ethics",
+      "definition": "Principles used to consider what is right, responsible, and fair.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "1b9bcd3d-3b22-4745-9f86-93e7bf112ce1"
+    },
+    {
+      "keyword": "honesty",
+      "definition": "Communicating truthfully and accurately, including when it is difficult.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "fd9427f9-b3ad-48ae-92ad-c8def6d2cf93"
+    },
+    {
+      "keyword": "respectful disagreement",
+      "definition": "Discussing different views without insults, contempt, or dismissiveness.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "94055009-44ee-4ea2-869f-111337e60bd1"
+    },
+    {
+      "keyword": "curiosity",
+      "definition": "An interest in noticing and learning about visual art, places, and experiences.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "1d256ccc-d15d-488f-b6eb-c5fa581ceaa8"
+    }
+  ]
+}

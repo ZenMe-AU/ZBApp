@@ -1,0 +1,14 @@
+{
+  "identity_id": "AP",
+  "name": "Aisha Patel",
+  "age": 35,
+  "gender": "female",
+  "location": "Brisbane, Queensland, Australia",
+  "occupation": "Software engineer and volunteer digital-literacy tutor",
+  "summary": "A curious engineer who enjoys practical technology, moderate hikes and making digital tools accessible.",
+  "personas": [
+    { "name": "technology peer", "description": "Enjoys comparing practical approaches to software architecture, AI and automation." },
+    { "name": "outdoor activity friend", "description": "Enjoys moderate hikes and walks with room to photograph wildlife." },
+    { "name": "community volunteer", "description": "Is drawn to local education projects that make digital tools more accessible." }
+  ]
+}

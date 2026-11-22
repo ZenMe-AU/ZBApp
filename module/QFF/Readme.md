@@ -30,7 +30,7 @@ Before matching begins, each person must clarify what friendship means to them. 
 - their boundaries and deal-breakers
 - how much personal information they are initially willing to disclose
 
-A person can maintain multiple personas, each representing a different connection goal, such as:
+A person can pursue multiple connection goals without creating personas first. Goals might include:
 
 - career contact
 - business partner
@@ -43,7 +43,7 @@ A person can maintain multiple personas, each representing a different connectio
 - potential investor
 - romantic connection
 
-These personas may overlap, conflict or require different matching criteria.
+An optional current intent tells QFF what the person wants from this encounter. A connection opportunity is a concrete, tentative suggestion, not a label for either person. Over time, the person may choose to save or name a recurring way they like to connect as a persona. See [social-context and persona discovery](socialContextPersonaDiscovery.md).
 
 ## Environmental constraints
 
@@ -120,7 +120,7 @@ The Quest app should support:
 
 Matcher compares a person’s profile with the profiles of other passengers. It can use only the information voluntarily provided.
 
-For each persona, the matcher should evaluate:
+For each potential connection opportunity, the matcher should evaluate:
 
 - shared interests
 - aligned goals
@@ -153,7 +153,7 @@ Person A and B are matched on career topic of "teacher" and recreation interest 
 
 ## Simulation fixtures
 
-The [Identities](Identities) directory contains six fictional identities with three personas each:
+The [Identities](Identities) directory contains six fictional identities, with three scripted personas each for the comparison baseline:
 
 | ID | Identity | Personas |
 | --- | --- | --- |
@@ -164,12 +164,12 @@ The [Identities](Identities) directory contains six fictional identities with th
 | MR | Marcus Reed | Melbourne sport friend; community volunteer; outdoor activity friend |
 | ET | Emma Thompson | Technology peer; Christian friend; culture and photography friend |
 
-Each identity's directory contains four JSON files, prefixed with its `identity_id`:
+Each fixture directory is named after its internal `identity_id` (for example, [`Identities/AP`](Identities/AP)). The Identity Repository resolves that ID directly to the directory without scanning files. The three source files and optional test context use the same ID prefix:
 
-- `XX-identity.json`: biographical details.
-- `XX-personas.json`: persona narratives under entries in `personas`, covering goals, contributions, expectations, interests, communication, boundaries, and initial disclosure.
-- `XX-properties.json`: preferences shared across personas, their per-persona affinities (kinds `interest`, `want`, `value`, `boundary`), concept embeddings, model metadata, and kind vectors.
-- `XX-relations.json`: known contacts referenced by their identity IDs, with `topics_shared` and `topics_private` lists and `source: "simulation"`.
+- `XX-identity.json`: biographical details and approved `personas`. Each entry has a `name` matching a named preference affinity and one AI-generated `description` inferred from preferences. The synthetic profiles assume approval for the persona names in their legacy test context.
+- `XX-test-context.json` (optional, legacy): scripted persona narratives kept for existing consumers and baseline comparisons, outside the identity lineage model. They are not required input or evidence for matching or semantic derivation.
+- `XX-properties.json`: identity-owned preferences (kinds `interest`, `want`, `value`, `boundary`). An affinity entry with `"persona": ""` applies to the identity as a whole; named entries preserve context-specific affinities and the scripted baseline. An empty `personas` array records no scoped affinity. Derived embeddings and model metadata belong to the QFF Repository, not identity source files.
+- `XX-relations.json`: known contacts referenced by their identity IDs, with `topics_shared` and `topics_private` lists.
 
 Initials are readable fixture identifiers used consistently across files and references. Production identifiers remain opaque. Concept and kind embeddings are generated with Azure AI Foundry `text-embedding-3-small`; see [persona_preference_embedding_model.md](persona_preference_embedding_model.md).
 
@@ -179,9 +179,9 @@ Known-contact links are reciprocal, while topic choices belong to each owner and
 
 The simulation proceeds through the following stages:
 
-1. **Define personas:** Write own persona descriptions in the identity's `XX-personas.json` file
-2. **Build profile:** Create profile property lists based on the text descriptions. Then create potential questions and answers from those. Capture those questions and answers into Quest
-3. **Discover:** Call Matcher API that returns the latest set of matches based on current information in Quest. Each match lists the personas and properties that enabled the match
+1. **Build profile:** Capture stated preferences, boundaries, questions and answers without requiring a persona.
+2. **Set current intent (optional):** Say what kind of conversation or connection would be welcome now. Skip this step if there is no particular goal.
+3. **Discover:** In the proposed flow, the Matcher suggests concrete connection opportunities using eligible evidence and explains them using only the requester's own data or permitted de-identified aggregates. A suggestion grants no permission to disclose.
 4. **Send clarification question:** If interested, write or re-use a question and send it to a match or set of matches
 5. **Exchange questions:** Both people choose questions that test compatibility without exceeding their current trust level
 6. **Build trust:** Reciprocal answers unlock deeper question categories or additional profile details
@@ -234,6 +234,28 @@ Secondary measures may include:
 - whether the connection remains mutually valuable after more information is shared
 
 ## Design decisions
+
+### Test locations
+
+- Put Vitest tests in the owning workspace's `vitest/` folder, or `QFF/vitest/` for tests owned by QFF itself. Use `*.test.ts` (or `*.test.mts`), as matched by the [root Vitest config](../../vitest.config.ts). The folder name follows the other workspaces; Vitest discovers tests by filename.
+- Put Playwright browser tests in the component's `pwtests/` folder and name them `*.spec.ts`. The [root Playwright config](../../playwright.config.ts) matches `*.spec.ts` and `*.setup.ts` (and their `.mts` equivalents) under `pwtests/`.
+- Existing QFFViz browser checks in `tests/` use `node:test` to launch Playwright and are not discovered by the root Playwright runner. Follow the folder convention when replacing those checks during the redesign.
+
+### Phase 1 repository checks
+
+Run the repository tests and save the Vitest JSON result:
+
+```powershell
+pnpm exec vitest run module/QFF/vitest --reporter=default --reporter=json --outputFile="$env:TEMP\qff-vitest-results.json"
+```
+
+The bulk-load test writes performance metrics to `%TEMP%\qff-repository-performance.json` by default. Generate a combined test and performance summary with:
+
+```powershell
+node module/QFF/vitest/report.mjs "$env:TEMP\qff-vitest-results.json" "$env:TEMP\qff-repository-performance.json"
+```
+
+The QFF integration test indexes only identity/preference IDs and source revisions; full source profiles remain owned by Identity Repository.
 
 ### Embedding text changes invalidate vectors
 

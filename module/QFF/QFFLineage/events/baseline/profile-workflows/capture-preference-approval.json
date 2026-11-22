@@ -1,0 +1,29 @@
+{
+  "eventTime": "2026-11-19T23:40:28Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/JobEvent",
+  "job": {
+    "namespace": "QFFIdentity",
+    "name": "capture-preference-approval",
+    "facets": {
+      "jobType": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Review suggested wording and its source preferences.\nApprove the system-generated preference using the active profile and editor revision.",
+        "contentType": "text/plain"
+      }
+    }
+  },
+  "inputs": [
+    { "namespace": "IdentityUser", "name": "preference-approval-decision" },
+    { "namespace": "QFFIdentity", "name": "preference-suggestion" },
+    { "namespace": "QFFIdentity", "name": "profile-editor-snapshot" }
+  ],
+  "outputs": [{ "namespace": "QFFIdentity", "name": "approved-preference-draft" }]
+}

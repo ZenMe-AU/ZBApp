@@ -1,0 +1,25 @@
+{
+  "eventTime": "2026-11-19T23:40:28Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/JobEvent",
+  "job": {
+    "namespace": "QFFIdentity",
+    "name": "mark-superseded-preferences",
+    "facets": {
+      "jobType": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Mark each source preference as superseded without rewriting its wording.\nSubmit the accepted wording as a new preference linked to its inference.",
+        "contentType": "text/plain"
+      }
+    }
+  },
+  "inputs": [{ "namespace": "QFFIdentity", "name": "approved-preference-draft" }],
+  "outputs": [{ "namespace": "identity-repository-api", "name": "preference-approval-command" }]
+}

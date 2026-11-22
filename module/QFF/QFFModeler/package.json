@@ -1,0 +1,22 @@
+{
+  "name": "qff-modeler",
+  "version": "1.0.0",
+  "description": "QFF canonical model and mapping review UI",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm run typecheck && vite build"
+  },
+  "dependencies": {
+    "ag-grid-community": "^36.3.0",
+    "plotly.js-dist-min": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/plotly.js-dist-min": "^2.3.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6"
+  }
+}

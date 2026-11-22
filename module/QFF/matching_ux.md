@@ -4,11 +4,11 @@
 
 Help people find approachable common ground and choose whether to start a conversation. A match is a discovery aid, not a verdict about total compatibility, a promise of friendship, or consent to disclose identity or contact details.
 
-## Persona context
+## Connection opportunities
 
-- Present results in the context of the person's own connection persona, such as outdoor activity friend or community connection.
-- Keep different connection goals distinct. Do not combine unrelated persona results into one global compatibility judgment.
-- A match in one persona can be useful even when there is no evidence for another persona.
+- Present concrete ways to connect, such as “a coastal walk with time for photography,” without requiring the person to choose or save a persona.
+- Use a person's stated current intent when supplied. Show distinct opportunities separately rather than combining them into a global compatibility judgment.
+- Keep persona-grouped results as the scripted comparison baseline. An opportunity can draw on interests across those labels, but cannot override boundaries or expose counterpart details.
 
 ## Topic ordering
 

@@ -1,0 +1,49 @@
+{
+  "eventTime": "2026-11-19T23:33:57Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/JobEvent",
+  "job": {
+    "namespace": "QFFIdentity",
+    "name": "submit-preferences",
+    "facets": {
+      "jobType": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF",
+        "jobType": "COMMAND"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Flatten grouped preferences by kind.\nSend preferences to the API.\nResolve external ID at the API boundary.",
+        "contentType": "text/plain"
+      }
+    }
+  },
+  "inputs": [{ "namespace": "QFFIdentity", "name": "preferences" }],
+  "outputs": [{
+    "namespace": "identity-repository-api",
+    "name": "properties",
+    "facets": {
+      "columnLineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json",
+        "fields": {
+          "identity_id": {
+            "inputFields": [{
+              "namespace": "QFFIdentity", "name": "preferences", "field": "external_id",
+              "transformations": [{ "type": "DIRECT", "subtype": "TRANSFORMATION", "description": "Resolve the external ID to the internal identity ID at the API boundary. The IDs are equal only in fixture mode.", "masking": false }]
+            }]
+          },
+          "preferences": {
+            "inputFields": [{
+              "namespace": "QFFIdentity", "name": "preferences", "field": "preferences",
+              "transformations": [{ "type": "DIRECT", "subtype": "TRANSFORMATION", "description": "Flatten the interests, wants, values and boundaries groups into preferences[], setting kind to interest, want, value and boundary respectively.", "masking": false }]
+            }]
+          }
+        }
+      }
+    }
+  }]
+}

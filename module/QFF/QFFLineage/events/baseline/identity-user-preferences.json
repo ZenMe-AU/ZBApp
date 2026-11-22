@@ -1,0 +1,124 @@
+{
+  "eventTime": "2026-11-19T03:16:40Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "IdentityUser",
+    "name": "preferences",
+    "facets": {
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "external_id", "type": "string", "description": "Login identity from Entra ID or a social provider; simulated in fixture mode." },
+          {
+            "name": "preferences",
+            "type": "object",
+            "fields": [
+              {
+                "name": "interests",
+                "type": "array",
+                "fields": [{
+                  "name": "_element",
+                  "type": "object",
+                  "fields": [
+                    { "name": "preference_id", "type": "string" },
+                    { "name": "keyword", "type": "string" },
+                    { "name": "definition", "type": "string" },
+                    {
+                      "name": "personas",
+                      "type": "array",
+                      "fields": [{
+                        "name": "_element",
+                        "type": "object",
+                        "fields": [
+                          { "name": "persona", "type": "string" },
+                          { "name": "affinity", "type": "number" }
+                        ]
+                      }]
+                    }
+                  ]
+                }]
+              },
+              {
+                "name": "wants",
+                "type": "array",
+                "fields": [{
+                  "name": "_element",
+                  "type": "object",
+                  "fields": [
+                    { "name": "preference_id", "type": "string" },
+                    { "name": "keyword", "type": "string" },
+                    { "name": "definition", "type": "string" },
+                    {
+                      "name": "personas",
+                      "type": "array",
+                      "fields": [{
+                        "name": "_element",
+                        "type": "object",
+                        "fields": [
+                          { "name": "persona", "type": "string" },
+                          { "name": "affinity", "type": "number" }
+                        ]
+                      }]
+                    }
+                  ]
+                }]
+              },
+              {
+                "name": "values",
+                "type": "array",
+                "fields": [{
+                  "name": "_element",
+                  "type": "object",
+                  "fields": [
+                    { "name": "preference_id", "type": "string" },
+                    { "name": "keyword", "type": "string" },
+                    { "name": "definition", "type": "string" },
+                    {
+                      "name": "personas",
+                      "type": "array",
+                      "fields": [{
+                        "name": "_element",
+                        "type": "object",
+                        "fields": [
+                          { "name": "persona", "type": "string" },
+                          { "name": "affinity", "type": "number" }
+                        ]
+                      }]
+                    }
+                  ]
+                }]
+              },
+              {
+                "name": "boundaries",
+                "type": "array",
+                "fields": [{
+                  "name": "_element",
+                  "type": "object",
+                  "fields": [
+                    { "name": "preference_id", "type": "string" },
+                    { "name": "keyword", "type": "string" },
+                    { "name": "definition", "type": "string" },
+                    {
+                      "name": "personas",
+                      "type": "array",
+                      "fields": [{
+                        "name": "_element",
+                        "type": "object",
+                        "fields": [
+                          { "name": "persona", "type": "string" },
+                          { "name": "affinity", "type": "number" }
+                        ]
+                      }]
+                    }
+                  ]
+                }]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

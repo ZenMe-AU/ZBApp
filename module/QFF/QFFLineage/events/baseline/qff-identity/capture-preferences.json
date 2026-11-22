@@ -1,0 +1,25 @@
+{
+  "eventTime": "2026-11-19T23:17:21Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/JobEvent",
+  "job": {
+    "namespace": "QFFIdentity",
+    "name": "capture-preferences",
+    "facets": {
+      "jobType": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Save preference edits.",
+        "contentType": "text/plain"
+      }
+    }
+  },
+  "inputs": [{ "namespace": "IdentityUser", "name": "preferences" }],
+  "outputs": [{ "namespace": "QFFIdentity", "name": "preferences" }]
+}

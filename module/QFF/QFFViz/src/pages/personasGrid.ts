@@ -18,7 +18,7 @@ interface Row {
 export function render(root: HTMLElement): () => void {
   root.innerHTML = `
     <h2>Personas</h2>
-    <p class="hint">One row per persona in <code>*-personas.json</code>. List cells hold one item per line. Renaming a persona also renames it in the matching properties file.</p>
+    <p class="hint">One row per scripted persona in the optional <code>*-test-context.json</code>. List cells hold one item per line. Renaming a persona also renames its labels in the properties draft.</p>
     <div class="toolbar">
       <input class="search" placeholder="Quick filter…" />
       <select class="owner">${personOptions()}</select>

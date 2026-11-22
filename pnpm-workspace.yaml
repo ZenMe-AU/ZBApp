@@ -5,6 +5,13 @@ packages:
   - module/*/func
   - module/dashboard
   - module/QFF/QFFViz
+  - module/QFF/QFFIdentity
+  - module/QFF/QFFModeler
+  - module/QFF/QFFMatcher
+  - module/QFF/QFFLineage
+  - module/QFF/IdentityRepository
+  - module/QFF/QFFRepository
+  - external/openlineage-visualizer
   - deploy/corpSetup/c11cloudfront/source/authGuardLambdaEdge
   - deploy/corpSetup/c11cloudfront/source/msalSpa
 allowBuilds:
@@ -20,6 +27,9 @@ allowBuilds:
 overrides:
   react: 18.x.x
   react-router: ^7.x.x
+  # openlineage-visualizer requires React 19
+  "openlineage-visualizer>react": ^19.2.8
+  "openlineage-visualizer>react-dom": ^19.2.8
 
 onlyBuiltDependencies:
   - "@scarf/scarf"

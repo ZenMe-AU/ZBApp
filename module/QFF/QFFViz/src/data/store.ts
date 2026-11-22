@@ -13,7 +13,8 @@ interface ModesState {
 }
 
 function kindOf(fileName: string): FileKind {
-  const match = /-(identity|personas|properties|relations)\.json$/.exec(fileName);
+  if (fileName.endsWith("-test-context.json")) return "personas";
+  const match = /-(identity|properties|relations)\.json$/.exec(fileName);
   return (match?.[1] as FileKind | undefined) ?? "other";
 }
 
@@ -26,13 +27,13 @@ function buildPeople(files: DataFile[]): Person[] {
   }
   const people: Person[] = [];
   for (const [folder, f] of byFolder) {
-    if (!f.identity || !f.personas || !f.properties || !f.relations) continue;
+    if (!f.identity || !f.properties || !f.relations) continue;
     const identity = f.identity as Person["identity"];
     people.push({
       id: identity.identity_id,
       folder,
       identity,
-      personas: f.personas as Person["personas"],
+      personas: (f.personas as Person["personas"] | undefined) ?? { identity_id: identity.identity_id, personas: [] },
       properties: f.properties as Person["properties"],
       relations: f.relations as Person["relations"],
     });

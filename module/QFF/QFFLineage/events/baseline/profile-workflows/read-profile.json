@@ -1,0 +1,30 @@
+{
+  "eventTime": "2026-11-19T23:40:28Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/JobEvent",
+  "job": {
+    "namespace": "identity-repository-api",
+    "name": "read-profile",
+    "facets": {
+      "jobType": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-3/JobTypeJobFacet.json",
+        "processingType": "SERVICE",
+        "integration": "QFF",
+        "jobType": "QUERY"
+      },
+      "documentation": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/DocumentationJobFacet.json",
+        "description": "Resolve the external ID to the internal identity (fixture mode supports simulated profile selection).\nRead the identity, preferences and relations into the editor snapshot.\nInclude the preference revision for conditional writes; reuse this query to reload after a conflict.\nQuery parameters: external_id.",
+        "contentType": "text/plain"
+      }
+    }
+  },
+  "inputs": [
+    { "namespace": "identity-repository", "name": "<id>-identity.json" },
+    { "namespace": "identity-repository", "name": "<id>-properties.json" },
+    { "namespace": "identity-repository", "name": "<id>-relations.json" }
+  ],
+  "outputs": [{ "namespace": "QFFIdentity", "name": "profile-editor-snapshot" }]
+}

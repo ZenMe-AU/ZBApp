@@ -1,0 +1,14 @@
+{
+  "identity_id": "SC",
+  "name": "Sarah Chen",
+  "age": 40,
+  "gender": "female",
+  "location": "Melbourne, Victoria, Australia",
+  "occupation": "Secondary-school teacher and community choir organiser",
+  "summary": "A thoughtful teacher who values Christian friendship, local arts and relaxed outdoor activities.",
+  "personas": [
+    { "name": "christian friend", "description": "Enjoys sharing Christian fellowship and studying the Bible with others." },
+    { "name": "melbourne culture friend", "description": "Enjoys exploring local history, seeing live music and visiting galleries, with time for coffee along the way." },
+    { "name": "outdoor activity friend", "description": "Prefers relaxed walks and regional day trips where there is time to watch wildlife, rather than strenuous hikes." }
+  ]
+}

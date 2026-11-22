@@ -1,0 +1,121 @@
+:root {
+  color-scheme: dark;
+  --surface: #111522;
+  background-color: var(--surface);
+  color: #f0f3ff;
+  font: 1rem/1.5 system-ui, sans-serif;
+}
+body { margin: 0; }
+main { padding: 1.5rem; }
+h1, h2, h3 { line-height: 1.25; overflow-wrap: anywhere; }
+header { border-bottom: 1px solid GrayText; margin-bottom: 1.25rem; }
+select, button { font: inherit; max-width: 100%; }
+label { display: block; }
+.hint { margin-top: -.5rem; }
+#viewport {
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 100%;
+  min-height: 10rem;
+  background: var(--surface) radial-gradient(circle, #343a50 1px, transparent 1px) 0 0 / 16px 16px;
+  border: 1px solid #59617b;
+  border-radius: .65rem;
+}
+#viewport > p { padding: 0 1rem; }
+.stage { position: relative; }
+.stage svg { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.stage .front-lines { z-index: 3; }
+.connection { fill: none; stroke: #a7b2d1; stroke-width: 1.5; }
+.connection:is(.is-hovered, .is-connected) { stroke: white; stroke-width: 4; filter: url(#connection-outline); }
+.connection.is-connected { filter: url(#connection-outline) drop-shadow(0 3px 4px #000); }
+#connection-outline feFlood { flood-color: #080a12; }
+.connection-hit { fill: none; stroke: black; stroke-width: 10; opacity: 0; pointer-events: stroke; }
+#arrow path { fill: #a7b2d1; fill: context-stroke; }
+.namespace-group {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid #59617b;
+  border-radius: .55rem;
+  background: #1b203044;
+}
+.namespace-group h2, .namespace-placeholders h2 { margin: 0; padding: .5rem .75rem; font-size: 1rem; }
+.node-frame { position: absolute; z-index: 2; }
+.namespace-placeholders { max-width: 75rem; margin: 1.5rem; }
+.namespace-placeholders > div { display: flex; flex-wrap: wrap; gap: 1rem; }
+.namespace-placeholders .node-frame { position: relative; }
+.node {
+  display: grid;
+  width: 100%;
+  align-content: center;
+  gap: .2rem;
+  box-sizing: border-box;
+  border: 1px solid;
+  border-radius: .45rem;
+  padding: .5rem .65rem;
+  text-align: start;
+  cursor: pointer;
+  line-height: 1.25;
+  min-height: 68px;
+}
+.node.dataset { background: #30234c; border-color: #b69be9; color: #f1e7ff; }
+.node.job { background: #16392f; border-color: #87c6a9; color: #e0faed; }
+.node small, .node strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.node.dataset :is(small, strong) { white-space: normal; overflow-wrap: anywhere; }
+.node-content {
+  display: grid;
+  border-top: 1px solid #79689c;
+  margin-top: .2rem;
+  padding-top: .3rem;
+  font-size: .75rem;
+  overflow-wrap: anywhere;
+}
+.node-actions { border-color: #87c6a9; gap: .15rem; }
+.schema-fields { display: grid; gap: .15rem; }
+.schema-fields .schema-fields {
+  border-inline-start: 1px solid currentColor;
+  margin-inline-start: .2rem;
+  padding-inline-start: .5rem;
+}
+.node[aria-pressed="true"] { box-shadow: 0 0 0 2px #f0f3ff, 0 4px 12px #000c; }
+.node:hover { filter: brightness(1.2); }
+.node:focus-visible { outline: 2px solid #ffdb86; outline-offset: 4px; }
+.resize-strip {
+  position: absolute;
+  width: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.node-resize { inset: 0 0 0 auto; }
+.resize-strip:hover { background: #ffffff30; }
+.resize-strip:focus-visible { outline: 2px solid #ffdb86; }
+#details-panel:not([hidden]) {
+  position: fixed;
+  z-index: 4;
+  inset: 1rem 1rem auto auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 22rem;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 2rem);
+  padding: .75rem 1rem;
+  border: 1px solid #59617b;
+  border-radius: .65rem;
+  background: var(--surface);
+  box-shadow: 0 .4rem 1.2rem #0008;
+}
+#details-resize { inset: 0 auto 0 0; }
+#inspect { width: 100%; min-height: 0; overflow: auto; overflow-wrap: anywhere; }
+details { border-bottom: 1px solid GrayText; padding: .5rem 0; overflow-wrap: anywhere; }
+pre { overflow: auto; max-height: 24rem; }
+#errors { border: 1px solid GrayText; padding: 0 1rem; margin-bottom: 1rem; overflow-wrap: anywhere; }
+@media (forced-colors: active) {
+  .resize-strip:hover { background: Highlight; }
+  .connection, .connection:is(.is-hovered, .is-connected) { stroke: CanvasText; }
+  #connection-outline feFlood { flood-color: Canvas; }
+  .node[aria-pressed="true"] { border: 3px double Highlight; }
+}

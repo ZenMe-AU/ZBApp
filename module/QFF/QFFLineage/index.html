@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QFFLineage</title>
+  </head>
+  <body>
+    <main>
+      <div>Trace jobs and datasets from local OpenLineage files.</div>
+      <div id="viewport" role="region" aria-label="Lineage graph"></div>
+      <section id="errors" role="status" hidden></section>
+    </main>
+    <aside id="details-panel" aria-label="Selected node details" hidden>
+      <button id="details-resize" class="resize-strip" type="button" aria-label="Resize details panel"></button>
+      <button id="details-close" type="button">Close details</button>
+      <div id="inspect"></div>
+    </aside>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

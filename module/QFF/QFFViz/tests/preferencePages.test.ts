@@ -24,7 +24,7 @@ test("preference views support a shared preference with persona-specific affinit
     for (const [id, name] of [["a", "Alice"], ["b", "Bob"]]) {
       files.push(
         { path: `${id}/${id}-identity.json`, content: { identity_id: id, name } },
-        { path: `${id}/${id}-personas.json`, content: { identity_id: id, personas: [{ persona: "Friends" }, { persona: "Work" }] } },
+        { path: `${id}/${id}-test-context.json`, content: { identity_id: id, personas: [{ persona: "Friends" }, { persona: "Work" }] } },
         { path: `${id}/${id}-properties.json`, content: {
           identity_id: id, embedding_model: { name: "test", version: "1", dimensions: 16 },
           preferences: [{

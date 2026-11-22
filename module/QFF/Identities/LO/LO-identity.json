@@ -1,0 +1,14 @@
+{
+  "identity_id": "LO",
+  "name": "Liam O'Connor",
+  "age": 42,
+  "gender": "male",
+  "location": "Melbourne, Victoria, Australia",
+  "occupation": "Operations manager for a mid-sized construction supplier",
+  "summary": "A grounded Melbourne local who enjoys Australian rules football, live music, neighbourhood food and coffee, walking, day hikes and practical community involvement. He is friendly but not highly extroverted, values reliability and prefers relationships that develop through shared activities.",
+  "personas": [
+    { "name": "melbourne sport friend", "description": "Enjoys watching Australian rules football and cricket, playing social tennis and talking about Melbourne sporting history." },
+    { "name": "melbourne culture friend", "description": "Enjoys getting to know Melbourne neighbourhoods through independent cafes, food markets, galleries and live shows." },
+    { "name": "outdoor activity friend", "description": "Prefers casual rides and moderate walks or hikes, especially on day trips with coastal scenery and wildlife to photograph." }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [{
+    "label": "Start",
+    "type": "shell",
+    "command": "pnpm run dev",
+    "isBackground": true,
+    "problemMatcher": {
+      "owner": "qff-lineage",
+      "pattern": {
+        "regexp": "^(.+):(\\d+):\\s+(.*)$",
+        "file": 1,
+        "line": 2,
+        "message": 3
+      },
+      "background": {
+        "activeOnStart": true,
+        "beginsPattern": "^.*VITE v.*",
+        "endsPattern": "^.*Local:\\s+http"
+      }
+    }
+  }]
+}

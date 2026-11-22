@@ -1,0 +1,50 @@
+{
+  "eventTime": "2026-11-19T01:42:35Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "identity-repository",
+    "name": "<id>-properties.json",
+    "facets": {
+      "qff_lineage": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageDatasetFacet.json",
+        "source": { "namespace": "identity-repository-api", "name": "properties" },
+        "mapping": "direct-copy"
+      },
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "identity_id", "type": "string" },
+          {
+            "name": "preferences",
+            "type": "array",
+            "fields": [{
+              "name": "_element",
+              "type": "object",
+              "fields": [
+                { "name": "preference_id", "type": "string" },
+                { "name": "keyword", "type": "string" },
+                { "name": "kind", "type": "string", "description": "Preference category: interest, want, value, or boundary." },
+                { "name": "definition", "type": "string" },
+                {
+                  "name": "personas",
+                  "type": "array",
+                  "fields": [{
+                    "name": "_element",
+                    "type": "object",
+                    "fields": [
+                      { "name": "persona", "type": "string" },
+                      { "name": "affinity", "type": "number" }
+                    ]
+                  }]
+                }
+              ]
+            }]
+          }
+        ]
+      }
+    }
+  }
+}

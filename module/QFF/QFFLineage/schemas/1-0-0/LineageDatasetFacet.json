@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ZenMe-AU/ZBReactArchitecture/main/module/QFF/QFFLineage/schemas/1-0-0/LineageDatasetFacet.json",
+  "title": "LineageDatasetFacet",
+  "description": "QFF's declared dataset mapping. The dataset carrying this facet is the destination. This is not a recorded execution.",
+  "allOf": [
+    { "$ref": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetFacet" }
+  ],
+  "type": "object",
+  "required": ["source", "mapping"],
+  "properties": {
+    "source": {
+      "type": "object",
+      "required": ["namespace", "name"],
+      "properties": {
+        "namespace": { "type": "string", "pattern": "\\S" },
+        "name": { "type": "string", "pattern": "\\S" }
+      }
+    },
+    "mapping": {
+      "enum": ["direct-copy", "flatten-by-kind"],
+      "description": "Copy matching fields by name, or flatten source preferences groups into the destination preferences array, copying item fields by name and supplying the kind."
+    },
+    "resolveIdentity": {
+      "type": "boolean",
+      "description": "Resolve the request's external_id to the destination's internal identity_id in addition to the declared payload mapping."
+    },
+    "kindByGroup": {
+      "type": "object",
+      "description": "Source group names under preferences and the destination kind for each group's items.",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "\\S" },
+      "additionalProperties": { "type": "string", "pattern": "\\S" }
+    }
+  },
+  "if": { "properties": { "mapping": { "const": "flatten-by-kind" } } },
+  "then": { "required": ["kindByGroup"] }
+}

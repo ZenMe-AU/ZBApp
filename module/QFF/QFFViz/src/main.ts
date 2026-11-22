@@ -53,7 +53,7 @@ const pages: Page[] = [
   { id: "identities", group: "Grids", title: "Identities", render: identitiesGrid.render,
     info: "The core profile of each person (*-identity.json): name, age, location, occupation and a free-text summary. Every other file links back to these IDs." },
   { id: "personas", group: "Grids", title: "Personas", render: personasGrid.render,
-    info: "The connection personas each person offers (*-personas.json): what kind of connection they seek, what they contribute and expect, and their boundaries and disclosure rules. Matching is done per persona." },
+    info: "Optional persona narratives from *-test-context.json, used for the scripted simulation baseline." },
   { id: "preferences", group: "Grids", title: "Preferences", render: preferencesGrid.render,
     info: "The machine-readable preferences behind each persona (*-properties.json): keyword, kind (interest, value, boundary) and signed affinity from -1 (repels) to +1 (attracts). These drive the matcher." },
   { id: "relations", group: "Grids", title: "Relations", render: relationsGrid.render,

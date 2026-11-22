@@ -1,0 +1,205 @@
+{
+  "identity_id": "MR",
+  "preferences": [
+    {
+      "keyword": "watching Australian rules football",
+      "kind": "interest",
+      "definition": "Following an Australian rules football match as a spectator.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "51ccc151-4221-4f01-928c-63639214680a"
+    },
+    {
+      "keyword": "playing social cricket",
+      "kind": "interest",
+      "definition": "Playing cricket recreationally in a friendly, non-competitive setting.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.6
+        }
+      ],
+      "preference_id": "e81a0519-1dd2-4cd7-ad01-f7d93cb2633c"
+    },
+    {
+      "keyword": "watching cricket",
+      "kind": "interest",
+      "definition": "Following a cricket match as a spectator.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "f76294d6-a52a-43fc-95a3-1211a49c4bb9"
+    },
+    {
+      "keyword": "casual cycling",
+      "kind": "interest",
+      "definition": "Riding a bicycle for recreation at a comfortable, non-competitive pace.",
+      "personas": [
+        {
+          "persona": "melbourne sport friend",
+          "affinity": 0.7
+        },
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "effc25f8-ddce-41ae-bcb2-3cef6ad311af"
+    },
+    {
+      "keyword": "gambling pressure",
+      "kind": "boundary",
+      "definition": "Pressuring someone to bet or gamble as part of a social activity.",
+      "personas": [],
+      "preference_id": "3a5896e1-90c5-4aec-811b-6b11982ceff5"
+    },
+    {
+      "keyword": "local initiatives",
+      "kind": "interest",
+      "definition": "Community-led efforts to address needs or improve life in a local area.",
+      "personas": [
+        {
+          "persona": "community volunteer",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "b5463f78-fd81-4887-8b98-711644781aed"
+    },
+    {
+      "keyword": "education",
+      "kind": "interest",
+      "definition": "The process of teaching and learning knowledge and skills.",
+      "personas": [
+        {
+          "persona": "community volunteer",
+          "affinity": 0.7
+        }
+      ],
+      "preference_id": "85c18e31-a847-4001-95e3-774672c1e5b7"
+    },
+    {
+      "keyword": "not-for-profit organisations",
+      "kind": "interest",
+      "definition": "Organisations that use their income to advance a mission rather than distribute profit.",
+      "personas": [
+        {
+          "persona": "community volunteer",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "a711fd10-fb37-43ea-981a-572ae7e5e6ad"
+    },
+    {
+      "keyword": "unrealistic unpaid-work expectations",
+      "kind": "boundary",
+      "definition": "Expecting volunteers to contribute unreasonable amounts of time or effort without pay.",
+      "personas": [],
+      "preference_id": "0d5713e8-60ea-4e20-bab2-1ec65075bada"
+    },
+    {
+      "keyword": "moderate hiking",
+      "kind": "interest",
+      "definition": "Walking on trails at a manageable pace and difficulty, without extreme terrain or exertion.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "cdf4b03e-f85a-49ac-90b1-47e076309fcd"
+    },
+    {
+      "keyword": "regional day trips",
+      "kind": "interest",
+      "definition": "Short visits to nearby destinations that begin and end on the same day.",
+      "personas": [
+        {
+          "persona": "outdoor activity friend",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "be0f6989-059b-4941-a2ca-a3a1f64efd11"
+    },
+    {
+      "keyword": "safety",
+      "kind": "want",
+      "definition": "Taking reasonable precautions to reduce avoidable risks during activities.",
+      "personas": [],
+      "preference_id": "15c09333-c67f-4f97-9266-97d45f385a3d"
+    },
+    {
+      "keyword": "disregard for agreed plans",
+      "kind": "boundary",
+      "definition": "Ignoring or changing arrangements without respecting or coordinating with those involved.",
+      "personas": [],
+      "preference_id": "6e9855ed-898f-493f-9f71-56ab0435ca8b"
+    },
+    {
+      "keyword": "sportsmanship",
+      "definition": "Playing fairly and treating teammates, opponents, and officials with respect.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "9c09a36e-c110-4cd4-a892-d18c8feb3a30"
+    },
+    {
+      "keyword": "loyalty",
+      "definition": "Being dependable and standing by teammates, friends, or a team.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "bd714449-ebdf-4412-ac87-dfa8118bddb2"
+    },
+    {
+      "keyword": "service",
+      "definition": "Contributing time or skills to help other people or the community.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.8
+        }
+      ],
+      "preference_id": "51bfa17c-0083-4f9a-a079-a370214af22f"
+    },
+    {
+      "keyword": "responsibility",
+      "definition": "Taking ownership of commitments, duties, and their consequences.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "0e8f43fc-f752-425a-8555-605ebb3686e8"
+    },
+    {
+      "keyword": "reliability",
+      "definition": "Following through on plans and commitments consistently.",
+      "kind": "value",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.9
+        }
+      ],
+      "preference_id": "20c879c5-86a5-43b9-ac34-088291b18571"
+    }
+  ]
+}

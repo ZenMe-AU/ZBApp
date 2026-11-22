@@ -1,0 +1,18 @@
+{
+  "eventTime": "2026-11-19T23:40:28Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "IdentityUser",
+    "name": "preference-approval-decision",
+    "facets": {
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "inference_ref", "type": "string", "description": "Identifies the system suggestion explicitly accepted by the user." }
+        ]
+      }
+    }
+  }
+}

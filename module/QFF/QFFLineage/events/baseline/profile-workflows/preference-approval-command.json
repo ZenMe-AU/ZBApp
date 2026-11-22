@@ -1,0 +1,22 @@
+{
+  "eventTime": "2026-11-19T23:40:28Z",
+  "producer": "urn:qff:lineage:baseline",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/DatasetEvent",
+  "dataset": {
+    "namespace": "identity-repository-api",
+    "name": "preference-approval-command",
+    "facets": {
+      "schema": {
+        "_producer": "urn:qff:lineage:baseline",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json",
+        "fields": [
+          { "name": "external_id", "type": "string", "description": "Login context, resolved to the internal identity at the API boundary." },
+          { "name": "inference_ref", "type": "string" },
+          { "name": "accepted_wording", "type": "string" },
+          { "name": "superseded_preference_ids", "type": "array", "description": "One or more prior preferences to mark superseded; preserve their original content.", "fields": [{ "name": "_element", "type": "string" }] },
+          { "name": "revision", "type": "string", "description": "Expected base revision; a conflict leaves both new and old preferences unchanged." }
+        ]
+      }
+    }
+  }
+}

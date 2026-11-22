@@ -1,5 +1,7 @@
 # QFF Matching
 
+The per-persona files and scoring rules below describe the scripted baseline, not a persona requirement for the planned Matcher. [Phase 2](plan-canonical-ontology.md#phase-2--semantic-derivation-matcher-and-repository-api-integration) will compare it with persona-optional connection opportunities using the same fixtures and privacy limits.
+
 > **Pending review: matching rules vs the updated psychology model.** The preference model now distinguishes `want` from `value` (ACT) and treats depth separately from privacy (see [psychology.md](psychology.md)). The scoring rules below still predate that change: they compare pairs only through a kind-similarity cut-off, so they likely miss value ↔ want complementarity and may overweight shared values. Do not change the matching rules yet. First analyse and visualise the restructured data in QFFViz (for example kind-pair similarity, want ↔ value overlaps and cut-off sensitivity), then update the rules based on that analysis.
 
 ## Match run

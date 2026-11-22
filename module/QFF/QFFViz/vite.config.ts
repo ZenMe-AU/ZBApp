@@ -5,10 +5,10 @@
 
 import { defineConfig, type Plugin } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { listFiles, resolveDataPath, writeJson } from "./src/server/files.ts";
-import { clearStale, embeddingStatus, interestModesForUi, modesEditorData, runEmbeddings, saveModesEditor } from "./src/server/embeddings.ts";
+import { interestModesForUi, modesEditorData, saveModesEditor } from "./src/server/embeddings.ts";
 
 const maxBodyBytes = 5 * 1024 * 1024;
+let modesMutationRunning = false;
 
 async function readBody(req: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
@@ -27,15 +27,11 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.end(JSON.stringify(body));
 }
 
-const job = {
-  status: "idle" as "idle" | "running" | "succeeded" | "failed",
-  startedAt: "",
-  finishedAt: "",
-  options: {} as Record<string, unknown>,
-  log: [] as string[],
-};
-let modesMutationRunning = false;
-const modeUpdateInProgress = () => job.status === "running" || modesMutationRunning;
+async function readIdentityApi<T>(resource: string): Promise<T> {
+  const response = await fetch(`http://127.0.0.1:7181/api/v1/${resource}`);
+  if (!response.ok) throw new Error(`Identity Repository responded with ${response.status}`);
+  return await response.json() as T;
+}
 
 function identitiesApi(): Plugin {
   return {
@@ -45,10 +41,10 @@ function identitiesApi(): Plugin {
         try {
           if (req.method === "GET") return sendJson(res, 200, await modesEditorData());
           if (req.method !== "PUT" && req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed" });
-          if (modeUpdateInProgress()) return sendJson(res, 409, { error: "Wait for the current embedding or mode update to finish." });
+          if (modesMutationRunning) return sendJson(res, 409, { error: "Wait for the current mode update to finish." });
           const body = JSON.parse(await readBody(req)) as { data?: unknown, revision?: unknown };
           if (typeof body.revision !== "string") return sendJson(res, 400, { error: "A modes revision is required." });
-          if (modeUpdateInProgress()) return sendJson(res, 409, { error: "Wait for the current embedding or mode update to finish." });
+          if (modesMutationRunning) return sendJson(res, 409, { error: "Wait for the current mode update to finish." });
           modesMutationRunning = true;
           try {
             const current = await modesEditorData();
@@ -65,26 +61,23 @@ function identitiesApi(): Plugin {
       });
 
       server.middlewares.use("/api/files", async (req, res) => {
+        if (req.method !== "GET") return sendJson(res, 405, { error: "Legacy fixture editing is disabled during the repository migration." });
         try {
-          if (req.method === "GET") return sendJson(res, 200, await listFiles());
-          if (req.method === "PUT") {
-            const target = resolveDataPath(new URL(req.url ?? "", "http://local").searchParams.get("path"));
-            if (!target) return sendJson(res, 400, { error: "Invalid path" });
-            await writeJson(target, JSON.parse(await readBody(req)));
-            res.statusCode = 204;
-            res.end();
-            return;
-          }
-          res.statusCode = 405;
-          res.end();
+          const { profile_ids: ids } = await readIdentityApi<{ profile_ids: string[] }>("profiles");
+          const profiles = await Promise.all(ids.map(async (id) => {
+            const { profile } = await readIdentityApi<{ profile: Record<string, unknown> }>(`profiles/${encodeURIComponent(id)}`);
+            return Object.entries(profile).map(([kind, content]) => ({
+              path: `${id}/${id}-${kind === "personas" ? "test-context" : kind}.json`, content,
+            }));
+          }));
+          sendJson(res, 200, profiles.flat());
         }
         catch (err) {
-          res.statusCode = 500;
-          res.end(err instanceof Error ? err.message : String(err));
+          server.config.logger.error(`QFFViz identity load failed: ${String(err)}`);
+          sendJson(res, 502, { error: "Start the local Identity Repository in fixture mode before loading QFFViz." });
         }
       });
 
-      // Registered before '/api/embeddings' because connect matches by path prefix.
       server.middlewares.use("/api/interest-modes", async (_req, res) => {
         try {
           sendJson(res, 200, await interestModesForUi());
@@ -94,60 +87,8 @@ function identitiesApi(): Plugin {
         }
       });
 
-      server.middlewares.use("/api/embeddings/status", async (_req, res) => {
-        try {
-          sendJson(res, 200, await embeddingStatus());
-        }
-        catch (err) {
-          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
-        }
-      });
-
-      server.middlewares.use("/api/embeddings/clear-stale", async (req, res) => {
-        if (req.method !== "POST") {
-          res.statusCode = 405;
-          res.end();
-          return;
-        }
-        if (job.status === "running" || modesMutationRunning) return sendJson(res, 409, { error: "An embedding or mode update is in progress" });
-        try {
-          sendJson(res, 200, { cleared: await clearStale() });
-        }
-        catch (err) {
-          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
-        }
-      });
-
-      server.middlewares.use("/api/embeddings", async (req, res) => {
-        try {
-          if (req.method === "GET") return sendJson(res, 200, job);
-          if (req.method !== "POST") {
-            res.statusCode = 405;
-            res.end();
-            return;
-          }
-          if (job.status === "running") return sendJson(res, 409, { error: "A run is already in progress" });
-          const body = JSON.parse((await readBody(req)) || "{}") as Record<string, unknown>;
-          if (modeUpdateInProgress()) return sendJson(res, 409, { error: "An embedding or mode update is in progress" });
-          const dimensions = Number(body.dimensions ?? 1536);
-          if (!Number.isInteger(dimensions) || dimensions < 16 || dimensions > 1536) {
-            return sendJson(res, 400, { error: "dimensions must be an integer between 16 and 1536" });
-          }
-          const options = { dimensions, force: body.force === true, dryRun: body.dryRun === true };
-          Object.assign(job, { status: "running", startedAt: new Date().toISOString(), finishedAt: "", options, log: [] });
-          const log = (line: string) => job.log.push(`${new Date().toLocaleTimeString("en-GB")}  ${line}`);
-          runEmbeddings(options, log)
-            .then(() => (job.status = "succeeded"))
-            .catch((err: unknown) => {
-              log(`ERROR: ${err instanceof Error ? err.message : String(err)}`);
-              job.status = "failed";
-            })
-            .finally(() => (job.finishedAt = new Date().toISOString()));
-          sendJson(res, 202, job);
-        }
-        catch (err) {
-          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
-        }
+      server.middlewares.use("/api/embeddings", (_req, res) => {
+        sendJson(res, 503, { error: "Legacy preference embeddings are disabled during the repository migration." });
       });
     },
   };
