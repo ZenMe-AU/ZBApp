@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "QFF_FIXTURE_MODE": "1",
+    "QFF_AI_MODE": "sample",
+    "LLM_BASE_URL": "",
+    "LLM_MODEL": "",
+    "LLM_API_KEY": "",
+    "LLM_TIMEOUT_MS": "30000"
+  }
+}

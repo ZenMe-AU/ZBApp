@@ -43,6 +43,12 @@ Production will resolve a verified, provider-scoped login ID (Entra ID or social
 - With Azure Functions Core Tools installed, set `FUNCTIONS_WORKER_RUNTIME=node` and `QFF_FIXTURE_MODE=1` in your shell. From this folder, run `pnpm start` (port 7181, loopback only) or `pnpm test` for the repository tests.
 - Run `pnpm run migrate:fixtures` to assign missing preference GUIDs and remove legacy vector fields. It is safe to rerun on the synthetic fixtures.
 
+### Planned prototype AI settings
+
+The QFFIdentity prototype will co-host an optional proposal handler in this local Functions process. Configure each developer machine in `local.settings.json` using [local.settings.json.example](local.settings.json.example); copy it only when no local file exists, otherwise merge its keys. The real file is Git-ignored and must not contain committed credentials. Its `Values` use strings: `QFF_AI_MODE` selects `disabled`, `sample` (the default, no provider calls), or `live`; `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` and `LLM_TIMEOUT_MS` configure the OpenAI-compatible endpoint on the backend.
+
+See the [QFFIdentity assistance design](../QFFIdentity/readme.md#optional-ai-assistance-for-the-prototype) and [workstation configuration contract](../QFFIdentity/readme.md#workstation-ai-configuration) for validation, request/response shapes and approval behavior. Restart the local Functions host after settings changes. These settings prepare the design; the current routes do not yet generate proposals or consume the AI configuration. Generation must not write identity source records; accepted changes still require the separate conditional approval command.
+
 ## Design decisions
 
 - **Stable source IDs:** Preserve valid internal `identity_id` values and assign each preference an opaque, immutable GUID. Do not derive preference IDs from wording or array position; derived records link by ID without copying the authoritative source.
