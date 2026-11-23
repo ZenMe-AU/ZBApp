@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "pnpm run build && func start --address 127.0.0.1 --port 7181",
     "migrate:fixtures": "node src/migrate.ts",
-    "test": "node --test src/repository.test.ts"
+    "test": "node --test src/repository.test.ts src/editor.test.ts src/buddy.test.ts"
   },
   "dependencies": {
     "@azure/functions": "^4.0.0"

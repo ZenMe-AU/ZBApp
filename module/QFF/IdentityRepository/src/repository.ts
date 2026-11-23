@@ -5,13 +5,17 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { Preference, PreferenceInput } from "./contracts.ts";
+import { newPreferenceDuplicate, samePreference, similarPreferences } from "./buddy-preferences.ts";
+import { preferenceErrors, trimmedPreference, type FieldErrors } from "./preference-validation.ts";
 
-export const fixtureRoot = fileURLToPath(new URL("../../Identities/", import.meta.url));
+export const fixtureRoot = process.env.QFF_IDENTITY_ROOT
+  ? resolve(process.env.QFF_IDENTITY_ROOT)
+  : fileURLToPath(new URL("../../Identities/", import.meta.url));
 const profileIdPattern = /^[a-z0-9_-]+$/i;
 const guid = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
-const kinds = ["interest", "want", "value", "boundary"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -19,10 +23,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export class RequestError extends Error {
   status: number;
+  fields?: FieldErrors;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, fields?: FieldErrors) {
     super(message);
     this.status = status;
+    this.fields = fields;
   }
 }
 
@@ -54,7 +60,10 @@ export async function createFixtureProfile(input: unknown, root = fixtureRoot) {
 }
 
 export async function profileIds(root = fixtureRoot) {
-  const entries = await readdir(root, { withFileTypes: true });
+  const entries = await readdir(root, { withFileTypes: true }).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  });
   return entries.filter(entry => entry.isDirectory() && profileIdPattern.test(entry.name)).map(entry => entry.name).sort();
 }
 
@@ -86,9 +95,9 @@ function parsePreferences(text: string, id: string) {
   return { ...parsed, preferences };
 }
 
-const etag = (text: string) => `"${createHash("sha256").update(text).digest("hex")}"`;
+export const etag = (text: string) => `"${createHash("sha256").update(text).digest("hex")}"`;
 
-async function replaceJson(file: string, update: (original: string) => unknown | undefined) {
+export async function replaceJson(file: string, update: (original: string) => unknown | Promise<unknown>, options: { initial?: string; private?: boolean; maxBytes?: number } = {}) {
   const lockPath = `${file}.lock`;
   const lock = await open(lockPath, "wx").catch((error: NodeJS.ErrnoException) => {
     if (error.code === "EEXIST") throw new RequestError(409, "A write is already in progress. Retry after reloading.");
@@ -96,12 +105,16 @@ async function replaceJson(file: string, update: (original: string) => unknown |
   });
   const temp = `${file}.${randomUUID()}.tmp`;
   try {
-    const original = await readFile(file, "utf8");
-    const next = update(original);
+    const original = await readFile(file, "utf8").catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT" && options.initial !== undefined) return options.initial;
+      throw error;
+    });
+    const next = await update(original);
     if (next === undefined) return etag(original);
     const json = JSON.stringify(next, null, 2) + "\n";
     const text = original.includes("\r\n") ? json.replaceAll("\n", "\r\n") : json;
-    await writeFile(temp, text, { flag: "wx" });
+    if (options.maxBytes && Buffer.byteLength(text) > options.maxBytes) throw new RequestError(413, "Buddy memory is full. Delete older conversations or diary entries before adding more.");
+    await writeFile(temp, text, { flag: "wx", ...(options.private ? { mode: 0o600 } : {}) });
     await rename(temp, file);
     return etag(text);
   }
@@ -153,15 +166,21 @@ export async function migratePreferences(root = fixtureRoot) {
 
 export async function readProfile(folder: string, id: string) {
   const read = (kind: string) => readFile(join(folder, `${id}-${kind}.json`), "utf8");
-  const [identity, relations, text, testContext] = await Promise.all([
+  const [identity, relations, text, testContext, buddyMemory] = await Promise.all([
     read("identity"), read("relations"), read("properties"),
     read("test-context").catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== "ENOENT") throw error;
+      return undefined;
+    }),
+    read("buddy").catch((error: NodeJS.ErrnoException) => {
       if (error.code !== "ENOENT") throw error;
       return undefined;
     }),
   ]);
   return {
     revision: etag(text),
+    identity_revision: etag(identity),
+    profile_revision: etag(JSON.stringify([identity, relations, text, testContext ?? null, ...(buddyMemory === undefined ? [] : [buddyMemory])])),
     profile: {
       identity: JSON.parse(identity) as unknown,
       ...(testContext === undefined ? {} : { personas: JSON.parse(testContext) as unknown }),
@@ -230,26 +249,149 @@ export async function createProfile(id: string, input: unknown, root = fixtureRo
   }
 }
 
+export function validatePreference(input: unknown): asserts input is PreferenceInput {
+  const fields = preferenceErrors(input);
+  if (Object.keys(fields).length) throw new RequestError(400, Object.values(fields)[0], fields);
+}
+
+function rejectDuplicate(input: PreferenceInput, preferences: Preference[], current?: Preference) {
+  const duplicate = newPreferenceDuplicate(input, preferences, current);
+  if (duplicate) {
+    const message = `“${duplicate.keyword}” already has the same title or description in this Category and Context. Edit the existing preference instead.`;
+    throw new RequestError(409, message, { keyword: message });
+  }
+}
+
 export function updatePreference(folder: string, id: string, preferenceId: string, revision: string | null, input: unknown) {
   if (!revision) throw new RequestError(428, "Supply the properties revision in If-Match.");
   if (!guid.test(preferenceId)) throw new RequestError(400, "Invalid preference GUID.");
-  if (
-    !isRecord(input) || Object.keys(input).some(key => !["keyword", "definition", "kind", "personas"].includes(key))
-    || typeof input.keyword !== "string" || !input.keyword.trim()
-    || typeof input.definition !== "string" || !input.definition.trim()
-    || typeof input.kind !== "string" || !kinds.includes(input.kind)
-    || !Array.isArray(input.personas) || !input.personas.every((entry: unknown) => isRecord(entry)
-      && Object.keys(entry).every(key => ["persona", "affinity"].includes(key))
-      && typeof entry.persona === "string" && (entry.persona === "" || entry.persona.trim() !== "")
-      && typeof entry.affinity === "number" && Number.isFinite(entry.affinity) && Math.abs(entry.affinity) <= 1)
-  ) throw new RequestError(400, "Supply valid keyword, definition, kind and persona affinities.");
+  validatePreference(input);
 
   return replaceJson(join(folder, `${id}-properties.json`), (original) => {
     if (etag(original) !== revision) throw new RequestError(412, "Preferences changed. Reload before saving.");
     const parsed = parsePreferences(original, id);
     const preference = parsed.preferences.find(record => record.preference_id === preferenceId);
     if (!preference) throw new RequestError(404, "Preference not found.");
-    Object.assign(preference, input);
+    const clean = trimmedPreference(input);
+    rejectDuplicate(clean, parsed.preferences as unknown as Preference[], preference as unknown as Preference);
+    Object.assign(preference, clean);
+    if (input.kind !== "want") delete preference.want_type;
     return parsed;
   });
+}
+
+export async function addPreference(folder: string, id: string, revision: string | null, input: unknown) {
+  if (!revision) throw new RequestError(428, "Supply the properties revision in If-Match.");
+  validatePreference(input);
+  const preference_id = randomUUID();
+  const next = await replaceJson(join(folder, `${id}-properties.json`), original => {
+    if (etag(original) !== revision) throw new RequestError(412, "Preferences changed. Reload before saving.");
+    const parsed = parsePreferences(original, id);
+    const clean = trimmedPreference(input);
+    rejectDuplicate(clean, parsed.preferences as unknown as Preference[]);
+    parsed.preferences.push({ ...clean, preference_id });
+    return parsed;
+  });
+  return { preference_id, revision: next };
+}
+
+export async function commitBuddyApproval(folder: string, id: string, revision: string, proposalId: string,
+  input: PreferenceInput, sourceId?: string, acknowledgeSimilar = false) {
+  validatePreference(input);
+  let preference_id: string = randomUUID();
+  const next = await replaceJson(join(folder, `${id}-properties.json`), original => {
+    const parsed = parsePreferences(original, id);
+    const preferences = parsed.preferences as unknown as Preference[];
+    const accepted = preferences.find(p => p.buddy_approval?.proposal_id === proposalId);
+    if (accepted) { preference_id = accepted.preference_id; return undefined; }
+    if (etag(original) !== revision) throw new RequestError(412, "Your preferences changed. Review the latest profile before approving this recommendation.");
+    const source = sourceId ? preferences.find(p => p.preference_id === sourceId && !p.superseded_by) : undefined;
+    if (sourceId && !source) throw new RequestError(409, "The original preference is no longer active. Request a fresh proposal.");
+    const active = preferences.filter(p => !p.superseded_by && p.preference_id !== sourceId);
+    if (active.some(p => samePreference(input, p))) throw new RequestError(409, "This preference is already saved. Dismiss this proposal.");
+    if (similarPreferences(input, active).length && !acknowledgeSimilar) throw new RequestError(409, "Review the similar preferences and confirm this is a separate preference.");
+    if (source) source.superseded_by = preference_id;
+    parsed.preferences.push({ ...trimmedPreference(input), preference_id, ...(sourceId ? { supersedes: sourceId } : {}),
+      buddy_approval: { proposal_id: proposalId, approved_at: new Date().toISOString() } });
+    return parsed;
+  });
+  return { preference_id, revision: next };
+}
+
+export function deletePreference(folder: string, id: string, preferenceId: string, revision: string | null) {
+  if (!revision) throw new RequestError(428, "Supply the properties revision in If-Match.");
+  if (!guid.test(preferenceId)) throw new RequestError(400, "Invalid preference GUID.");
+  return replaceJson(join(folder, `${id}-properties.json`), original => {
+    if (etag(original) !== revision) throw new RequestError(412, "Preferences changed. Reload before deleting.");
+    const parsed = parsePreferences(original, id);
+    const index = parsed.preferences.findIndex(p => p.preference_id === preferenceId);
+    if (index < 0) throw new RequestError(404, "Preference not found.");
+    parsed.preferences.splice(index, 1);
+    return parsed;
+  });
+}
+
+export function updateIdentity(folder: string, id: string, revision: string | null, input: unknown) {
+  if (!revision) throw new RequestError(428, "Supply the identity revision in If-Match.");
+  const textFields = ["name", "gender", "location", "occupation", "summary"];
+  if (!isRecord(input) || !Object.keys(input).length
+    || Object.keys(input).some(key => ![...textFields, "age", "details"].includes(key))) {
+    throw new RequestError(400, "Supply editable identity fields only.");
+  }
+  for (const key of textFields) {
+    if (Object.hasOwn(input, key) && input[key] !== null
+      && (typeof input[key] !== "string" || input[key].length > (key === "summary" ? 4000 : 200))) {
+      throw new RequestError(400, `Invalid ${key}.`);
+    }
+  }
+  if (Object.hasOwn(input, "age") && input.age !== null
+    && (typeof input.age !== "number" || !Number.isInteger(input.age) || input.age < 0 || input.age > 150)) {
+    throw new RequestError(400, "Age must be a whole number from 0 to 150, or empty.");
+  }
+  if (Object.hasOwn(input, "details") && (!Array.isArray(input.details) || input.details.length > 50
+    || !input.details.every((d: unknown) => isRecord(d) && Object.keys(d).every(k => ["label", "value"].includes(k))
+      && typeof d.label === "string" && !!d.label.trim() && d.label.length <= 120
+      && typeof d.value === "string" && !!d.value.trim() && d.value.length <= 4000))) {
+    throw new RequestError(400, "Supply up to 50 personal details with a label and value.");
+  }
+  return replaceJson(join(folder, `${id}-identity.json`), original => {
+    if (etag(original) !== revision) throw new RequestError(412, "Profile information changed. Reload before saving.");
+    const identity = JSON.parse(original);
+    if (!isRecord(identity) || identity.identity_id !== id) throw new Error("Invalid identity document.");
+    for (const [key, value] of Object.entries(input)) {
+      if (value === null || value === "") delete identity[key];
+      else identity[key] = value;
+    }
+    return identity;
+  });
+}
+
+export async function deleteProfile(folder: string, id: string, revision: string | null) {
+  if (!revision) throw new RequestError(428, "Supply the whole-profile revision in If-Match.");
+  // Lock the same files as other writers before checking and removing the profile.
+  const locks: Array<{ name: string; handle: Awaited<ReturnType<typeof open>> }> = [];
+  let currentFolder = folder;
+  try {
+    for (const kind of ["identity", "properties", "relations", "test-context", "buddy"]) {
+      const name = `${id}-${kind}.json.lock`;
+      const handle = await open(join(folder, name), "wx").catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "EEXIST") throw new RequestError(409, "A write is in progress. Reload before deleting.");
+        throw error;
+      });
+      locks.push({ name, handle });
+    }
+    if ((await readProfile(folder, id)).profile_revision !== revision) {
+      throw new RequestError(412, "Profile changed. Reload before deleting.");
+    }
+    // Remove it from discovery atomically; never recursively remove a user-supplied path.
+    const removed = join(dirname(folder), `.deleted-${id}-${randomUUID()}`);
+    await rename(folder, removed);
+    currentFolder = removed;
+    await rm(removed, { recursive: true, force: true });
+  } finally {
+    for (const lock of locks) {
+      await lock.handle.close();
+      await rm(join(currentFolder, lock.name), { force: true });
+    }
+  }
 }
