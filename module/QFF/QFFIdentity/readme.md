@@ -2,11 +2,64 @@
 
 ## Overview
 
-QFFIdentity is the customer app for managing an identity profile, relations, and personal preferences, including explicit approval of proposed wording and inferred personas. The browser app is currently a starter. This document describes its planned behavior, reconciled with the [canonical ontology implementation plan](../plan-canonical-ontology.md) and the [QFFLineage baseline](../QFFLineage/events/baseline/).
+QFFIdentity is the customer app for managing identity information and personal preferences. Its initial English-language Profile Editor supports manual creation, viewing, editing and deletion through the existing Identity Repository API. The broader design includes relations and explicit approval of proposed wording and inferred personas, reconciled with the [canonical ontology implementation plan](../plan-canonical-ontology.md) and the [QFFLineage baseline](../QFFLineage/events/baseline/).
 
-Phase 1 of the ontology plan provides local fixture APIs; it does not implement this UI, production authorization, or preference approval. Phase 2 introduces preference confirmation. Automated persona discovery remains deferred until the persona-optional experiment is evaluated; recording an approved persona does not authorize automatic discovery or publication.
+The editor extends the Phase 1 local repository APIs with preference creation/deletion, identity editing and whole-profile deletion. AI Buddy adds conversations, a dated diary, persistent private memory and recommendations for later, revision-checked approval. Production authorization and the broader QFF inference-provenance workflow remain unimplemented. Automated persona discovery remains deferred until the persona-optional experiment is evaluated; recording an approved persona does not authorize automatic discovery or publication.
 
-The developer-machine prototype also includes optional AI assistance for drafting preference proposals. Workstations select an OpenAI-compatible endpoint, model and API key through backend `local.settings.json`. These assistance contracts are planned; adding settings does not implement or enable live generation by itself.
+The [AI Buddy implementation and design](ai-buddy-design.md) covers chat, diary, classification, recommendation review, file memory, tests and future matching inputs. Workstations select an OpenAI-compatible endpoint, model and API key through backend `local.settings.json`. Live generation requires a configured connection; diary entries can still be saved without one. No sample chat responses are shown in the product.
+
+## Implemented Profile Editor
+
+This is a self-service editor: users write their own information directly. **Questionnaire is a separate communication feature**, where one person asks another person questions. No questionnaire completion is required to create or change an identity.
+
+- **My profile:** edit optional name, introduction, location, occupation, age and gender; add any number of personal label/value fields within the repository's limits; clear fields to remove them; explicitly confirm deletion of the whole profile.
+- **Preferences:** add, search, filter, edit and delete freely written likes/dislikes, wants/goals, values and boundaries. Interest affinities retain their signed values; one preference can apply differently in different contexts.
+- **Affinity display:** compact rows show each saved context's signed affinity with ten red negative ticks, a yellow zero marker and ten green positive ticks. Each tick is 2px wide with a 1px gap; magnitude fills outward from zero in tenths. The gauge appears to the left of its context text, without numeric labels. Accessible meter semantics are preserved. Selecting a context narrows the gauges; different contexts are never averaged, and missing affinity is shown as “Not set.”
+- **Readable content:** preference titles, descriptions and context names wrap in full without ellipsis or line limits. Rows grow only with their content. When the list pane narrows, category and affinity details move below the full-width text rather than squeezing it between fixed columns.
+- **Contexts:** use identity-wide scope or enter your own context names, such as Work, IT, Church or Personal. Names come from saved affinities or approved personas; the app does not seed them or manufacture persona descriptions. These scopes reuse `preferences[].personas` and remain separate from future inferred-persona approval.
+- **Validation and duplicates:** Title/Description reject whitespace-only input before submission, with English errors next to the fields. Duplicate Context rows are identified individually. Manual saves and Buddy approvals use the same normalized title/description comparison within compatible categories, contexts and affinity directions. Existing ambiguous source records are preserved and can be edited without introducing additional duplicates.
+- **Search and review feedback:** searches ignore surrounding whitespace and case; category counts include both search and Context filters. Empty categories have their own message. `Not set` is separate from explicit Identity-wide affinity. Successful saves open the item’s page and highlight it. In-app discard and chat deletion use keyboard-accessible confirmation dialogs; browser/tab closing retains the browser’s unsaved-change protection.
+- **Persistence:** all profile content goes through the Identity Repository API to the existing identity/properties/relations files. `localStorage` remembers only the selected profile ID; the URL also carries that selector. Returning to the app reloads the saved records. No profile or sample preferences are created on startup.
+- **Editing:** explicit save, discard confirmation, deletion confirmation, validation and revision conflicts. A failed write keeps the form; **Load latest & keep draft** refreshes the snapshot while preserving the draft for an explicit review and save.
+- **Workspace layout:** the top bar displays the current page title and its actions, switching between My preferences, My profile and My contexts as users navigate. The body starts directly with the page content, alongside consistent SVG navigation icons and a persistent status bar. Preferences default to 100 items per page, with a 10/50/100/200 selector. Pagination appears only when results exceed the selected limit; opening an editor or resizing the window keeps the current page. Filtering returns to the first page. Long lists scroll inside their panel while pagination and save actions stay visible. Narrow screens use a single-pane editor. Long text or many contexts/custom fields remain accessible inside their panels without extending the whole page.
+
+The UI intentionally contains no prototype, AI-mode or sample-profile badges. AI proposals are available in the separate **AI Buddy** navigation item. Inferred-persona approval, relations editing and Questionnaire remain outside this implementation. Existing relations and approved persona data are preserved during identity and preference edits.
+
+## Implemented AI Buddy
+
+- **Chat** uses the selected profile, recent conversation and relevant older memory, prioritizing likes, dislikes, wants and goals; values are optional. Goals use the compatible `kind: want, want_type: goal` representation.
+- **Conversation experience:** sent messages appear immediately, with a replying indicator and an editable composer for the next draft. New replies reveal progressively after the server response is validated; **Show full reply** skips the effect and reduced-motion preferences disable it. History opens fully displayed. Scrolling up keeps the reading position, with a jump-to-latest action. Enter sends, Shift+Enter inserts a newline, and IME composition does not send. Failed deliveries retain the message for explicit retry.
+- **Stable chat layout:** the transcript and composer use the available panel width with consistent side padding. The composer stays at the bottom with a fixed height and button label through typing, sending and completion. Longer drafts scroll inside the input. Saving does not insert a success banner; connection and error messages appear inside the transcript without shrinking it.
+- **Diary** accepts dated entries about what happened today or hopes for the future. It saves the original entry before asking Buddy to reflect and infer tentative preferences. An event alone is not treated as a lasting preference.
+- **Recommendations** persist for later review and show supporting words and similar saved preferences. The user can edit wording/category, dismiss, or approve. Generation saves private memory and recommendations, never confirmed preferences. If the profile has changed, **Review latest** refreshes the comparison before another explicit approval.
+- Approval reuses the Identity Repository's lock and atomic write. Refinements preserve original wording under a new preference GUID with supersession links; active lists show the approved version. Repeated approvals cannot create duplicate records.
+- Context defaults to Identity-wise (`persona: ""`). Existing context affinities are preserved during refinements. No inferred persona descriptions are silently saved.
+- **History** reopens saved conversations and diary entries after refresh or restart. Deleting a conversation removes its messages and recommendations while preserving approved preferences.
+- Memory lives in the optional `<identity_id>-buddy.json` inside the existing identity folder, under repository locks and atomic writes. It is plaintext with owner-only file permissions and is Git-ignored; there is no transcript database or localStorage copy. See the design for limits and backup details.
+- Loading, error, explicit retry, unavailable and empty states keep manual editing available. Failed model calls preserve the entry; retries do not duplicate it. Diary saving works without an AI connection.
+
+See [AI Buddy architecture, API contracts, changed files and remaining work](ai-buddy-design.md). The broader ontology/lineage design below still includes future multi-source inference provenance and persona workflows; it does not imply those flows are implemented by the local Buddy approval receipt.
+
+### Run and verify
+
+From the repository root, after installing workspace dependencies:
+
+```sh
+pnpm --dir module/QFF/IdentityRepository start
+pnpm --dir module/QFF/QFFIdentity dev
+```
+
+Open `http://127.0.0.1:5181`. Vite proxies `/api` to the local Functions host at `http://127.0.0.1:7181`. The backend needs `FUNCTIONS_WORKER_RUNTIME=node` and `QFF_FIXTURE_MODE=1` in its environment or Git-ignored `local.settings.json`; see [Identity Repository setup](../IdentityRepository/readme.md#technical-guidance). Existing saved profiles can be opened explicitly; new profiles start empty with only the name entered by the user.
+
+The existing selector is a **local development identity context, not authentication**. The API refuses requests outside its local fixture mode; production requires the verified identity/ownership resolver described below. Both development servers bind to loopback. Optional backend `QFF_IDENTITY_ROOT` selects a separate directory while retaining the same repository implementation and file format.
+
+```sh
+pnpm --dir module/QFF/IdentityRepository test
+pnpm --dir module/QFF/QFFIdentity build
+pnpm --dir module/QFF/QFFIdentity test:browser
+```
+
+The browser check uses the workspace Playwright dependency, installed Google Chrome and Azure Functions Core Tools. It starts isolated servers on ports 15181/17181, an empty temporary repository and a controlled OpenAI-compatible test server. It verifies editor CRUD, return visits, contexts, paging, conflict recovery and responsive layouts, plus Buddy chat, dated diary/future hopes, restored history, later approval, goals, duplicate prevention, preserved refinements, history deletion, provider retry and profile isolation. Test records and servers are removed afterward; checked-in identity records are never used for test writes and no live model is contacted.
 
 ## Business context
 
@@ -41,7 +94,7 @@ QFFModeler and QFFViz are analyst tools; their approvals and overrides cannot st
 | Profile, relations and grouped preferences | Lineage [capture datasets/jobs](../QFFLineage/events/baseline/qff-identity/) and [submission jobs/API objects](../QFFLineage/events/baseline/identity-repository-api/) | Include all three editors, approved persona records, and the grouped-to-flat preference mapping. |
 | Profile loading and concurrency | Lineage [read-profile](../QFFLineage/events/baseline/profile-workflows/read-profile.json) and [profile-editor-snapshot](../QFFLineage/events/baseline/profile-workflows/profile-editor-snapshot.json) | Load all three documents together with the preference revision; reuse the query after a conflict. |
 | Explicit approval and supersession | Ontology Phase 2 confirmation notes and lineage [profile workflows](../QFFLineage/events/baseline/profile-workflows/) | Capture consent, bind it to the active profile/revision, prepare source supersession, and commit one conditional change. |
-| Existing API versus future workflow | [Identity Repository contract](../IdentityRepository/readme.md#functional-requirements) and [route implementation](../IdentityRepository/src/index.ts) | Reuse fixture reads, creation and single-preference edits; keep approval and additional edit endpoints explicitly planned. |
+| Existing API versus future workflow | [Identity Repository contract](../IdentityRepository/readme.md#functional-requirements) and [route implementation](../IdentityRepository/src/index.ts) | Reuse local profile reads/creation, identity edits and preference CRUD; keep relation edits and approval explicitly planned. |
 | Lineage meaning | [Lineage authoring guide](../QFFLineage/lineage-authoring-guide.md) | Dataset schemas describe data shapes, not user records; declared jobs are not observed runs or a one-to-one list of HTTP routes. |
 | Optional prototype assistance | [Proposal generation and review](#optional-ai-assistance-for-the-prototype) and [workstation configuration](#workstation-ai-configuration) | Add on-demand generation, editable proposals and server-only settings; these extend the existing lineage baseline and are not yet recorded JobEvents. |
 
@@ -71,7 +124,7 @@ The following paths use the exact dataset and job names declared in QFFLineage. 
 | `relations` | `capture-relations` → `relations` | `submit-relations` → `relations` | `<id>-relations.json` |
 | `preferences` | `capture-preferences` → `preferences` | `submit-preferences` → `properties` | `<id>-properties.json` |
 
-Capture jobs prepare UI state; submission jobs are declared `COMMAND` operations. Profile and relation fields copy by name after identity resolution. Preferences are flattened as specified below. The API objects map by field name to the persisted documents; `<id>` is the resolved internal identity filename pattern, never a literal profile ID. These are logical handoffs, not three implemented save endpoints or evidence that a save ran.
+Capture jobs prepare UI state; submission jobs are declared `COMMAND` operations. Profile and relation fields copy by name after identity resolution. Preferences are flattened as specified below. The API objects map by field name to the persisted documents; `<id>` is the resolved internal identity filename pattern, never a literal profile ID. These are logical handoffs, not a one-to-one list of HTTP endpoints or evidence that a save ran. The initial manual editor adds optional `identity.details: { label: string, value: string }[]` for free personal fields; this additive extension and the new revision fields are runtime contracts, not yet reflected in the declared lineage schemas.
 
 ### Profile query and approval data flow
 
@@ -116,6 +169,8 @@ flowchart TD
 The source/delivery job for `preference-suggestion` is not yet declared in QFFLineage. The prototype defines that boundary below as optional backend proposal generation. The existing diagram shows the baseline approval dependencies; generation and editable-approval extensions must also be added to lineage metadata when implementing them.
 
 ### Optional AI assistance for the prototype
+
+**Scope note:** the selected-preference consolidation and persisted `inference_ref` workflow in this section remains a future design. The implemented conversational Buddy uses the same workstation provider settings, with its current routes and bounded approval receipt documented in [ai-buddy-design.md](ai-buddy-design.md). Its status route returns `{ available, reason? }`; it does not implement the planned sample mode or the proposal routes in the table below.
 
 Start with clarifying one preference or consolidating several selected preferences. The customer chooses **Help me phrase this**, optionally adds a short instruction, then sees the proposed keyword/definition, a brief rationale and the source preferences. Review allows editing, regeneration or dismissal. Before approval, show the final preference and exactly which source records will be superseded. Dismissal leaves source records unchanged; regeneration produces a separate proposal reference and never approves the previous draft.
 
@@ -174,13 +229,13 @@ Commit the new active preference, its inference link and all supersession marks 
 ## Technical Guidance
 
 - Use the app-local VS Code **Start** launcher or run `pnpm dev` from this folder (port 5181).
-- The local Identity Repository runs on 7181 with `FUNCTIONS_WORKER_RUNTIME=node` and `QFF_FIXTURE_MODE=1`; use synthetic data only. API connection/proxy wiring remains UI implementation work.
+- The local Identity Repository runs on 7181 with `FUNCTIONS_WORKER_RUNTIME=node` and `QFF_FIXTURE_MODE=1`. The editor and Buddy use its API through Vite's local proxy; tests use disposable synthetic records.
 
 ### Workstation AI configuration
 
 Store workstation settings in `module/QFF/IdentityRepository/local.settings.json`, beside the backend's `host.json`, not in the Vite app. On another workstation, copy the tracked [local.settings.json.example](../IdentityRepository/local.settings.json.example) to that filename if it does not exist; merge the settings into an existing file rather than replacing it. The repository already ignores `local.settings.json`.
 
-Azure Functions local tooling supplies `Values` to backend code as environment settings; all entries in `Values` are strings. See Microsoft's [local settings documentation](https://learn.microsoft.com/en-us/azure/azure-functions/functions-develop-local#local-settings-file). The prototype reads these server-side settings at startup; restart the Functions host after changing them. The current starter does not consume the new AI settings yet.
+Azure Functions local tooling supplies `Values` to backend code as environment settings; all entries in `Values` are strings. See Microsoft's [local settings documentation](https://learn.microsoft.com/en-us/azure/azure-functions/functions-develop-local#local-settings-file). Buddy consumes these settings only on the backend; restart the Functions host after changing them.
 
 ```json
 {
@@ -188,7 +243,7 @@ Azure Functions local tooling supplies `Values` to backend code as environment s
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "QFF_FIXTURE_MODE": "1",
-    "QFF_AI_MODE": "sample",
+    "QFF_AI_MODE": "disabled",
     "LLM_BASE_URL": "",
     "LLM_MODEL": "",
     "LLM_API_KEY": "",
@@ -199,24 +254,28 @@ Azure Functions local tooling supplies `Values` to backend code as environment s
 
 | Setting | Prototype behavior |
 | --- | --- |
-| `QFF_AI_MODE` | `disabled`, `sample` or `live`; default `sample`. Sample needs no endpoint, model or key and makes no network calls. Invalid values disable assistance with a configuration message while preserving manual editing. |
+| `QFF_AI_MODE` | `live` enables Buddy when connection settings are valid. `disabled`, missing/invalid modes and the legacy design-only `sample` value make Buddy unavailable and never call a provider. Manual editing remains available. |
 | `LLM_BASE_URL` | Required in live mode. Selects the provider/workstation server, for example `https://api.openai.com/v1` or `http://127.0.0.1:11434/v1`. These are endpoint examples, not a claim that a local server is installed. Require HTTPS except for loopback HTTP; reject URL credentials, query strings and fragments. The browser cannot override it. |
 | `LLM_MODEL` | Required in live mode; the exact model/deployment identifier accepted by that endpoint. No automatic model selection or provider fallback. |
 | `LLM_API_KEY` | Workstation secret for Bearer authentication. Required for remote live endpoints; may be empty for an unauthenticated loopback server. Never put a real value in the example, source control, browser state or lineage events. |
 | `LLM_TIMEOUT_MS` | Default `30000`; validate as an integer from `1000` to `120000` milliseconds. Timeout cancels the provider request and returns a recoverable assistance error. |
 
-To use live assistance, set mode to `live`, enter the chosen base URL/model and any required key in the local backend file, then restart the host. Keep the mode at `sample` for repeatable business scenarios, or use `disabled` to test the manual experience. No settings editor or API-key field is needed in the browser. Do not use `VITE_*` for secrets, serialize `process.env` to the UI, log provider headers/raw error bodies, or forward credentials across redirects. Live generation sends selected synthetic preference content to the configured endpoint; label sample/live mode in the prototype so testers know which path they are exercising.
+To use Buddy, set mode to `live`, enter the chosen base URL/model and any required key in the local backend file, then restart the host. Use `disabled` for the manual experience. Repeatable business scenarios use the test-only provider in the browser checks. Do not use `VITE_*` for secrets, serialize `process.env` to the UI, log provider headers/raw error bodies, or forward credentials across redirects. Live chat sends the selected user's relevant saved profile and bounded conversation to the configured endpoint. The UI contains no sample/live badges or fake chat fallback.
 
 ### Current fixture API integration
 
 | Operation | Existing contract |
 | --- | --- |
 | Select fixture | `GET /api/v1/profiles` returns `profile_ids`, used as simulated external IDs. This cross-profile selector is test-only. |
-| Load/reload editor | `GET /api/v1/profiles/{externalId}` returns `{ profile, revision }`; adapt it to `profile-editor-snapshot`. |
+| Load/reload editor | `GET /api/v1/profiles/{externalId}` returns `{ profile, revision, identity_revision, profile_revision }`. `revision` protects properties, `identity_revision` protects identity fields, and `profile_revision` covers all source documents including optional test context for whole-profile deletion. |
 | Create fixture | `POST /api/v1/profiles` accepts `{ external_id, identity, properties, relations }`. Put approved personas inside `identity.personas`, not the optional top-level legacy `personas` test-context document. The API assigns internal document IDs and missing preference GUIDs; duplicate profile IDs are rejected. |
 | Edit existing preference | `PUT /api/v1/profiles/{externalId}/preferences/{preferenceId}` accepts `{ keyword, definition, kind, personas }` with the exact snapshot revision in `If-Match`; success returns `{ revision }`. Missing revision is `428`, stale revision is `412`, and a concurrent file write can return `409`. Reload and review before resubmission. |
+| Add preference | `POST /api/v1/profiles/{externalId}/preferences` accepts the same editable fields and properties `If-Match`; returns `201 { preference_id, revision }` with a new server-generated GUID. |
+| Delete preference | `DELETE /api/v1/profiles/{externalId}/preferences/{preferenceId}` requires properties `If-Match`; returns `{ revision }`. |
+| Edit personal information | `PATCH /api/v1/profiles/{externalId}/identity` accepts only `name`, `summary`, `gender`, `location`, `occupation`, `age` and `details`, using `identity_revision` in `If-Match`; returns `{ identity_revision }`. Omitted fields are preserved; null or empty text removes an optional field; `details: []` removes custom details. Server-owned IDs and approved personas cannot be changed through this endpoint. |
+| Delete profile | `DELETE /api/v1/profiles/{externalId}` requires `profile_revision` in `If-Match`. After checking all source documents under their write locks, removes the profile folder from discovery and deletes it; success is `204`. |
 
-These routes do not implement bulk preference replacement, existing profile/relation edits, or suggestion approval. Do not implement approval by issuing ordinary preference PUTs: they neither create the new preference nor guarantee the required atomic multi-record change. The existing properties revision cannot protect profile/relation edits; those need an explicit concurrency contract when their endpoints are designed.
+These CRUD routes do not implement bulk preference replacement, relation edits, or suggestion approval. Buddy uses its separate `/buddy/approvals` command for an atomic addition/refinement with an idempotency receipt; it never chains ordinary CRUD calls for approval. The existing properties revision remains unchanged for compatibility; identity edits use their separate revision. All writes reuse the repository's per-file locks and atomic replacement rather than introducing another storage mechanism. Shared editor types live in `IdentityRepository/src/contracts.ts` and are imported as types only by the browser.
 
 Source changes/deletions must invalidate QFF-derived data for later full refresh. Keep that coordination in the backend; QFFIdentity does not regenerate embeddings or store derived vectors. If suggestion evidence eventually displays scores, label `embedding_similarity` and uncalibrated `confidence_score` distinctly. Do not present either as likelihood or show `probability` before the plan's Phase 5 calibration requirements are met.
 
@@ -242,6 +301,6 @@ Source changes/deletions must invalidate QFF-derived data for later full refresh
 ## Remaining contract decisions and source discrepancies
 
 - **Lineage status:** the ontology plan's design-time-assets paragraph still describes a baseline without jobs. The current lineage files declare capture, submission, query and approval jobs, but no observed runs. This design follows those declarations without claiming implementation.
-- **Assistance and approval persistence:** the prototype generation/configuration and edited-approval contracts are specified above but not implemented. Add their datasets/jobs and extended fields to QFFLineage when implementing the flow. Define QFF Repository inference/provenance persistence and an approval endpoint with idempotency semantics. The current properties schema still needs the inference link, active/superseded state and supersession links; the existing lineage command is not a finished wire protocol.
+- **Assistance and approval persistence:** local Buddy chat/diary, file memory, durable recommendations, reviewed approval, supersession and idempotency receipts are implemented. The broader selected-source consolidation contract, QFF-owned persisted `inference_ref` and corresponding QFFLineage generation/approval extensions remain future work. The existing lineage command is not the Buddy wire protocol; private working recommendations are not canonical QFF inference records.
 - **Broader lifecycle choices:** the ontology plan allows keeping, replacing, superseding or contradicting preferences. The declared approval command models only the case that supersedes one or more sources; do not imply it implements the other choices. Define those commands separately when required.
-- **Personas and profile/relation edits:** lineage defines approved persona records and capture actions, but not a persona-suggestion producer or approval audit/concurrency protocol. Specify those with the future profile/relation edit endpoints. Keep automated discovery deferred and legacy test-context handling separate.
+- **Personas and relation edits:** lineage defines approved persona records and capture actions, but not a persona-suggestion producer or approval audit/concurrency protocol. Specify those alongside future relation/persona edit endpoints. Ordinary personal-information edits now use `identity_revision`; they preserve approved personas. Keep automated discovery deferred and legacy test-context handling separate.
