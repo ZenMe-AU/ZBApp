@@ -43,7 +43,22 @@ import cmdName from "../../enum/cmdName.mjs";
 import { v4 as uuidv4 } from "uuid";
 import { Op } from "@sequelize/core";
 
-let models: Record<string, unknown> | null = null;
+type SqlModels = {
+  Question: ReturnType<typeof questionModel>;
+  QuestionAnswer: ReturnType<typeof questionAnswerModel>;
+  QuestionShare: ReturnType<typeof questionShareModel>;
+  QuestionLog: ReturnType<typeof questionLogModel>;
+  QuestionAction: ReturnType<typeof questionActionModel>;
+  FollowUpCmd: ReturnType<typeof followUpCmdModel>;
+  FollowUpFilter: ReturnType<typeof followUpFilterModel>;
+  FollowUpEvent: ReturnType<typeof followUpEventModel>;
+  QuestionShareCmd: ReturnType<typeof questionShareCmdModel>;
+  QuestionShareEvent: ReturnType<typeof questionShareEventModel>;
+  Profile: ReturnType<typeof profileModel>;
+  ProfileFriend: ReturnType<typeof profileFriendModel>;
+};
+
+let models: SqlModels | null = null;
 
 // TODO: add code to capture the authenticated user to enforce row level rbac at query time.
 export async function initRepository(config: DbConfig) {
