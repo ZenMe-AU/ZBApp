@@ -77,6 +77,8 @@ AI Buddy runs in this local Functions process. Configure each developer machine 
 
 For DeepSeek, set the base URL to `https://api.deepseek.com` and model to `deepseek-flash`. Direct DeepSeek requests disable thinking, cap output at 1,536 tokens and request JSON. Buddy sends a bounded conversation window and asks for concise replies; it never retries paid requests automatically. These controls reduce per-message usage, but do not impose a monthly spending cap. See [Buddy setup and cost controls](../QFFIdentity/ai-buddy-design.md#workstation-setup).
 
+For Gemini, set the base URL to `https://generativelanguage.googleapis.com/v1beta/openai/` and, for example, model `gemini-2.5-flash`. Put the Gemini API key in `LLM_API_KEY`. Direct Gemini requests cap output at 1,536 tokens, request JSON and minimize thinking (`none` for Gemini 2.5, otherwise `low`).
+
 See the [implemented Buddy design](../QFFIdentity/ai-buddy-design.md) for configuration validation, request/response shapes, bounds, memory and approval behavior. Restart the local Functions host after settings changes. Chat/diary entries and recommendations persist in the private Buddy file across worker restarts, including while waiting for later review. Only explicit approval writes confirmed preferences through the existing repository lock and atomic replacement. The properties approval receipt is authoritative if the separate memory-status update is interrupted. Missing AI configuration still permits diary saving; it never generates a sample response.
 
 ## Design decisions

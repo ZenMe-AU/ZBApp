@@ -33,9 +33,12 @@ export function buddyAvailability(env = process.env): BuddyAvailability {
 // provider errors, and a bounded response/timeout for this interactive workflow.
 export function openAICompatibleBuddy(env = process.env, fetchFn: typeof fetch = fetch): BuddyProvider {
   const settings = buddySettings(env);
-  // DeepSeek enables thinking by default; Buddy needs short structured replies.
-  const budget = new URL(settings.url).hostname === "api.deepseek.com"
+  // Keep paid provider replies short and machine-readable.
+  const hostname = new URL(settings.url).hostname;
+  const budget = hostname === "api.deepseek.com"
     ? { thinking: { type: "disabled" }, max_tokens: 1536, response_format: { type: "json_object" } }
+    : hostname === "generativelanguage.googleapis.com"
+      ? { reasoning_effort: settings.model.startsWith("gemini-2.5-") ? "none" : "low", max_tokens: 1536, response_format: { type: "json_object" } }
     : {};
   return { async complete(system, input) {
     try {

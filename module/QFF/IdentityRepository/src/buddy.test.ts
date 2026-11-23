@@ -344,3 +344,16 @@ test("DeepSeek disables thinking and bounds JSON output without automatic retrie
   }).complete(buddyPrompt, {}), /reply limit/);
   assert.equal(calls, 1);
 });
+
+test("Gemini compatibility requests bounded JSON without unnecessary thinking", async () => {
+  const config = { ...env, LLM_BASE_URL: "https://generativelanguage.googleapis.com/v1beta/openai/", LLM_MODEL: "gemini-2.5-flash" };
+  await openAICompatibleBuddy(config, async (url, init) => {
+    assert.equal(url, "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions");
+    assert.equal(init?.headers && (init.headers as Record<string, string>).Authorization, `Bearer ${env.LLM_API_KEY}`);
+    const body = JSON.parse(String(init?.body));
+    assert.equal(body.reasoning_effort, "none");
+    assert.equal(body.max_tokens, 1536);
+    assert.deepEqual(body.response_format, { type: "json_object" });
+    return Response.json({ choices: [{ finish_reason: "stop", message: { content: '{"reply":"Hello","suggestions":[]}' } }] });
+  }).complete(buddyPrompt, {});
+});
