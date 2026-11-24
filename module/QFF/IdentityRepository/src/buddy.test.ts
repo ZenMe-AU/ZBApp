@@ -17,7 +17,7 @@ import type { BuddyCategory, BuddyProposal, PreferenceInput, ProfileSnapshot } f
 async function setup(t: { after(fn: () => Promise<unknown>): void }) {
   const root = await mkdtemp(join(tmpdir(), "qff-buddy-unit-"));
   t.after(() => rm(root, { recursive: true, force: true }));
-  for (const id of ["TEST", "OTHER"]) await createFixtureProfile({ external_id: id, identity: { name: id, summary: "Already known introduction" }, properties: { preferences: [] }, relations: { relations: [{ private: "DO NOT SEND" }] }, personas: { narrative: "NOT MEMORY" } }, root);
+  for (const id of ["TEST", "OTHER"]) await createFixtureProfile({ external_id: id, identity: { name: id, age: 28, gender: "female", summary: "Already known introduction", personas: [{ name: "photography friend", description: "Enjoys photo walks and galleries." }] }, properties: { preferences: [] }, relations: { relations: [{ private: "DO NOT SEND" }] }, personas: { narrative: "NOT MEMORY" } }, root);
   const folder = await resolveProfileFolder("TEST", root);
   const read = async () => await readProfile(folder, "TEST") as unknown as ProfileSnapshot;
   return { folder, root, read, buddy: new BuddyService() };
@@ -118,8 +118,11 @@ test("provider sees only the selected profile, active preferences, conversation 
   await buddy.chat(folder, "TEST", { ...request("In forests"), conversation_id: first.conversation_id }, { async complete(_system, payload) { payloads.push(payload); return { reply: "Quiet forests sound good.", suggestions: [] }; } });
   const serialized = JSON.stringify(payloads);
   assert.match(serialized, /Already known introduction/); assert.match(serialized, /In forests/); assert.match(serialized, /dismissed: Hiking/);
+  assert.match(serialized, /"age":28/); assert.match(serialized, /"gender":"female"/); assert.match(serialized, /Enjoys photo walks and galleries/);
   assert.doesNotMatch(serialized, /DO NOT SEND|NOT MEMORY|OTHER/);
   assert.equal((await read()).profile.properties.preferences.length, 0);
+  assert.match(buddyPrompt, /active preferences as established knowledge/);
+  assert.match(buddyPrompt, /3-5 conversational sentences/);
 });
 
 test("bad messages are rejected; invalid model output preserves the entry without preference writes", async t => {
