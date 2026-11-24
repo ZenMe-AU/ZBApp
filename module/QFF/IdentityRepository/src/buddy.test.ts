@@ -12,7 +12,7 @@ import { BuddyService, buddyPrompt } from "./buddy.ts";
 import { buddyAvailability, buddySettings, openAICompatibleBuddy, type BuddyProvider } from "./buddy-provider.ts";
 import { addPreference, createFixtureProfile, readProfile, resolveProfileFolder, updatePreference, deleteProfile, RequestError } from "./repository.ts";
 import { buddyArchiveFile, buddyFile, readBuddyMemory, updateBuddyMemory } from "./buddy-memory.ts";
-import type { BuddyCategory, BuddyProposal, PreferenceInput, ProfileSnapshot } from "./contracts.ts";
+import type { BuddyCategory, BuddyProposal, BuddyTokenUsage, PreferenceInput, ProfileSnapshot } from "./contracts.ts";
 
 async function setup(t: { after(fn: () => Promise<unknown>): void }) {
   const root = await mkdtemp(join(tmpdir(), "qff-buddy-unit-"));
@@ -368,6 +368,57 @@ test("corrupt memory is not reset, and profile deletion locks and removes memory
 });
 
 const env = { QFF_AI_MODE: "live", LLM_BASE_URL: "http://127.0.0.1:12345/v1/", LLM_MODEL: "test-model", LLM_API_KEY: "test-key", LLM_TIMEOUT_MS: "1000" };
+test("token usage comes from the provider envelope, not generated content, and missing counts stay unknown", async () => {
+  for (const cached of [{ prompt_tokens_details: { cached_tokens: 250 } }, { prompt_cache_hit_tokens: 250 }]) {
+    let measured: BuddyTokenUsage | undefined;
+    const output = await openAICompatibleBuddy({ ...env, LLM_CONTEXT_WINDOW_TOKENS: "32000" }, async () => Response.json({
+      usage: { prompt_tokens: 1000, completion_tokens: 100, total_tokens: 1100, completion_tokens_details: { reasoning_tokens: 20 }, ...cached },
+      choices: [{ message: { content: JSON.stringify({ reply: "Hi", suggestions: [], usage: { total_tokens: 999999 } }) } }],
+    })).complete("system", {}, usage => { measured = usage; });
+    assert.deepEqual(measured, { model: "test-model", context_window_tokens: 32000, input_tokens: 1000, output_tokens: 100, total_tokens: 1100, cached_input_tokens: 250, reasoning_tokens: 20 });
+    assert.equal((output as { reply: string }).reply, "Hi");
+  }
+  for (const usage of [undefined, { prompt_tokens: -1, completion_tokens: "100", total_tokens: 1.5 }]) {
+    let measured: BuddyTokenUsage | undefined;
+    await openAICompatibleBuddy(env, async () => Response.json({ usage, choices: [{ message: { content: '{"reply":"Hi","suggestions":[]}' } }] }))
+      .complete("system", {}, value => { measured = value; });
+    assert.equal(measured?.input_tokens, undefined); assert.equal(measured?.output_tokens, undefined); assert.equal(measured?.total_tokens, undefined);
+  }
+  assert.equal(buddyAvailability({ ...env, LLM_CONTEXT_WINDOW_TOKENS: "-1" }).available, false);
+});
+
+test("usage persists across reload, records failed attempts and retries, and never double counts a completed request", async t => {
+  const { folder, root, buddy } = await setup(t);
+  let calls = 0;
+  const requestBody = request();
+  const connection = openAICompatibleBuddy(env, async () => {
+    calls++;
+    return Response.json({ usage: { prompt_tokens: 1000, completion_tokens: 100, total_tokens: 1100 },
+      choices: [{ message: { content: calls === 1 ? "invalid JSON" : JSON.stringify({ reply: "Hello", suggestions: [] }) } }] });
+  });
+  const first = await buddy.chat(folder, "TEST", requestBody, connection);
+  assert(first.error);
+  await buddy.chat(folder, "TEST", requestBody, connection);
+  await new BuddyService().chat(folder, "TEST", requestBody, connection);
+  assert.equal(calls, 2);
+  const memory = (await new BuddyService().memory(folder, "TEST")).memory;
+  const attempts = memory.conversations[0].turns[0].usage!;
+  assert.equal(attempts.length, 2);
+  assert.equal(attempts.reduce((sum, a) => sum + a.tokens!.total_tokens!, 0), 2200);
+  assert.equal(attempts[0].context.messages, 1);
+  assert.equal(attempts[0].context.character_limit, 48000);
+  assert(attempts[0].context.characters > buddyPrompt.length);
+  assert.equal((await buddy.memory(await resolveProfileFolder("OTHER", root), "OTHER")).memory.conversations.length, 0);
+  // Legacy records remain readable; malformed saved metrics must not be silently reset.
+  const legacy = structuredClone(memory);
+  delete legacy.conversations[0].turns[0].usage;
+  await writeFile(buddyFile(folder, "TEST"), JSON.stringify(legacy));
+  assert.equal((await buddy.memory(folder, "TEST")).memory.conversations[0].turns[0].usage, undefined);
+  attempts[0].context.character_limit = -1;
+  await writeFile(buddyFile(folder, "TEST"), JSON.stringify(memory));
+  await assert.rejects(buddy.memory(folder, "TEST"), { status: 500 });
+});
+
 test("workstation configuration is modular, server-only and never falls back to sample output", async () => {
   for (const bad of [{ QFF_AI_MODE: "sample" }, { QFF_AI_MODE: "disabled" }, { LLM_BASE_URL: "http://remote.example/v1" }, { LLM_BASE_URL: "https://user:secret@example.com/v1" }, { LLM_BASE_URL: "https://example.com/v1?q=secret" }, { LLM_BASE_URL: "https://example.com/v1", LLM_API_KEY: "" }, { LLM_TIMEOUT_MS: "0" }]) assert.equal(buddyAvailability({ ...env, ...bad }).available, false);
   assert.deepEqual(buddyAvailability(env), { available: true });

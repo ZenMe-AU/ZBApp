@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import type { BuddyCategory, BuddyConversation, BuddyMemory, BuddyMessage, BuddyMode, BuddyProposal, BuddyReply, DiaryFocus, Preference, PreferenceInput, ProfileSnapshot, SavedBuddyProposal } from "./contracts.ts";
+import type { BuddyCategory, BuddyConversation, BuddyMemory, BuddyMessage, BuddyMode, BuddyProposal, BuddyReply, BuddyUsage, DiaryFocus, Preference, PreferenceInput, ProfileSnapshot, SavedBuddyProposal } from "./contracts.ts";
 import { buddyCategories, categoryFields, classifyBuddyCategory, samePreference, similarPreferences } from "./buddy-preferences.ts";
 import { commitBuddyApproval, readProfile, RequestError, validatePreference } from "./repository.ts";
 import type { BuddyProvider } from "./buddy-provider.ts";
@@ -131,6 +131,7 @@ export class BuddyService {
       const conversation = current.conversation;
       if (current.complete) return { conversation_id: conversation.conversation_id, request_id: request.request_id, reply: conversation.turns.find(t => t.request_id === request.request_id)?.reply, proposals: current.proposals };
       let reply: string | undefined, failure: string | undefined, proposals: SavedBuddyProposal[] = [];
+      let usage: BuddyUsage | undefined;
       try {
         const snapshot = await readProfile(folder, id) as unknown as ProfileSnapshot;
         // read the memory again to ensure we have the latest state after the initial update
@@ -142,8 +143,12 @@ export class BuddyService {
         const payload = { profile: { name, age, gender, summary, occupation, location, details, personas, preferences: preferences.map(p => ({ preference_id: p.preference_id, keyword: p.keyword, definition: p.definition, kind: p.kind, want_type: p.want_type, personas: p.personas })) },
           mode: conversation.mode, diary_date: conversation.diary_date, diary_focus: conversation.diary_focus, messages, memories,
           decisions: memory.proposals.slice(-30).map(p => `${p.status}: ${p.preference.keyword}`) };
-        if (buddyPrompt.length + JSON.stringify(payload).length > 48000) throw new RequestError(413, "This profile exceeds Buddy's context limit. Your entry is saved; continue editing preferences manually for now.");
-        const output = await (typeof provider === "function" ? provider() : provider).complete(buddyPrompt, payload);
+        const characters = buddyPrompt.length + JSON.stringify(payload).length;
+        if (characters > 48000) throw new RequestError(413, "This profile exceeds Buddy's context limit. Your entry is saved; continue editing preferences manually for now.");
+        const connection = typeof provider === "function" ? provider() : provider;
+        usage = { created_at: new Date().toISOString(), context: { characters, character_limit: 48000,
+          messages: messages.length, memories: memories.length, preferences: preferences.length, decisions: payload.decisions.length } };
+        const output = await connection.complete(buddyPrompt, payload, tokens => { usage!.tokens = tokens; });
         if (!record(output) || !Array.isArray(output.suggestions) || output.suggestions.length > 3) throw new RequestError(502, "Buddy returned an invalid recommendation. Your entry is saved; please try again.");
         reply = text(output.reply, 4000, "reply");
         const evidenceMessages: BuddyMessage[] = [...messages, ...memories.map(m => ({ role: "user" as const, content: m.content }))];
@@ -160,6 +165,7 @@ export class BuddyService {
         if (!turn || turn.generation_id !== generationId) throw new RequestError(410, "The conversation was deleted or this response was replaced.");
         if (memory.proposals.length + proposals.length > 1500) { failure = "The recommendation history is full. Delete older conversations before collecting more."; proposals = []; }
         turn.status = failure ? "failed" : "complete";
+        if (usage) (turn.usage ??= []).push(usage);
         if (failure) turn.error = failure; else { turn.reply = reply; delete turn.error; }
         delete turn.generation_id; delete turn.started_at;
         saved!.updated_at = new Date().toISOString();

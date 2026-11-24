@@ -106,11 +106,19 @@ Every submission includes a client-generated request UUID. Repeating a completed
 
 All routes retain the local fixture-mode guard and 64 KiB HTTP body limit. Production verified ownership/authentication remains a prerequisite for hosted deployment, as with the existing editor.
 
-The provider implements the small `BuddyProvider.complete(system, input)` interface. It follows the project's existing OpenAI-compatible `POST /chat/completions` convention and workstation settings, without importing dashboard orchestration or its mandatory strict JSON-schema response mode. The wire contract is documented by [OpenAI's Chat Completions reference](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create). A model must return JSON text; no tool calling or provider-specific structured output is required. Output is validated, including quoted evidence actually present in a user message, source ownership and affinity ranges. Raw model content is rendered as text, never HTML.
+The provider implements the small `BuddyProvider.complete(system, input, reportUsage?)` interface. It follows the project's existing OpenAI-compatible `POST /chat/completions` convention and workstation settings, without importing dashboard orchestration or its mandatory strict JSON-schema response mode. The wire contract is documented by [OpenAI's Chat Completions reference](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create). A model must return JSON text; no tool calling or provider-specific structured output is required. Output is validated, including quoted evidence actually present in a user message, source ownership and affinity ranges. Raw model content is rendered as text, never HTML.
 
 Responses are capped at 32 KiB. Timeout is configurable from 1–120 seconds. Redirects are rejected, provider errors are sanitized, and keys never reach the browser or logs. Provider failure preserves the message for explicit retry. Missing configuration shows an unavailable state while diary saving and manual editing remain usable. Configuring a remote provider sends the selected profile and bounded personal memory to that provider. No sample mode, fake chat responses or model calls on page load are shipped in the product.
 
 The prompt treats active preferences as established knowledge and asks Buddy to connect relevant interests naturally, add a useful observation or idea, and avoid rediscovering them or presenting an interest checklist. Replies default to 3–5 conversational sentences and at most two concise recommendations. An explicit request for language, format or brevity (including one sentence) takes precedence over that default, while approval/privacy and the JSON response contract stay mandatory. Direct requests to `api.deepseek.com` additionally disable thinking, cap the entire generated JSON reply at 1,536 output tokens, and enable JSON output. This avoids DeepSeek's default thinking mode and its much larger output allowance. Other compatible endpoints keep their existing provider parameters. A response stopped at the token limit is reported without an automatic paid retry; the entry remains saved. There is no cumulative spending cap, and input tokens are still billed.
+
+## AI usage panel
+
+Chat and Diary include a keyboard-accessible **AI usage** disclosure below the composer. It shows the last request's model, provider-reported input/output/total tokens, optional cached-input and reasoning counts, a recorded total for the selected conversation, and per-message attempts. Cached-input and reasoning details are not added to totals again. Missing/invalid counters remain unknown, never estimated as zero. Old conversations remain readable without usage records.
+
+The adapter reads `usage` from the OpenAI-compatible response envelope, separately from generated JSON, and reports it before parsing/validating the reply. `turns[].usage[]` stores each attempt's timestamp, token metadata and context counts in the private Buddy file. Explicit retries append attempts; replaying a completed request does not duplicate usage. Provider failures can have unknown counts, and a process/storage failure can prevent recording a billed request. Conversation deletion removes these records. This panel is not an account-wide billing ledger.
+
+Context displays the exact app-budget count (JavaScript string length of instructions plus serialized input, limited to 48,000) and the included message/memory/preference/decision counts. This character budget is distinct from the model token window. Optional `LLM_CONTEXT_WINDOW_TOKENS` supplies a verified positive integer for the configured model; when present and input tokens are reported, the UI shows input tokens as a percentage of that configured window. Output also consumes window capacity. An absent limit is labelled unconfigured; the app does not guess limits from model aliases. Update or clear this setting when switching models. No additional model requests are made to calculate usage.
 
 ## Workstation setup
 
@@ -122,7 +130,8 @@ Merge these keys into `IdentityRepository/local.settings.json` under `Values`, w
   "LLM_BASE_URL": "https://your-compatible-endpoint.example/v1",
   "LLM_MODEL": "your-configured-model",
   "LLM_API_KEY": "",
-  "LLM_TIMEOUT_MS": "30000"
+  "LLM_TIMEOUT_MS": "30000",
+  "LLM_CONTEXT_WINDOW_TOKENS": ""
 }
 ```
 

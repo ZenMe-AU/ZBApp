@@ -20,7 +20,7 @@ export async function startBuddyProvider() {
       const output = await next(input);
       if (output.error) { res.writeHead(503); res.end("Private upstream failure"); return; }
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(output) } }] }));
+      res.end(JSON.stringify({ usage: { prompt_tokens: 1000, completion_tokens: 100, total_tokens: 1100, prompt_tokens_details: { cached_tokens: 250 } }, choices: [{ message: { content: JSON.stringify(output) } }] }));
     } catch { res.writeHead(500); res.end("Test provider failed"); }
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -49,11 +49,30 @@ export async function checkBuddy(page, backend, provider) {
   await send("I want to become wealthy", () => ({ reply: "What would wealth let you do?", suggestions: [goal] }));
   await page.getByText("What would wealth let you do?", { exact: true }).waitFor();
   assert.equal((await snapshot()).profile.properties.preferences.length, 0);
+  const usagePanel = page.locator(".buddy-usage");
+  await usagePanel.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  await usagePanel.getByText("Input tokens", { exact: true }).waitFor();
+  assert.equal(await usagePanel.evaluate(el => el.open), true);
+  assert.equal(await usagePanel.locator("dd").allTextContents().then(values => values.join(",")), "1,000,100,1,100");
+  assert.equal((await memory()).memory.conversations[0].turns[0].usage[0].tokens.total_tokens, 1100);
+  for (const viewport of [{ width: 375, height: 812 }, { width: 844, height: 390 }]) {
+    await page.setViewportSize(viewport);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Usage panel fits small screens");
+    const sendBounds = await page.locator('#buddy-compose [type="submit"]').boundingBox();
+    assert(sendBounds && sendBounds.y >= 0 && sendBounds.y + sendBounds.height <= viewport.height, "Usage panel keeps composer visible");
+  }
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  if (process.env.QFF_EDITOR_SCREENSHOT) await page.screenshot({ path: process.env.QFF_EDITOR_SCREENSHOT.replace(/\.png$/, "-buddy-usage.png") });
+  await usagePanel.locator("summary").click();
   await page.reload();
   await page.getByRole("heading", { name: "My preferences", exact: true }).waitFor();
   await page.getByRole("button", { name: "AI Buddy", exact: true }).click();
   await page.getByText("What would wealth let you do?", { exact: true }).waitFor();
   assert.equal(provider.requests.length, 1, "Reloading saved history makes no model call");
+  await page.locator(".buddy-usage summary").click();
+  assert.equal(await page.locator(".buddy-usage dd").allTextContents().then(values => values.join(",")), "1,000,100,1,100");
+  await page.locator(".buddy-usage summary").click();
   await tab("review").click();
   const card = proposal("Financial independence");
   assert.equal(await card.getByLabel("Category").inputValue(), "goal");

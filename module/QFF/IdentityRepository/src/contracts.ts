@@ -55,6 +55,20 @@ export interface BuddyProposal {
 }
 export type BuddyMode = "chat" | "diary";
 export type DiaryFocus = "today" | "future";
+export interface BuddyTokenUsage {
+  model: string;
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  cached_input_tokens?: number;
+  reasoning_tokens?: number;
+  context_window_tokens?: number;
+}
+export interface BuddyUsage {
+  created_at: string;
+  tokens?: BuddyTokenUsage;
+  context: { characters: number; character_limit: number; messages: number; memories: number; preferences: number; decisions: number };
+}
 export interface BuddyTurn {
   request_id: string;
   content: string;
@@ -64,6 +78,7 @@ export interface BuddyTurn {
   error?: string;
   generation_id?: string;
   started_at?: string;
+  usage?: BuddyUsage[];
 }
 export interface BuddyConversation {
   conversation_id: string;

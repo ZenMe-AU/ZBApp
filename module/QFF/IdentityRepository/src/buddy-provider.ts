@@ -3,10 +3,10 @@
  * @license SPDX-License-Identifier: MIT
  */
 import { RequestError } from "./repository.ts";
-import type { BuddyAvailability } from "./contracts.ts";
+import type { BuddyAvailability, BuddyTokenUsage } from "./contracts.ts";
 
-export interface BuddyProvider { complete(system: string, input: unknown): Promise<unknown> }
-type Settings = { url: string; model: string; key: string; timeout: number };
+export interface BuddyProvider { complete(system: string, input: unknown, reportUsage?: (usage: BuddyTokenUsage) => void): Promise<unknown> }
+type Settings = { url: string; model: string; key: string; timeout: number; contextWindow?: number };
 
 export function buddySettings(env: NodeJS.ProcessEnv = process.env): Settings {
   if (env.QFF_AI_MODE !== "live") throw new RequestError(503, "Buddy is not connected on this workstation. Configure the AI connection to start chatting.");
@@ -20,7 +20,13 @@ export function buddySettings(env: NodeJS.ProcessEnv = process.env): Settings {
   if (!Number.isInteger(timeout) || timeout < 1000 || timeout > 120000) throw new RequestError(503, "The workstation AI timeout must be between 1000 and 120000 milliseconds.");
   if (!env.LLM_MODEL?.trim() || (!loopback && !env.LLM_API_KEY?.trim())) throw new RequestError(503, "The workstation AI model or API key is missing.");
   const base = url.href.replace(/\/+$/, "");
-  return { url: base.endsWith("/chat/completions") ? base : `${base}/chat/completions`, model: env.LLM_MODEL.trim(), key: env.LLM_API_KEY || "", timeout };
+  const contextWindow = env.LLM_CONTEXT_WINDOW_TOKENS?.trim() ? Number(env.LLM_CONTEXT_WINDOW_TOKENS) : undefined;
+  if (contextWindow !== undefined && (!Number.isSafeInteger(contextWindow) || contextWindow <= 0)) throw new RequestError(503, "The model context window must be a positive whole number of tokens.");
+  return { url: base.endsWith("/chat/completions") ? base : `${base}/chat/completions`, model: env.LLM_MODEL.trim(), key: env.LLM_API_KEY || "", timeout, contextWindow };
+}
+
+function reportedTokens(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
 }
 
 export function buddyAvailability(env = process.env): BuddyAvailability {
@@ -40,7 +46,8 @@ export function openAICompatibleBuddy(env = process.env, fetchFn: typeof fetch =
     : hostname === "generativelanguage.googleapis.com"
       ? { reasoning_effort: settings.model.startsWith("gemini-2.5-") ? "none" : "low", max_tokens: 1536, response_format: { type: "json_object" } }
     : {};
-  return { async complete(system, input) {
+  return { async complete(system, input, reportUsage) {
+    reportUsage?.({ model: settings.model, context_window_tokens: settings.contextWindow });
     try {
       const response = await fetchFn(settings.url, {
         method: "POST", redirect: "error", signal: AbortSignal.timeout(settings.timeout),
@@ -60,6 +67,12 @@ export function openAICompatibleBuddy(env = process.env, fetchFn: typeof fetch =
         chunks.push(value);
       }
       const envelope = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      const usage = envelope?.usage;
+      reportUsage?.({ model: settings.model, context_window_tokens: settings.contextWindow,
+        input_tokens: reportedTokens(usage?.prompt_tokens), output_tokens: reportedTokens(usage?.completion_tokens),
+        total_tokens: reportedTokens(usage?.total_tokens),
+        cached_input_tokens: reportedTokens(usage?.prompt_tokens_details?.cached_tokens ?? usage?.prompt_cache_hit_tokens),
+        reasoning_tokens: reportedTokens(usage?.completion_tokens_details?.reasoning_tokens) });
       if (envelope?.choices?.[0]?.finish_reason === "length") throw new RequestError(502, "Buddy reached its reply limit. Your entry is saved; try asking about one topic at a time.");
       const content = envelope?.choices?.[0]?.message?.content;
       if (typeof content !== "string") throw new Error("Missing content");

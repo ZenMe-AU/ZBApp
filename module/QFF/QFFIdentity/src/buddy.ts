@@ -12,7 +12,7 @@ const categories: Record<BuddyCategory, string> = { like: "Like", dislike: "Disl
 type View = "chat" | "diary" | "review" | "archive" | "history";
 type Review = SavedBuddyProposal & { error?: string; stale?: boolean; acknowledged?: boolean };
 type Reveal = { request_id: string; parts: string[]; shown: number; started: number; duration: number };
-type Session = { afterComposition?: () => void; reveal?: Reveal; frame?: number; resize?: ResizeObserver; follow: boolean; scrollTop: number; sentAt?: string; data?: BuddyMemorySnapshot; reviews: Review[]; view: View; selected?: string; draft: string; archiveSearch: string; archiveCategory: "all" | BuddyCategory; request?: { request_id: string; message: string; conversation_id?: string }; date: string; focus: DiaryFocus; busy: boolean; loading: boolean; error: string; notice: string; availability?: BuddyAvailability };
+type Session = { usageOpen?: boolean; afterComposition?: () => void; reveal?: Reveal; frame?: number; resize?: ResizeObserver; follow: boolean; scrollTop: number; sentAt?: string; data?: BuddyMemorySnapshot; reviews: Review[]; view: View; selected?: string; draft: string; archiveSearch: string; archiveCategory: "all" | BuddyCategory; request?: { request_id: string; message: string; conversation_id?: string }; date: string; focus: DiaryFocus; busy: boolean; loading: boolean; error: string; notice: string; availability?: BuddyAvailability };
 const sessions = new Map<string, Session>();
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 const dateLabel = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString("en-AU", { year: "numeric", month: "short", day: "numeric" });
@@ -62,6 +62,29 @@ export function renderBuddy(container: HTMLElement, id: string, onSaved: () => P
       ${waiting ? '<div class="buddy-thinking" role="status"><span class="buddy-typing" aria-hidden="true"><i></i><i></i><i></i></span><span>Buddy is replying…</span></div>' : t.reply ? `<p class="buddy-reply">${reveal ? `<span data-buddy-reveal="${t.request_id}" aria-hidden="true">${escape(reveal.parts.slice(0, reveal.shown).join(""))}</span><span class="sr-only">${escape(t.reply)}</span>` : escape(t.reply)}</p>${reveal ? '<button type="button" class="text-button buddy-show-reply" data-buddy="show-reply">Show full reply</button>' : ""}` : `<div class="buddy-turn-status"><p>${escape(pending ? "Delivery not confirmed. Your message is kept here for retry." : t.error || "This entry is saved. Buddy may still be responding.")}</p><button type="button" data-retry="${t.request_id}" ${chat.busy || chat.loading || (!chat.availability?.available && chat.view !== "diary") ? "disabled" : ""}>Try Buddy again</button></div>`}</div></article>`;
   }
 
+  function usageView(c?: BuddyConversation) {
+    const attempts = c?.turns.flatMap((turn, index) => (turn.usage ?? []).map((usage, attempt) => ({ usage, message: index + 1, attempt: attempt + 1 }))) ?? [];
+    const latest = attempts.at(-1)?.usage;
+    const tokens = latest?.tokens;
+    const number = (value?: number) => value === undefined ? "Not reported" : value.toLocaleString("en-AU");
+    const reported = attempts.filter(a => a.usage.tokens?.total_tokens !== undefined);
+    const total = reported.reduce((sum, a) => sum + a.usage.tokens!.total_tokens!, 0);
+    const untracked = c?.turns.filter(t => !t.usage?.length).length ?? 0;
+    return `<details class="buddy-usage" ${chat.usageOpen ? "open" : ""}><summary>AI usage${tokens?.total_tokens !== undefined ? ` <span>· ${number(tokens.total_tokens)} tokens last request</span>` : ""}</summary>
+      <div class="buddy-usage-body">
+        ${latest ? `<p class="buddy-usage-model">Last request · ${escape(tokens?.model || "Model not reported")}</p>
+          <dl class="buddy-usage-metrics"><div><dt>Input tokens</dt><dd>${number(tokens?.input_tokens)}</dd></div><div><dt>Output tokens</dt><dd>${number(tokens?.output_tokens)}</dd></div><div><dt>Total tokens</dt><dd>${number(tokens?.total_tokens)}</dd></div></dl>
+          ${tokens?.cached_input_tokens !== undefined || tokens?.reasoning_tokens !== undefined ? `<p>Included details: ${tokens.cached_input_tokens !== undefined ? `${number(tokens.cached_input_tokens)} cached input tokens` : ""}${tokens.cached_input_tokens !== undefined && tokens.reasoning_tokens !== undefined ? " · " : ""}${tokens.reasoning_tokens !== undefined ? `${number(tokens.reasoning_tokens)} reasoning tokens` : ""}. These are not added to the total again.</p>` : ""}
+          <p><strong>Model context:</strong> ${tokens?.context_window_tokens && tokens.input_tokens !== undefined ? `${number(tokens.input_tokens)} / ${number(tokens.context_window_tokens)} input tokens (${(tokens.input_tokens / tokens.context_window_tokens * 100).toFixed(1)}% of the configured window). Output also needs room in this window.` : "Window limit not configured; percentage unavailable."}</p>
+          <label class="buddy-context-label">App context budget <span>${number(latest.context.characters)} / ${number(latest.context.character_limit)} characters</span><progress aria-label="App context budget in characters" value="${latest.context.characters}" max="${latest.context.character_limit}"></progress></label>
+          <p>This character budget includes instructions and serialized context; it is not the model’s token limit.</p>
+          <p>Included: ${latest.context.messages} messages · ${latest.context.memories} older memories · ${latest.context.preferences} preferences · ${latest.context.decisions} recommendation decisions.</p>
+          <p><strong>Recorded conversation total: ${reported.length ? `${number(total)} tokens` : "Not reported"}</strong><br>Usage reported for ${reported.length} of ${attempts.length} recorded attempts${untracked ? `; ${untracked} older or unmeasured messages` : ""}. Retries count separately. This is not an account billing total.</p>
+          <ol class="buddy-usage-history" aria-label="Usage by request">${[...attempts].reverse().map(a => `<li><strong>Message ${a.message} · Attempt ${a.attempt}</strong><span>${escape(a.usage.tokens?.model || "Model not reported")}</span><span>Input ${number(a.usage.tokens?.input_tokens)} · Output ${number(a.usage.tokens?.output_tokens)} · Total ${number(a.usage.tokens?.total_tokens)}</span></li>`).join("")}</ol>`
+          : `<p>No usage recorded for this conversation. New AI requests will show token usage when the provider reports it. Older messages and entries saved without AI have no usage record.</p>`}
+      </div></details>`;
+  }
+
   function conversationView() {
     const c = current(), diary = chat.view === "diary";
     const pending = chat.request && !c?.turns.some(t => t.request_id === chat.request!.request_id)
@@ -77,6 +100,7 @@ export function renderBuddy(container: HTMLElement, id: string, onSaved: () => P
       </div></div><button type="button" class="buddy-jump" data-buddy="latest-message" aria-label="Jump to latest message" ${chat.follow ? "hidden" : ""}>↓ Latest message</button></div>
       <div class="buddy-composer-shell">
         <form novalidate id="buddy-compose" class="buddy-compose"><label><span class="sr-only">Message Buddy</span><textarea name="message" rows="1" maxlength="${diary ? 6000 : 2000}" required placeholder="${diary ? "Write about your day or your hopes…" : "Message Buddy…"}" ${chat.loading || !chat.data ? "readonly" : ""}>${escape(chat.draft)}</textarea></label><button class="primary buddy-send ${diary ? "is-diary" : ""}" type="submit" aria-busy="${chat.busy}" ${submitDisabled() ? "disabled" : ""}>${diary ? "Save entry" : "Send"}</button></form>
+        ${usageView(c)}
       </div>
     </div>`;
   }
@@ -97,6 +121,8 @@ export function renderBuddy(container: HTMLElement, id: string, onSaved: () => P
       ${!conversation && chat.notice ? `<p class="buddy-notice" role="status">${escape(chat.notice)}</p>` : ""}${!conversation && chat.error ? `<div class="buddy-error" role="alert">${escape(chat.error)} <button class="text-button" data-buddy="reload">Reload memory</button></div>` : ""}
     </section>`;
     const host = container.querySelector<HTMLElement>(".buddy-workspace")!;
+    const usagePanel = host.querySelector<HTMLDetailsElement>(".buddy-usage");
+    usagePanel?.addEventListener("toggle", () => { if (usagePanel.isConnected) chat.usageOpen = usagePanel.open; });
     const composer = host.querySelector<HTMLTextAreaElement>('#buddy-compose textarea');
     if (composer) {
       composer.addEventListener("compositionstart", () => { composer.dataset.composing = "true"; });

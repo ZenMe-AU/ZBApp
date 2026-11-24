@@ -4,7 +4,7 @@
  */
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
-import type { BuddyMemory, BuddyMemorySnapshot, SavedBuddyProposal } from "./contracts.ts";
+import type { BuddyMemory, BuddyMemorySnapshot, BuddyUsage, SavedBuddyProposal } from "./contracts.ts";
 import { etag, replaceJson, RequestError } from "./repository.ts";
 
 export const buddyMemoryLimit = 5 * 1024 * 1024;
@@ -15,12 +15,22 @@ export const buddyArchiveFile = (folder: string, id: string) => join(folder, `${
 const isArchived = (p: SavedBuddyProposal) => p.status === "archived" || p.status === "dismissed";
 const emptyArchive = (id: string) => ({ version: 1, identity_id: id, proposals: [] as SavedBuddyProposal[] });
 
+function validUsage(usage: BuddyUsage) {
+  const count = (v: unknown) => typeof v === "number" && Number.isSafeInteger(v) && v >= 0;
+  return usage && typeof usage.created_at === "string" && usage.context
+    && [usage.context.characters, usage.context.character_limit, usage.context.messages, usage.context.memories, usage.context.preferences, usage.context.decisions].every(count)
+    && usage.context.character_limit > 0
+    && (usage.tokens === undefined || (usage.tokens && typeof usage.tokens.model === "string"
+      && [usage.tokens.input_tokens, usage.tokens.output_tokens, usage.tokens.total_tokens, usage.tokens.cached_input_tokens, usage.tokens.reasoning_tokens, usage.tokens.context_window_tokens].every(v => v === undefined || count(v))));
+}
+
 function parseMemory(text: string, id: string): BuddyMemory {
   let value: BuddyMemory;
   try { value = JSON.parse(text); } catch { throw new RequestError(500, "Buddy memory could not be read. The saved file has been left unchanged."); }
   if (!value || value.version !== 1 || value.identity_id !== id || !Array.isArray(value.conversations) || !Array.isArray(value.proposals)
     || value.conversations.some(c => !c || typeof c.conversation_id !== "string" || !["chat", "diary"].includes(c.mode) || !Array.isArray(c.turns)
-      || c.turns.some(t => !t || typeof t.request_id !== "string" || typeof t.content !== "string" || !["processing", "complete", "failed"].includes(t.status)))
+      || c.turns.some(t => !t || typeof t.request_id !== "string" || typeof t.content !== "string" || !["processing", "complete", "failed"].includes(t.status)
+        || (t.usage !== undefined && (!Array.isArray(t.usage) || t.usage.some(u => !validUsage(u))))))
     || value.proposals.some(p => !p || typeof p.proposal_id !== "string" || !["pending", "approved", "archived", "dismissed"].includes(p.status) || !p.preference
       || (p.archived_at !== undefined && typeof p.archived_at !== "string"))) {
     throw new RequestError(500, "Buddy memory has an unsupported format. The saved file has been left unchanged.");
