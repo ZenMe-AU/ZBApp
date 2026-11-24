@@ -8,7 +8,11 @@
       "personas": [
         {
           "persona": "technology peer",
-          "affinity": 0.9
+          "affinity": -0.34
+        },
+        {
+          "persona": "christian friend",
+          "affinity": 1
         }
       ],
       "preference_id": "aafa05fc-59ad-4bb5-a963-d1faf59ad14c"
@@ -20,7 +24,7 @@
       "personas": [
         {
           "persona": "technology peer",
-          "affinity": 0.9
+          "affinity": -0.51
         }
       ],
       "preference_id": "ddfe6607-85ed-4955-a94c-d7e66036c7c5"
@@ -201,6 +205,18 @@
         }
       ],
       "preference_id": "1d256ccc-d15d-488f-b6eb-c5fa581ceaa8"
+    },
+    {
+      "keyword": "test",
+      "definition": "test",
+      "kind": "want",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 1
+        }
+      ],
+      "preference_id": "c01181f4-0da3-47c1-8949-76eb80576fa8"
     }
   ]
 }

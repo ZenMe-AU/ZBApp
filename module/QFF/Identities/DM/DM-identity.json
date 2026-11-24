@@ -1,14 +1,24 @@
 {
   "identity_id": "DM",
-  "name": "Daniel Mercer",
   "age": 46,
   "gender": "male",
   "location": "Brisbane, Queensland, Australia",
   "occupation": "Technology architect and small-business founder",
   "summary": "An analytical and technically minded Australian man interested in cloud security, artificial intelligence, practical innovation, outdoor activities, Christian faith and community projects. He values independence, reliability, honesty and substantive conversation.",
   "personas": [
-    { "name": "technology peer", "description": "Enjoys comparing approaches to cloud security and identity management and exploring practical uses for AI and automation." },
-    { "name": "christian friend", "description": "Enjoys discussing Christian theology and studying the Bible with others." },
-    { "name": "outdoor activity friend", "description": "Enjoys walks, moderate hikes and regional day trips with opportunities to photograph wildlife and scenery." }
-  ]
+    {
+      "name": "technology peer",
+      "description": "Enjoys comparing approaches to cloud security and identity management and exploring practical uses for AI and automation."
+    },
+    {
+      "name": "christian friend",
+      "description": "Enjoys discussing Christian theology and studying the Bible with others."
+    },
+    {
+      "name": "outdoor activity friend",
+      "description": "Enjoys walks, moderate hikes and regional day trips with opportunities to photograph wildlife and scenery."
+    }
+  ],
+  "details": [],
+  "name": "Daniel Mercer"
 }

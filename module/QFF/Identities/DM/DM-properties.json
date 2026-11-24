@@ -420,6 +420,23 @@
         }
       ],
       "preference_id": "eb17c9b3-3a02-4f52-a445-069d6386666c"
+    },
+    {
+      "keyword": "learning to ride horses",
+      "definition": "I want to learn how to ride horses properly, rather than only trying it once.",
+      "kind": "want",
+      "personas": [
+        {
+          "persona": "",
+          "affinity": 0.6
+        }
+      ],
+      "want_type": "goal",
+      "preference_id": "a84ec9c2-66ee-4a4e-9b39-3fe7f90bf456",
+      "buddy_approval": {
+        "proposal_id": "d7956158-fec1-436a-ad0d-37f8f00aba47",
+        "approved_at": "2026-11-23T08:30:30.675Z"
+      }
     }
   ]
 }
