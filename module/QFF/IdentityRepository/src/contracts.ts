@@ -79,7 +79,8 @@ export interface SavedBuddyProposal extends BuddyProposal {
   conversation_id: string;
   request_id: string;
   created_at: string;
-  status: "pending" | "approved" | "dismissed";
+  status: "pending" | "approved" | "archived" | "dismissed";
+  archived_at?: string;
   preference_id?: string;
 }
 export interface BuddyMemory {

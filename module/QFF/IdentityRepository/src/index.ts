@@ -159,7 +159,7 @@ app.http("buddyMemory", {
   }),
 });
 
-for (const action of ["review", "dismiss"] as const) app.http(`buddyProposal${action}`, {
+for (const action of ["review", "archive"] as const) app.http(`buddyProposal${action}`, {
   route: `v1/profiles/{externalId}/buddy/proposals/{proposalId}/${action}`, methods: ["POST"], authLevel: "anonymous",
   handler: fixtureOnly(async request => {
     const id = resolveFixtureIdentityId(request.params.externalId);

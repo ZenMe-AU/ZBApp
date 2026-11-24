@@ -9,10 +9,10 @@ import type { BuddyAvailability, BuddyCategory, BuddyConversation, BuddyMemorySn
 
 const escape = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const categories: Record<BuddyCategory, string> = { like: "Like", dislike: "Dislike", want: "Want", goal: "Goal or ambition", value: "Value", boundary: "Boundary" };
-type View = "chat" | "diary" | "review" | "history";
+type View = "chat" | "diary" | "review" | "archive" | "history";
 type Review = SavedBuddyProposal & { error?: string; stale?: boolean; acknowledged?: boolean };
 type Reveal = { request_id: string; parts: string[]; shown: number; started: number; duration: number };
-type Session = { afterComposition?: () => void; reveal?: Reveal; frame?: number; resize?: ResizeObserver; follow: boolean; scrollTop: number; sentAt?: string; data?: BuddyMemorySnapshot; reviews: Review[]; view: View; selected?: string; draft: string; request?: { request_id: string; message: string; conversation_id?: string }; date: string; focus: DiaryFocus; busy: boolean; loading: boolean; error: string; notice: string; availability?: BuddyAvailability };
+type Session = { afterComposition?: () => void; reveal?: Reveal; frame?: number; resize?: ResizeObserver; follow: boolean; scrollTop: number; sentAt?: string; data?: BuddyMemorySnapshot; reviews: Review[]; view: View; selected?: string; draft: string; archiveSearch: string; archiveCategory: "all" | BuddyCategory; request?: { request_id: string; message: string; conversation_id?: string }; date: string; focus: DiaryFocus; busy: boolean; loading: boolean; error: string; notice: string; availability?: BuddyAvailability };
 const sessions = new Map<string, Session>();
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 const dateLabel = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString("en-AU", { year: "numeric", month: "short", day: "numeric" });
@@ -21,7 +21,7 @@ export function clearBuddyProfile(id: string) { sessions.delete(id); }
 export function renderBuddy(container: HTMLElement, id: string, onSaved: () => Promise<void>) {
   let session = sessions.get(id);
   if (!session) {
-    session = { follow: true, scrollTop: 0, reviews: [], view: "chat", draft: "", date: today(), focus: "today", busy: false, loading: false, error: "", notice: "" };
+    session = { follow: true, scrollTop: 0, reviews: [], view: "chat", draft: "", archiveSearch: "", archiveCategory: "all", date: today(), focus: "today", busy: false, loading: false, error: "", notice: "" };
     sessions.set(id, session);
   }
   const chat = session;
@@ -92,8 +92,8 @@ export function renderBuddy(container: HTMLElement, id: string, onSaved: () => P
     const pending = chat.reviews.filter(p => p.status === "pending").length;
     const conversation = chat.view === "chat" || chat.view === "diary";
     container.innerHTML = `<section class="buddy-workspace" aria-label="AI Buddy chat">
-      <div class="buddy-toolbar"><div class="buddy-tabs" role="group" aria-label="Buddy views">${([["chat", "Chat"], ["diary", "Diary"], ["review", "Recommendations"], ["history", "History"]] as const).map(([view,label]) => `<button data-buddy-view="${view}" aria-pressed="${chat.view === view}" ${chat.busy ? "disabled" : ""}>${label}${view === "review" && pending ? `<span class="buddy-count">${pending}</span>` : ""}</button>`).join("")}</div>${conversation ? `<button type="button" class="buddy-new" data-buddy="new" aria-label="${chat.view === "diary" ? "New diary entry" : "New conversation"}" title="${chat.view === "diary" ? "New diary entry" : "New conversation"}" ${chat.busy || chat.loading || !chat.data ? "disabled" : ""}><span aria-hidden="true">+</span><span class="buddy-new-label">${chat.view === "diary" ? "New entry" : "New chat"}</span></button>` : ""}</div>
-      ${chat.view === "history" ? historyView() : chat.view === "review" ? reviewView() : conversationView()}
+      <div class="buddy-toolbar"><div class="buddy-tabs" role="group" aria-label="Buddy views">${([["chat", "Chat"], ["diary", "Diary"], ["review", "Recommendations"], ["archive", "Archive"], ["history", "History"]] as const).map(([view,label]) => `<button data-buddy-view="${view}" aria-pressed="${chat.view === view}" ${chat.busy || chat.loading ? "disabled" : ""}>${label}${view === "review" && pending ? `<span class="buddy-count">${pending}</span>` : ""}</button>`).join("")}</div>${conversation ? `<button type="button" class="buddy-new" data-buddy="new" aria-label="${chat.view === "diary" ? "New diary entry" : "New conversation"}" title="${chat.view === "diary" ? "New diary entry" : "New conversation"}" ${chat.busy || chat.loading || !chat.data ? "disabled" : ""}><span aria-hidden="true">+</span><span class="buddy-new-label">${chat.view === "diary" ? "New entry" : "New chat"}</span></button>` : ""}</div>
+      ${chat.view === "history" ? historyView() : chat.view === "archive" ? archiveView() : chat.view === "review" ? reviewView() : conversationView()}
       ${!conversation && chat.notice ? `<p class="buddy-notice" role="status">${escape(chat.notice)}</p>` : ""}${!conversation && chat.error ? `<div class="buddy-error" role="alert">${escape(chat.error)} <button class="text-button" data-buddy="reload">Reload memory</button></div>` : ""}
     </section>`;
     const host = container.querySelector<HTMLElement>(".buddy-workspace")!;
@@ -121,6 +121,16 @@ export function renderBuddy(container: HTMLElement, id: string, onSaved: () => P
       }
       if (input.name === "diary-date") { chat.date = input.value; return; }
       if (input.name === "diary-focus") { chat.focus = input.value as DiaryFocus; return; }
+      if (input.name === "archive-search" || input.name === "archive-category") {
+        if (input.name === "archive-search") chat.archiveSearch = input.value;
+        else chat.archiveCategory = input.value as Session["archiveCategory"];
+        const name = input.name, selection = input instanceof HTMLInputElement ? [input.selectionStart, input.selectionEnd] : undefined;
+        draw();
+        const next = container.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${name}"]`);
+        next?.focus({ preventScroll: true });
+        if (selection && next instanceof HTMLInputElement) next.setSelectionRange(selection[0], selection[1]);
+        return;
+      }
       const form = input.closest<HTMLFormElement>("[data-proposal]");
       const p = chat.reviews.find(p => p.proposal_id === form?.dataset.proposal);
       if (!p) return;
@@ -163,7 +173,7 @@ export function renderBuddy(container: HTMLElement, id: string, onSaved: () => P
         }
         if (button.dataset.deleteConversation) {
           const conversation = conversations().find(c => c.conversation_id === button.dataset.deleteConversation);
-          if (!(await confirmAction({ title: "Delete this conversation?", message: `“${conversation?.title || "Conversation"}” and its recommendations will be deleted. Approved preferences will stay in your profile.`, confirmLabel: "Delete conversation", cancelLabel: "Keep conversation", danger: true }))) return;
+          if (!(await confirmAction({ title: "Delete this conversation?", message: `“${conversation?.title || "Conversation"}” and its active recommendations will be deleted. Archived recommendations and approved preferences will stay.`, confirmLabel: "Delete conversation", cancelLabel: "Keep conversation", danger: true }))) return;
           chat.busy = true; draw();
           try {
             await api(`${path}/conversations/${encodeURIComponent(button.dataset.deleteConversation)}`, "DELETE", undefined, chat.data!.revision);
@@ -178,14 +188,15 @@ export function renderBuddy(container: HTMLElement, id: string, onSaved: () => P
         }
         if (button.dataset.buddy === "reload" || button.dataset.buddy === "refresh") { await reload(); chat.error = ""; draw(); return; }
         if (button.dataset.buddy === "reconnect") { await connect(); return; }
+        if (button.dataset.buddy === "clear-archive-filters") { chat.archiveSearch = ""; chat.archiveCategory = "all"; draw(); container.querySelector<HTMLInputElement>('[name="archive-search"]')?.focus(); return; }
         const p = chat.reviews.find(p => p.proposal_id === button.closest<HTMLFormElement>("[data-proposal]")?.dataset.proposal);
         if (!p) return;
-        if (button.dataset.buddy === "dismiss" || button.dataset.buddy === "latest") {
+        if (button.dataset.buddy === "archive" || button.dataset.buddy === "latest") {
           chat.busy = true; p.error = ""; draw();
           try {
-            if (button.dataset.buddy === "dismiss") {
-              await api(`${path}/proposals/${p.proposal_id}/dismiss`, "POST");
-              p.status = "dismissed"; chat.notice = "Recommendation dismissed. Your preferences are unchanged.";
+            if (button.dataset.buddy === "archive") {
+              await api(`${path}/proposals/${p.proposal_id}/archive`, "POST");
+              chat.notice = "Recommendation archived. Your preferences are unchanged.";
             } else {
               const updated = await api<SavedBuddyProposal>(`${path}/proposals/${p.proposal_id}/review`, "POST");
               const { keyword, definition } = p.preference;
@@ -300,17 +311,36 @@ export function renderBuddy(container: HTMLElement, id: string, onSaved: () => P
   }
 
   function proposalCard(p: Review) {
-    const scopes = p.preference.personas.map(a => `${a.persona || "Identity-wise"} · ${a.affinity < 0 ? "Against" : a.affinity > 0 ? "For" : "Neutral"}`).join(", ");
+    const scopes = p.preference.personas.map(a => `${a.persona || "Identity-wide"} · ${a.affinity < 0 ? "Against" : a.affinity > 0 ? "For" : "Neutral"}`).join(", ");
     const origin = chat.data?.memory.conversations.find(c => c.conversation_id === p.conversation_id);
     return `<form novalidate class="buddy-proposal" data-proposal="${p.proposal_id}"><span class="buddy-proposal-type">${p.source ? "Suggested improvement" : "Suggested addition"}${origin?.mode === "diary" ? ` · Diary ${escape(dateLabel(origin.diary_date!))}` : ""}</span>
       <blockquote>${escape(p.evidence)}</blockquote><p>${escape(p.reason)}</p>
       ${p.source ? `<div class="buddy-original"><strong>Current: ${escape(p.source.keyword)}</strong><p>${escape(p.source.definition)}</p><small>Saving creates a new version and keeps the original wording in your record.</small></div>` : ""}
       <label>Title<input name="keyword" maxlength="120" required value="${escape(p.preference.keyword)}" ${chat.busy ? "disabled" : ""} /></label>
       <label>Description<textarea name="definition" rows="3" maxlength="4000" required ${chat.busy ? "disabled" : ""}>${escape(p.preference.definition)}</textarea></label>
-      <label>Category<select name="category" ${chat.busy ? "disabled" : ""}>${Object.entries(categories).map(([key,label]) => `<option value="${key}" ${p.category === key ? "selected" : ""}>${label}</option>`).join("")}</select></label><p class="buddy-scope">${escape(scopes || "Identity-wise")}</p>
+      <label>Category<select name="category" ${chat.busy ? "disabled" : ""}>${Object.entries(categories).map(([key,label]) => `<option value="${key}" ${p.category === key ? "selected" : ""}>${label}</option>`).join("")}</select></label><p class="buddy-scope">${escape(scopes || "Identity-wide")}</p>
       ${p.similar.length ? `<div class="buddy-similar"><strong>Similar saved preferences</strong>${p.similar.map(s => `<p>${escape(s.keyword)} — ${escape(s.definition)}</p>`).join("")}<label><input type="checkbox" name="acknowledge" ${p.acknowledged ? "checked" : ""} ${chat.busy ? "disabled" : ""} />This is a separate preference.</label></div>` : ""}
       ${p.error ? `<p class="buddy-error" role="alert">${escape(p.error)}</p>` : ""}
-      <div class="buddy-proposal-actions"><button type="button" data-buddy="latest" ${chat.busy ? "disabled" : ""}>Review latest</button><button type="button" data-buddy="dismiss" ${chat.busy ? "disabled" : ""}>Dismiss</button><button type="submit" class="primary" ${chat.busy || p.stale || (p.similar.length && !p.acknowledged) ? "disabled" : ""}>Approve & save</button></div></form>`;
+      <div class="buddy-proposal-actions"><button type="button" data-buddy="latest" ${chat.busy ? "disabled" : ""}>Review latest</button><button type="button" data-buddy="archive" ${chat.busy ? "disabled" : ""}>Archive</button><button type="submit" class="primary" ${chat.busy || p.stale || (p.similar.length && !p.acknowledged) ? "disabled" : ""}>Approve & save</button></div></form>`;
+  }
+
+  function archiveView() {
+    if (chat.loading || !chat.data) return '<div class="buddy-archive buddy-empty" role="status" aria-busy="true"><p>Loading archived recommendations…</p></div>';
+    const archived = chat.reviews.filter(p => p.status === "archived" || p.status === "dismissed")
+      .sort((a, b) => (b.archived_at || b.created_at).localeCompare(a.archived_at || a.created_at));
+    if (!archived.length) return '<div class="buddy-archive"><div class="buddy-empty"><h2>No archived recommendations</h2><p>Recommendations you archive will remain available here.</p></div></div>';
+    const query = chat.archiveSearch.trim().toLocaleLowerCase();
+    const filtered = archived.filter(p => {
+      const scopes = p.preference.personas.map(a => a.persona || "Identity-wide").join(" ");
+      return (chat.archiveCategory === "all" || p.category === chat.archiveCategory)
+        && (!query || `${p.preference.keyword} ${p.preference.definition} ${p.evidence} ${p.reason} ${categories[p.category]} ${scopes}`.toLocaleLowerCase().includes(query));
+    });
+    const filteredEmpty = !filtered.length;
+    return `<div class="buddy-archive-view"><div class="buddy-archive-filters"><label><span>Search archive</span><input name="archive-search" type="search" value="${escape(chat.archiveSearch)}" placeholder="Search recommendations" /></label><label><span>Category</span><select name="archive-category">${[["all", "All categories"], ...Object.entries(categories)].map(([value, label]) => `<option value="${value}" ${chat.archiveCategory === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>${chat.archiveSearch || chat.archiveCategory !== "all" ? '<button type="button" class="text-button" data-buddy="clear-archive-filters">Clear filters</button>' : ""}</div>${filteredEmpty ? '<div class="buddy-archive buddy-empty"><h2>No matching recommendations</h2><p>Try a different search or category.</p></div>' : `<div class="buddy-archive" role="region" aria-label="Archived recommendations" tabindex="0"><table class="buddy-archive-table"><caption class="sr-only">Archived preference recommendations</caption><thead><tr><th scope="col">Recommendation</th><th scope="col">Category</th><th scope="col">Context</th><th scope="col">Evidence</th><th scope="col">Archived</th></tr></thead><tbody>${filtered.map(p => {
+      const scopes = p.preference.personas.map(a => a.persona || "Identity-wide").join(", ") || "Identity-wide";
+      const archivedAt = p.archived_at || p.created_at;
+      return `<tr><td data-label="Recommendation"><strong>${escape(p.preference.keyword)}</strong><span>${escape(p.preference.definition)}</span></td><td data-label="Category">${escape(categories[p.category])}</td><td data-label="Context">${escape(scopes)}</td><td data-label="Evidence"><span>${escape(p.evidence)}</span></td><td data-label="Archived"><time datetime="${escape(archivedAt)}">${escape(new Date(archivedAt).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }))}</time></td></tr>`;
+    }).join("")}</tbody></table></div>`}</div>`;
   }
 
   async function connect() {

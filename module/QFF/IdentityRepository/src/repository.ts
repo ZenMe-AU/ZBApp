@@ -166,7 +166,7 @@ export async function migratePreferences(root = fixtureRoot) {
 
 export async function readProfile(folder: string, id: string) {
   const read = (kind: string) => readFile(join(folder, `${id}-${kind}.json`), "utf8");
-  const [identity, relations, text, testContext, buddyMemory] = await Promise.all([
+  const [identity, relations, text, testContext, buddyMemory, buddyArchive] = await Promise.all([
     read("identity"), read("relations"), read("properties"),
     read("test-context").catch((error: NodeJS.ErrnoException) => {
       if (error.code !== "ENOENT") throw error;
@@ -176,11 +176,15 @@ export async function readProfile(folder: string, id: string) {
       if (error.code !== "ENOENT") throw error;
       return undefined;
     }),
+    read("buddy-archive").catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== "ENOENT") throw error;
+      return undefined;
+    }),
   ]);
   return {
     revision: etag(text),
     identity_revision: etag(identity),
-    profile_revision: etag(JSON.stringify([identity, relations, text, testContext ?? null, ...(buddyMemory === undefined ? [] : [buddyMemory])])),
+    profile_revision: etag(JSON.stringify([identity, relations, text, testContext ?? null, ...(buddyMemory === undefined ? [] : [buddyMemory]), ...(buddyArchive === undefined ? [] : [buddyArchive])])),
     profile: {
       identity: JSON.parse(identity) as unknown,
       ...(testContext === undefined ? {} : { personas: JSON.parse(testContext) as unknown }),
@@ -308,7 +312,7 @@ export async function commitBuddyApproval(folder: string, id: string, revision: 
     const source = sourceId ? preferences.find(p => p.preference_id === sourceId && !p.superseded_by) : undefined;
     if (sourceId && !source) throw new RequestError(409, "The original preference is no longer active. Request a fresh proposal.");
     const active = preferences.filter(p => !p.superseded_by && p.preference_id !== sourceId);
-    if (active.some(p => samePreference(input, p))) throw new RequestError(409, "This preference is already saved. Dismiss this proposal.");
+    if (active.some(p => samePreference(input, p))) throw new RequestError(409, "This preference is already saved. Archive this recommendation.");
     if (similarPreferences(input, active).length && !acknowledgeSimilar) throw new RequestError(409, "Review the similar preferences and confirm this is a separate preference.");
     if (source) source.superseded_by = preference_id;
     parsed.preferences.push({ ...trimmedPreference(input), preference_id, ...(sourceId ? { supersedes: sourceId } : {}),
@@ -372,7 +376,7 @@ export async function deleteProfile(folder: string, id: string, revision: string
   const locks: Array<{ name: string; handle: Awaited<ReturnType<typeof open>> }> = [];
   let currentFolder = folder;
   try {
-    for (const kind of ["identity", "properties", "relations", "test-context", "buddy"]) {
+    for (const kind of ["identity", "properties", "relations", "test-context", "buddy", "buddy-archive"]) {
       const name = `${id}-${kind}.json.lock`;
       const handle = await open(join(folder, name), "wx").catch((error: NodeJS.ErrnoException) => {
         if (error.code === "EEXIST") throw new RequestError(409, "A write is in progress. Reload before deleting.");

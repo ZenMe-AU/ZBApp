@@ -2,11 +2,11 @@
 
 ## Implemented scope
 
-AI Buddy is a self-service conversation and diary inside QFFIdentity. It reads the selected user's saved personal information, active preferences and relevant conversation memory, asks follow-up questions, and collects recommendations. Recommendations stay separate from confirmed preferences until the user reviews their evidence, category, description, context and similar records, optionally edits the wording/category, and chooses **Approve & save**. They can be reviewed later or dismissed.
+AI Buddy is a self-service conversation and diary inside QFFIdentity. It reads the selected user's saved personal information, active preferences and relevant conversation memory, asks follow-up questions, and collects recommendations. Recommendations stay separate from confirmed preferences until the user reviews their evidence, category, description, context and similar records, optionally edits the wording/category, and chooses **Approve & save**. They can be reviewed later or archived.
 
-The Recommendations view shows pending items in equally sized cards, with consistent description fields and actions aligned at the bottom. Approved and dismissed items leave this review queue; their decisions remain in saved memory, and approved preferences are available in Preferences.
+The Recommendations view shows pending items in equally sized cards, with consistent description fields and actions aligned at the bottom. Approved and archived items leave this review queue. Archived items retain their original proposal content and metadata in a separate table; approved preferences are available in Preferences.
 
-The interface has **Chat**, **Diary**, **Recommendations** and **History** views. Diary entries have a date and a focus: **What happened today** or **Hopes for the future**. Both can lead to tentative preferences; an event alone does not establish a lasting like or dislike. User entries are saved before calling the model, so diary writing remains usable when AI is unavailable.
+The interface has **Chat**, **Diary**, **Recommendations**, **Archive** and **History** views. Diary entries have a date and a focus: **What happened today** or **Hopes for the future**. Both can lead to tentative preferences; an event alone does not establish a lasting like or dislike. User entries are saved before calling the model, so diary writing remains usable when AI is unavailable.
 
 The chat UI shows the outgoing message immediately, then a replying indicator. The composer stays editable for the next draft while submission is disabled. Once the complete validated reply arrives, the client reveals its text over at most 1.8 seconds; this is a display effect, not provider token streaming, and makes no extra model calls. **Show full reply** and reduced-motion preferences skip the effect. Saved history is never replayed. The transcript follows incoming text only while the user stays near the bottom; reading earlier messages preserves the scroll position. A failed/uncertain delivery stays visible and retries reuse the same request UUID. Reloading memory reconciles an already-saved request after a lost response.
 
@@ -19,7 +19,7 @@ flowchart LR
     User[Identity user] --> Chat[Chat, dated diary, recommendations and history]
     Chat -->|Entries and review decisions| Buddy[Identity API: Buddy service]
     Repo[Identity source documents] -->|Saved profile and active preferences| Buddy
-    Buddy <-->|Save entries, replies and recommendation status| Memory[Private identity-owned buddy.json]
+    Buddy <-->|Save entries, replies and recommendation status| Memory[Private identity-owned buddy.json and buddy-archive.json]
     Memory -->|Recent conversation and relevant older entries| Buddy
     Buddy -->|Bounded request, server-only credentials| Provider[OpenAI-compatible provider adapter]
     Provider -->|Reply and untrusted suggestions| Buddy
@@ -46,7 +46,7 @@ The prompt prioritizes likes, dislikes, wants and goals. It explicitly distingui
 
 `want_type` is additive and optional. Existing wants without it remain valid and are displayed as “Want or goal”; no migration or inference of old classifications runs. Ordinary edits preserve it while the kind remains `want`, and clear it when the kind changes.
 
-The default context is **Identity-wise**, persisted as the existing `persona: ""`. Existing editor labels use “Identity-wide” for the same scope. Named contexts are optional proposals supported by the user's words, visible before approval; they do not create `identity.personas` descriptions. Refinements preserve the original context affinities. Buddy does not require people to fill in values or assign personas.
+The default context is **Identity-wide**, persisted as the existing `persona: ""`. Named contexts are optional proposals supported by the user's words, visible before approval; they do not create `identity.personas` descriptions. Refinements preserve the original context affinities. Buddy does not require people to fill in values or assign personas.
 
 ## Approval and preservation
 
@@ -56,27 +56,29 @@ The default context is **Identity-wise**, persisted as the existing `persona: ""
 - A new addition gets a new preference GUID. A refinement also gets a new GUID; the old record retains its ID, wording, affinities and unknown fields, and gains `superseded_by`. The new record has `supersedes` pointing to the original.
 - Each new record stores a minimal `buddy_approval: { proposal_id, approved_at }` receipt. The receipt and supersession change are committed together by the existing file lock and atomic replace. The receipt makes a repeated/lost-response approval idempotent, including after a worker restart. Buddy then records the approved wording and status. These are two separate file writes, not a cross-file transaction: if the worker stops between them, the properties receipt is authoritative and the memory API reconciles the approval on read.
 - Active UI lists and Buddy memory exclude superseded records; the read API still returns the preserved history. Ordinary CRUD and existing identity/relations remain intact. A history/restore UI is future work.
-- A changed properties revision rejects approval with `412`; missing, dismissed or wrong-profile pending proposals return `404`. **Review latest** refreshes the source and similar-preference comparison without another model call, retains the user's draft wording/category, and requires explicit approval again. Approving one recommendation changes the revision, so older pending recommendations require this review. If a refinement's source has been removed or superseded, the user must dismiss it and request another suggestion.
+- A changed properties revision rejects approval with `412`; missing, archived or wrong-profile pending proposals return `404`. **Review latest** refreshes the source and similar-preference comparison without another model call, retains the user's draft wording/category, and requires explicit approval again. Approving one recommendation changes the revision, so older pending recommendations require this review. If a refinement's source has been removed or superseded, the user must archive it and request another suggestion.
 - Exact normalized keyword/description duplicates with compatible kind and context/sign are suppressed at generation and rejected under the write lock. Similar keyword overlaps are shown for comparison and require an explicit “separate preference” acknowledgment. The model is also prompted to find semantic duplicates; arbitrary paraphrase detection is not guaranteed without future semantic retrieval. Opposite signs and context differences are not silently merged.
 
 These are local self-service approval receipts and private working recommendations, not QFF-owned canonical inference records. The broader ontology's `inference_ref`, QFF Repository provenance endpoint, multi-source consolidation and QFFLineage generation/approval datasets remain separate future integration work. No fictitious lineage events or canonical inference records are created.
 
 ## File memory and retention
 
-The optional file is `Identities/<identity_id>/<identity_id>-buddy.json`, or the same relative location under `QFF_IDENTITY_ROOT`. Reading an unused Buddy does not create it; the first submitted entry creates it. Existing identity/properties/relations records need no migration.
+The optional conversation file is `Identities/<identity_id>/<identity_id>-buddy.json`, or the same relative location under `QFF_IDENTITY_ROOT`. Archived recommendations are stored separately in `<identity_id>-buddy-archive.json`, containing `version: 1`, `identity_id` and `proposals[]` with their full original content and metadata. Reading an unused Buddy creates neither file; the first submitted entry creates memory and the first archive creates the archive file. Legacy archived/dismissed records move from memory to the archive on the next memory read or write. Existing identity/properties/relations records need no migration.
+
+All updates take the existing Buddy memory lock. Archive replacement commits before archived records are removed from memory. The two files are not a cross-file transaction: if cleanup is interrupted, the archive record wins by proposal ID when reading and during subsequent writes, preventing duplicate or reactivated recommendations. A committed archive is reported as successful even when cleanup of the old pending copy fails. Both files contribute to the memory revision. The API combines them for the existing UI and bounded AI decision history; active and Archive views continue filtering by status.
 
 | Stored field | Purpose |
 | --- | --- |
 | `version: 1`, `identity_id` | Format version and profile binding. |
 | `conversations[]` | UUID, title, `mode: chat \| diary`, optional diary date/focus, created/updated times and turns. |
 | `turns[]` | Client request UUID, original user text, timestamp, processing/complete/failed status, optional reply/error and temporary generation lease. |
-| `proposals[]` | Server proposal UUID, conversation/request link, timestamp, category, wording, evidence, reason, source/comparison, properties revision, pending/approved/dismissed status and approved preference ID. |
+| `proposals[]` | Server proposal UUID, conversation/request link, creation/archive timestamps, category, wording, evidence, reason, source/comparison, properties revision, pending/approved/archived status and approved preference ID. |
 
-Files are written with owner-only `0600` permissions on supported systems. They contain **plaintext**, not encrypted data. `Identities/.gitignore` excludes Buddy files, locks and temporary files; a custom identity root outside that tree needs its own ignore rules. Backups or transfers that should preserve chat memory must include this optional file and treat it as personal data. The app keeps no transcript copy in localStorage; browser state holds only current UI state and unsaved drafts.
+Files are written with owner-only `0600` permissions on supported systems. They contain **plaintext**, not encrypted data. `Identities/.gitignore` excludes both Buddy files, locks and temporary files; a custom identity root outside that tree needs its own ignore rules. Backups or transfers that should preserve chat memory and archives must include both optional files and treat them as personal data. The app keeps no transcript copy in localStorage; browser state holds only current UI state and unsaved drafts.
 
-History opens or deletes a saved conversation/diary and its associated recommendations. Deletion checks the memory revision and preserves already approved preferences in the properties document. Full-profile deletion includes Buddy memory, checks a whole-profile revision and locks the Buddy file alongside source files. The ordinary profile API includes Buddy content in that revision hash but never exposes the transcript in its profile payload. Corrupt/unsupported memory is reported and left unchanged, not reset silently.
+History opens or deletes a saved conversation/diary and its active recommendations. Deletion checks the memory revision and preserves archived recommendations and already approved preferences. Full-profile deletion includes both Buddy files, checks a whole-profile revision and locks both files alongside source files. The ordinary profile API includes both files in that revision hash but never exposes their content in its profile payload. Corrupt/unsupported memory or archives are reported and left unchanged, not reset silently.
 
-Limits are 5 MiB per Buddy file, 500 conversations per profile, 100 turns per conversation, and 1,500 stored recommendations. The API rejects growth beyond these bounds with guidance to delete older conversations or start a new conversation, as appropriate. There is no automatic expiry or silent history deletion. A single document keeps this local implementation simple; larger archives and indexed retrieval are future work.
+Limits are 5 MiB per file, 500 conversations per profile, 100 turns per conversation, and 1,500 stored recommendations across memory and archive. The API rejects growth beyond these bounds. There is no automatic expiry or silent history deletion. Larger archives and indexed retrieval are future work.
 
 ## Model context and retries
 
@@ -86,7 +88,7 @@ The provider receives the latest conversation window (up to 16 messages, with a 
 
 The complete system prompt and serialized input are capped at 48,000 characters. Oversized profile context is rejected before a provider call, with the user's entry already saved. Chat input allows 2,000 characters and diary input 6,000. These are character bounds, not a provider-specific token guarantee.
 
-The fixed prompt directs Buddy to use known answers, avoid repeated questions and dismissed proposals, distinguish events from enduring preferences, and treat unapproved suggestions as tentative. Evidence must quote user text supplied in the bounded context. Future hopes map to wants or goals; sensitive traits and diagnoses must not be inferred from diary events.
+The fixed prompt directs Buddy to use known answers, avoid repeated questions and archived proposals, distinguish events from enduring preferences, and treat unapproved suggestions as tentative. Evidence must quote user text supplied in the bounded context. Future hopes map to wants or goals; sensitive traits and diagnoses must not be inferred from diary events.
 
 Every submission includes a client-generated request UUID. Repeating a completed request returns the saved result without another model call. Failed entries can be retried explicitly using that same ID without duplicating the entry. An in-process guard and a persisted 150-second generation lease prevent simultaneous generations for the same profile; an interrupted attempt can be retried after its lease expires. Generation IDs reject superseded late responses, and deleting a conversation while the provider is responding cannot recreate it. Retries are user initiated, never automatic.
 
@@ -98,9 +100,9 @@ Every submission includes a client-generated request UUID. Repeating a completed
 | `GET /api/v1/profiles/{id}/buddy/memory` | `{ revision, memory }`, including saved conversations and recommendations. Does not call the provider. |
 | `POST /api/v1/profiles/{id}/buddy/messages` | `{ request_id, conversation_id?, message, mode?: "chat" \| "diary", diary_date?, diary_focus?: "today" \| "future" }`. Diary requires a valid ISO date and focus. Saves the entry first; returns `{ conversation_id, request_id, reply?, error?, proposals }`. Provider failure returns a saved failed turn with `error`; it does not change preferences. Validation/storage errors use non-2xx responses. |
 | `POST /api/v1/profiles/{id}/buddy/proposals/{proposalId}/review` | Refresh the pending recommendation's properties revision, source and similar records; returns the updated recommendation without calling AI. |
-| `POST /api/v1/profiles/{id}/buddy/proposals/{proposalId}/dismiss` | Persist dismissal; confirmed preferences are unchanged. |
+| `POST /api/v1/profiles/{id}/buddy/proposals/{proposalId}/archive` | Persist `status: archived` and `archived_at`; confirmed preferences are unchanged. |
 | `POST /api/v1/profiles/{id}/buddy/approvals` | `{ proposal_id, revision, confirmed: true, category, preference, acknowledge_similar?: boolean }`. Returns `{ preference_id, revision }`. The server checks its proposal binding and reviewed revision under the write lock. |
-| `DELETE /api/v1/profiles/{id}/buddy/conversations/{conversationId}` | Requires memory `revision` in `If-Match`. Removes that conversation and its recommendations, preserving approved preferences. |
+| `DELETE /api/v1/profiles/{id}/buddy/conversations/{conversationId}` | Requires memory `revision` in `If-Match`. Removes that conversation and its active recommendations, preserving archived recommendations and approved preferences. |
 
 All routes retain the local fixture-mode guard and 64 KiB HTTP body limit. Production verified ownership/authentication remains a prerequisite for hosted deployment, as with the existing editor.
 

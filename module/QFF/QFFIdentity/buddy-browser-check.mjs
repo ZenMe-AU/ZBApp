@@ -100,7 +100,7 @@ export async function checkBuddy(page, backend, provider) {
   await page.getByText("What would speaking Spanish make possible for you?", { exact: true }).waitFor();
   for (const width of [1366, 1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const view of ["diary", "review", "history"]) {
+    for (const view of ["diary", "review", "archive", "history"]) {
       await tab(view).click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth || document.documentElement.scrollHeight > innerHeight + 1), false, `${view} fits at ${width}px`);
       if ((width === 1366 || width === 390) && process.env.QFF_EDITOR_SCREENSHOT) {
@@ -132,12 +132,25 @@ export async function checkBuddy(page, backend, provider) {
   assert.equal(await similar.getByRole("button", { name: "Approve & save", exact: true }).isDisabled(), true);
   await similar.getByRole("checkbox").check();
   assert.equal(await similar.getByRole("button", { name: "Approve & save", exact: true }).isEnabled(), true);
-  await similar.getByRole("button", { name: "Dismiss", exact: true }).click();
-  await page.getByText("Recommendation dismissed.", { exact: false }).waitFor();
-  assert.equal((await memory()).memory.proposals.find(p => p.preference.keyword === "Financial independence plan").status, "dismissed");
+  await similar.getByRole("button", { name: "Archive", exact: true }).click();
+  await page.getByText("Recommendation archived.", { exact: false }).waitFor();
+  const archived = (await memory()).memory.proposals.find(p => p.preference.keyword === "Financial independence plan");
+  assert.equal(archived.status, "archived"); assert.match(archived.archived_at, /^\d{4}-\d{2}-\d{2}T/);
+  await tab("archive").click();
+  const archivedRow = page.locator(".buddy-archive-table tbody tr").filter({ hasText: "Financial independence plan" });
+  await archivedRow.waitFor(); assert.equal(await archivedRow.getByText("I want a written plan for financial independence.", { exact: true }).count(), 1);
+  await page.getByRole("searchbox", { name: "Search archive", exact: true }).fill("no such recommendation");
+  await page.getByText("No matching recommendations", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Clear filters", exact: true }).click();
+  await page.locator(".buddy-archive-table tbody tr").filter({ hasText: "Financial independence plan" }).waitFor();
+  await page.reload();
+  await page.getByRole("heading", { name: "My preferences", exact: true }).waitFor();
+  await page.getByRole("button", { name: "AI Buddy", exact: true }).click();
+  await tab("archive").click();
+  await page.locator(".buddy-archive-table tbody tr").filter({ hasText: "Financial independence plan" }).waitFor();
   await tab("chat").click();
   await send("By independence I mean more freedom with my time", input => {
-    assert(input.decisions.some(d => d.startsWith("dismissed: Financial independence plan")));
+    assert(input.decisions.some(d => d.startsWith("archived: Financial independence plan")));
     return { reply: "That helps clarify your goal.", suggestions: [{ ...goal, category: "goal", evidence: "more freedom with my time", definition: "I want financial independence to have more freedom with my time.", source_preference_id: input.profile.preferences.find(p => p.keyword === "Financial independence").preference_id }] };
   });
   await page.getByText("That helps clarify your goal.", { exact: true }).waitFor();

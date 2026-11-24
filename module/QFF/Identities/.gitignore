@@ -1,4 +1,7 @@
 # Private conversations and diary memory are workstation data, not fixtures.
-
+*-buddy.json
 *-buddy.json.lock
 *-buddy.json.*.tmp
+*-buddy-archive.json
+*-buddy-archive.json.lock
+*-buddy-archive.json.*.tmp

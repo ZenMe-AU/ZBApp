@@ -11,7 +11,7 @@ import { test } from "node:test";
 import { BuddyService, buddyPrompt } from "./buddy.ts";
 import { buddyAvailability, buddySettings, openAICompatibleBuddy, type BuddyProvider } from "./buddy-provider.ts";
 import { addPreference, createFixtureProfile, readProfile, resolveProfileFolder, updatePreference, deleteProfile, RequestError } from "./repository.ts";
-import { buddyFile, readBuddyMemory, updateBuddyMemory } from "./buddy-memory.ts";
+import { buddyArchiveFile, buddyFile, readBuddyMemory, updateBuddyMemory } from "./buddy-memory.ts";
 import type { BuddyCategory, BuddyProposal, PreferenceInput, ProfileSnapshot } from "./contracts.ts";
 
 async function setup(t: { after(fn: () => Promise<unknown>): void }) {
@@ -114,10 +114,10 @@ test("provider sees only the selected profile, active preferences, conversation 
   const { folder, buddy, read } = await setup(t);
   const payloads: unknown[] = [];
   const first = await buddy.chat(folder, "TEST", request(), provider());
-  await buddy.dismiss(folder, "TEST", first.proposals[0].proposal_id);
+  await buddy.archive(folder, "TEST", first.proposals[0].proposal_id);
   await buddy.chat(folder, "TEST", { ...request("In forests"), conversation_id: first.conversation_id }, { async complete(_system, payload) { payloads.push(payload); return { reply: "Quiet forests sound good.", suggestions: [] }; } });
   const serialized = JSON.stringify(payloads);
-  assert.match(serialized, /Already known introduction/); assert.match(serialized, /In forests/); assert.match(serialized, /dismissed: Hiking/);
+  assert.match(serialized, /Already known introduction/); assert.match(serialized, /In forests/); assert.match(serialized, /archived: Hiking/);
   assert.match(serialized, /"age":28/); assert.match(serialized, /"gender":"female"/); assert.match(serialized, /Enjoys photo walks and galleries/);
   assert.doesNotMatch(serialized, /DO NOT SEND|NOT MEMORY|OTHER/);
   assert.equal((await read()).profile.properties.preferences.length, 0);
@@ -258,15 +258,24 @@ test("later review refreshes stale comparisons and requires renewed explicit app
   assert.equal(recovered.preference.definition, updated.preference.definition);
 });
 
-test("dismissal and history deletion persist, isolate profiles and preserve approved preferences", async t => {
+test("archiving and history deletion persist, isolate profiles and preserve approved preferences", async t => {
   const { folder, root, buddy, read } = await setup(t);
   const first = await buddy.chat(folder, "TEST", request(), provider());
-  await buddy.dismiss(folder, "TEST", first.proposals[0].proposal_id);
-  assert.equal((await new BuddyService().memory(folder, "TEST")).memory.proposals[0].status, "dismissed");
+  const archived = await buddy.archive(folder, "TEST", first.proposals[0].proposal_id);
+  assert.equal(archived.status, "archived"); assert.match(archived.archived_at!, /^\d{4}-\d{2}-\d{2}T/);
+  const archiveFile = buddyArchiveFile(folder, "TEST");
+  assert.deepEqual(JSON.parse(await readFile(archiveFile, "utf8")).proposals, [archived]);
+  assert.deepEqual(JSON.parse(await readFile(buddyFile(folder, "TEST"), "utf8")).proposals, []);
+  if (process.platform !== "win32") assert.equal((await stat(archiveFile)).mode & 0o777, 0o600);
+  assert.deepEqual(await buddy.archive(folder, "TEST", archived.proposal_id), archived);
+  const persisted = (await new BuddyService().memory(folder, "TEST")).memory.proposals[0];
+  assert.equal(persisted.status, "archived"); assert.equal(persisted.preference.definition, first.proposals[0].preference.definition);
   await assert.rejects(buddy.approve(folder, "TEST", approve(first.proposals[0])), { status: 404 });
   const otherFolder = await resolveProfileFolder("OTHER", root);
+  await assert.rejects(buddy.archive(otherFolder, "OTHER", first.proposals[0].proposal_id), { status: 404 });
   await assert.rejects(buddy.chat(otherFolder, "OTHER", { ...request(), conversation_id: first.conversation_id }, provider()), { status: 404 });
   assert.deepEqual((await buddy.memory(otherFolder, "OTHER")).memory.conversations, []);
+  await assert.rejects(stat(buddyArchiveFile(otherFolder, "OTHER")), { code: "ENOENT" });
   const second = await buddy.chat(folder, "TEST", request(), provider());
   await buddy.approve(folder, "TEST", approve(second.proposals[0]));
   const data = await buddy.memory(folder, "TEST");
@@ -275,6 +284,56 @@ test("dismissal and history deletion persist, isolate profiles and preserve appr
   assert.equal((await buddy.memory(folder, "TEST")).memory.conversations.length, 1);
   assert.equal((await read()).profile.properties.preferences.length, 1);
   await assert.rejects(buddy.deleteConversation(folder, "TEST", first.conversation_id, null), { status: 428 });
+  const remaining = await buddy.memory(folder, "TEST");
+  await buddy.deleteConversation(folder, "TEST", first.conversation_id, remaining.revision);
+  const afterDeletion = (await buddy.memory(folder, "TEST")).memory;
+  assert.equal(afterDeletion.conversations.length, 0); assert.equal(afterDeletion.proposals[0].status, "archived");
+  assert.deepEqual(JSON.parse(await readFile(archiveFile, "utf8")).proposals, [archived]);
+});
+
+test("legacy archives migrate without losing metadata and interrupted cleanup cannot reactivate them", async t => {
+  const { folder, buddy, read } = await setup(t);
+  const first = await buddy.chat(folder, "TEST", request(), provider());
+  const original = await readFile(buddyFile(folder, "TEST"), "utf8");
+  const legacy = JSON.parse(original);
+  legacy.proposals[0].status = "dismissed";
+  await writeFile(buddyFile(folder, "TEST"), JSON.stringify(legacy));
+  const migrated = await new BuddyService().memory(folder, "TEST");
+  assert.deepEqual(migrated.memory.proposals, legacy.proposals);
+  const archiveFile = buddyArchiveFile(folder, "TEST");
+  assert.deepEqual(JSON.parse(await readFile(archiveFile, "utf8")).proposals, legacy.proposals);
+  assert.deepEqual(JSON.parse(await readFile(buddyFile(folder, "TEST"), "utf8")).proposals, []);
+  // Simulate a stop after the archive commit, leaving a pending copy in memory.
+  await writeFile(buddyFile(folder, "TEST"), original);
+  assert.equal((await new BuddyService().memory(folder, "TEST")).memory.proposals[0].status, "dismissed");
+  await assert.rejects(buddy.approve(folder, "TEST", approve(first.proposals[0])), { status: 404 });
+  const before = await read();
+  await buddy.archive(folder, "TEST", first.proposals[0].proposal_id);
+  assert.notEqual((await read()).profile_revision, before.profile_revision);
+  await assert.rejects(buddy.deleteConversation(folder, "TEST", first.conversation_id, migrated.revision), { status: 412 });
+  await writeFile(`${archiveFile}.lock`, "another writer");
+  await assert.rejects(deleteProfile(folder, "TEST", (await read()).profile_revision), { status: 409 });
+  await rm(`${archiveFile}.lock`);
+  await deleteProfile(folder, "TEST", (await read()).profile_revision);
+  await assert.rejects(stat(archiveFile), { code: "ENOENT" });
+});
+
+test("failed archive writes keep recommendations active and corrupt archives are not overwritten", async t => {
+  const { folder, buddy } = await setup(t);
+  const first = await buddy.chat(folder, "TEST", request(), provider());
+  const original = await readFile(buddyFile(folder, "TEST"), "utf8");
+  const archiveFile = buddyArchiveFile(folder, "TEST");
+  await writeFile(`${archiveFile}.lock`, "another writer");
+  await assert.rejects(buddy.archive(folder, "TEST", first.proposals[0].proposal_id), { status: 409 });
+  assert.equal(await readFile(buddyFile(folder, "TEST"), "utf8"), original);
+  assert.equal((await buddy.memory(folder, "TEST")).memory.proposals[0].status, "pending");
+  await rm(`${archiveFile}.lock`);
+  for (const invalid of ["not JSON", JSON.stringify({ version: 1, identity_id: "OTHER", proposals: [] })]) {
+    await writeFile(archiveFile, invalid);
+    await assert.rejects(buddy.archive(folder, "TEST", first.proposals[0].proposal_id), { status: 500 });
+    assert.equal(await readFile(archiveFile, "utf8"), invalid);
+    assert.equal(await readFile(buddyFile(folder, "TEST"), "utf8"), original);
+  }
 });
 
 test("deleting a conversation during generation cannot resurrect its content", async t => {
