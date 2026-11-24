@@ -2,41 +2,41 @@
   "identity_id": "ET",
   "preferences": [
     {
-      "keyword": "product design",
+      "keyword": "graphic design",
       "kind": "interest",
-      "definition": "Shaping a product’s purpose, features, usability, and overall experience.",
+      "definition": "Creating visual communication through typography, colour, imagery, and layout.",
       "personas": [
         {
-          "persona": "technology peer",
-          "affinity": -0.34
-        },
-        {
-          "persona": "christian friend",
-          "affinity": 1
+          "persona": "graphic design friend",
+          "affinity": 0.9
         }
       ],
       "preference_id": "aafa05fc-59ad-4bb5-a963-d1faf59ad14c"
     },
     {
-      "keyword": "technology accessibility",
+      "keyword": "typography",
       "kind": "interest",
-      "definition": "Designing technology so people with different abilities and needs can use it.",
+      "definition": "The art and practice of arranging type to make language clear and visually expressive.",
       "personas": [
         {
-          "persona": "technology peer",
-          "affinity": -0.51
+          "persona": "graphic design friend",
+          "affinity": 0.8
         }
       ],
       "preference_id": "ddfe6607-85ed-4955-a94c-d7e66036c7c5"
     },
     {
-      "keyword": "artificial intelligence",
+      "keyword": "visual storytelling",
       "kind": "interest",
-      "definition": "Computing methods that perform tasks such as learning, reasoning, or language generation.",
+      "definition": "Communicating a story, feeling, or idea through a sequence of visual images and design.",
       "personas": [
         {
-          "persona": "technology peer",
-          "affinity": 0.7
+          "persona": "graphic design friend",
+          "affinity": 0.8
+        },
+        {
+          "persona": "photography friend",
+          "affinity": 0.8
         }
       ],
       "preference_id": "8988ff84-0971-4127-9882-5cb58b61a2b0"
@@ -80,13 +80,13 @@
       "preference_id": "36b8d2fe-36f0-4388-9384-3922611c721d"
     },
     {
-      "keyword": "taking photographs",
+      "keyword": "photography",
       "kind": "interest",
-      "definition": "Creating images to capture and preserve places, wildlife, or moments.",
+      "definition": "Creating photographs that capture people, places, and everyday moments.",
       "personas": [
         {
-          "persona": "culture and photography friend",
-          "affinity": 0.9
+          "persona": "photography friend",
+          "affinity": 1
         }
       ],
       "preference_id": "2ec526d6-671e-4b08-a128-0046d16fa59d"
@@ -97,7 +97,7 @@
       "definition": "Viewing exhibitions of art and other creative work in a gallery.",
       "personas": [
         {
-          "persona": "culture and photography friend",
+          "persona": "photography friend",
           "affinity": 0.8
         }
       ],
@@ -109,7 +109,7 @@
       "definition": "Going to a performance where musicians play in person.",
       "personas": [
         {
-          "persona": "culture and photography friend",
+          "persona": "photography friend",
           "affinity": 0.8
         }
       ],
@@ -121,7 +121,7 @@
       "definition": "The brewed drink and relaxed cafe experience enjoyed in social settings.",
       "personas": [
         {
-          "persona": "culture and photography friend",
+          "persona": "photography friend",
           "affinity": 0.7
         }
       ],
@@ -148,7 +148,7 @@
     },
     {
       "keyword": "curiosity",
-      "definition": "An interest in asking questions and exploring new ideas to understand technology.",
+      "definition": "An interest in noticing details, asking questions, and learning from people and places.",
       "kind": "value",
       "personas": [
         {
@@ -193,30 +193,6 @@
         }
       ],
       "preference_id": "94055009-44ee-4ea2-869f-111337e60bd1"
-    },
-    {
-      "keyword": "curiosity",
-      "definition": "An interest in noticing and learning about visual art, places, and experiences.",
-      "kind": "value",
-      "personas": [
-        {
-          "persona": "",
-          "affinity": 0.9
-        }
-      ],
-      "preference_id": "1d256ccc-d15d-488f-b6eb-c5fa581ceaa8"
-    },
-    {
-      "keyword": "test",
-      "definition": "test",
-      "kind": "want",
-      "personas": [
-        {
-          "persona": "",
-          "affinity": 1
-        }
-      ],
-      "preference_id": "c01181f4-0da3-47c1-8949-76eb80576fa8"
     }
   ]
 }

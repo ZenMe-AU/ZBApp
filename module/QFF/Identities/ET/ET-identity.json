@@ -1,14 +1,24 @@
 {
   "identity_id": "ET",
   "name": "Emma Thompson",
-  "age": 38,
+  "age": 28,
   "gender": "female",
   "location": "Brisbane, Queensland, Australia",
-  "occupation": "Product designer and amateur photographer",
-  "summary": "An open-minded designer interested in accessible technology, Christian ethics and local cultural experiences.",
+  "occupation": "Graphic designer and photographer",
+  "summary": "A creative Brisbane woman interested in photography, graphic design, Christian faith and local arts and culture.",
   "personas": [
-    { "name": "technology peer", "description": "Enjoys exploring product design, accessible technology and what AI can contribute to both." },
-    { "name": "christian friend", "description": "Enjoys conversations about Christian faith and theology." },
-    { "name": "culture and photography friend", "description": "Enjoys taking photos, browsing galleries and finding local live music or a good coffee." }
-  ]
+    {
+      "name": "graphic design friend",
+      "description": "Enjoys sharing visual ideas, typography, branding and practical design feedback."
+    },
+    {
+      "name": "christian friend",
+      "description": "Enjoys Christian fellowship, Bible study and conversations about faith in everyday life."
+    },
+    {
+      "name": "photography friend",
+      "description": "Enjoys photo walks, galleries, live music and finding a good Brisbane coffee."
+    }
+  ],
+  "details": []
 }

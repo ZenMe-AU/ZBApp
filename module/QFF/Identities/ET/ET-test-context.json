@@ -1,15 +1,15 @@
 {
   "identity_id": "ET",
   "personas": [{
-      "persona": "technology peer",
-      "connection_goal": "Exchange ideas about useful and accessible digital products.",
-      "motivation": "I enjoy connecting thoughtful design with practical implementation.",
-      "contributions": ["Product-design feedback", "Accessibility perspectives"],
-      "expectations": ["Curiosity", "Honest discussion"],
+      "persona": "graphic design friend",
+      "connection_goal": "Share visual ideas and exchange thoughtful feedback on creative projects.",
+      "motivation": "I enjoy turning a clear idea into expressive, useful visual design.",
+      "contributions": ["Graphic-design feedback", "Typography and layout ideas"],
+      "expectations": ["Curiosity", "Honest and constructive discussion"],
       "important_interests_and_values": [],
-      "communication_style": "Visual examples followed by concise discussion",
+      "communication_style": "Visual references followed by relaxed, practical discussion",
       "boundaries": ["persistent exaggeration (-0.9)"],
-      "initial_disclosure": "Public design work and broad technical interests."
+      "initial_disclosure": "Public design work and broad creative interests."
     }, {
       "persona": "christian friend",
       "connection_goal": "Explore Christian faith and ethics with thoughtful friends.",
@@ -21,10 +21,10 @@
       "boundaries": ["hostility toward beliefs (-0.9)"],
       "initial_disclosure": "Broad faith interests before personal experiences."
     }, {
-      "persona": "culture and photography friend",
+      "persona": "photography friend",
       "connection_goal": "Find companions for galleries, music and photography outings.",
-      "motivation": "Looking at familiar places through art and photography keeps me curious.",
-      "contributions": ["Photography tips", "Ideas for low-cost outings"],
+      "motivation": "Looking at familiar Brisbane places through art and photography keeps me curious.",
+      "contributions": ["Photography tips", "Ideas for Brisbane photo walks and low-cost outings"],
       "expectations": ["Respect for different tastes", "Balanced planning"],
       "important_interests_and_values": [],
       "communication_style": "Relaxed and conversational",

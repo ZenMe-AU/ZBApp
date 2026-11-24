@@ -2,15 +2,15 @@
   "identity_id": "ET",
   "relations": [{
       "contact_ref": "DM",
-      "topics_shared": ["Christianity", "theology", "artificial intelligence"],
+      "topics_shared": ["Christianity", "theology", "ethics"],
       "topics_private": ["client project details"]
     }, {
       "contact_ref": "LO",
-      "topics_shared": ["galleries", "live music", "coffee"],
+      "topics_shared": ["photography", "galleries", "live music", "coffee"],
       "topics_private": ["Christianity", "client project details"]
     }, {
       "contact_ref": "AP",
-      "topics_shared": ["product design", "technology accessibility", "photography"],
+      "topics_shared": ["photography"],
       "topics_private": ["personal finances"]
     }, {
       "contact_ref": "SC",
