@@ -6,7 +6,7 @@
     "QFF_AI_MODE": "live",
     "LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai/",
     "LLM_MODEL": "gemini-flash-lite-latest",
-    "LLM_API_KEY": "",
+    "LLM_API_KEY": "Get the key from https://aistudio.google.com/app/api-keys",
     "LLM_TIMEOUT_MS": "30000",
     "LLM_CONTEXT_WINDOW_TOKENS": ""
   }
