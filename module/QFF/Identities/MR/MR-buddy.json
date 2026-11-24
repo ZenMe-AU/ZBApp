@@ -6,7 +6,7 @@
       "title": "hi buddy",
       "mode": "chat",
       "created_at": "2026-11-24T08:57:37.866Z",
-      "updated_at": "2026-11-24T09:14:19.438Z",
+      "updated_at": "2026-11-24T09:20:52.449Z",
       "turns": [{
           "request_id": "7a290602-b28b-4671-b2f2-5dc07b7d0c1b",
           "content": "hi buddy",
@@ -67,6 +67,12 @@
           "created_at": "2026-11-24T09:14:17.915Z",
           "status": "complete",
           "reply": "If you want a classic Melbourne sports pub experience, the Turf Bar on Queen Street is brilliant for catching up over lunch, with great hearty food and screens everywhere without anyone breathing down your neck about betting. Would that kind of vibrant sports atmosphere hit the spot for your lunch?"
+        }, {
+          "request_id": "dbcd52ea-a1e8-41a4-83eb-74a4011ff821",
+          "content": "Emma loves horses, she also goes horse betting which I don't like, but I don't want to tell her that.",
+          "created_at": "2026-11-24T09:20:51.012Z",
+          "status": "complete",
+          "reply": "That's a tricky balance when you want to support Emma's interests while steering clear of betting yourself. Would you like to find a venue that balances a great atmosphere for lunch with options that keep everyone comfortable?"
         }]
     }],
   "proposals": [{
