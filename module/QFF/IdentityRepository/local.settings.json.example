@@ -3,10 +3,10 @@
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "QFF_FIXTURE_MODE": "1",
-    "QFF_AI_MODE": "disabled",
-    "LLM_BASE_URL": "",
-    "LLM_MODEL": "",
-    "LLM_API_KEY": "",
+    "QFF_AI_MODE": "live",
+    "LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai/",
+    "LLM_MODEL": "gemini-flash-lite-latest",
+    "LLM_API_KEY": "Get your key from https://aistudio.google.com/app/api-keys",
     "LLM_TIMEOUT_MS": "30000"
   }
 }

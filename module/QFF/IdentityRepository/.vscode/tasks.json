@@ -1,0 +1,63 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start",
+      "type": "shell",
+      "command": "pnpm run start --port 7181",
+      "isBackground": true,
+      "problemMatcher": "$func-node-watch",
+      "dependsOn": ["Start Azurite"]
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "pnpm install --frozen-lockfile"
+    },
+     {
+      "label": "Start Azurite",
+      "dependsOn": [
+        "Start Azurite Blob",
+        "Start Azurite Queue",
+        "Start Azurite Table"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Start Azurite Blob",
+      "type": "shell",
+      "command": "${command:azurite.start_blob}",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Start Azurite Queue",
+      "type": "shell",
+      "command": "${command:azurite.start_queue}",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Start Azurite Table",
+      "type": "shell",
+      "command": "${command:azurite.start_table}",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    }
+  ]
+}
+ 

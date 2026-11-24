@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "identity_id": "MR",
+  "conversations": [{
+      "conversation_id": "ad549787-fe11-454e-860e-d20fe28a4674",
+      "title": "hi buddy",
+      "mode": "chat",
+      "created_at": "2026-11-24T08:57:37.866Z",
+      "updated_at": "2026-11-24T09:14:19.438Z",
+      "turns": [{
+          "request_id": "7a290602-b28b-4671-b2f2-5dc07b7d0c1b",
+          "content": "hi buddy",
+          "created_at": "2026-11-24T08:57:37.866Z",
+          "status": "complete",
+          "reply": "Hey Marcus! How's your week going? Are you planning any weekend hikes or cycling trips around Melbourne?"
+        }, {
+          "request_id": "1bf294d0-d264-482f-b1dd-800a3ca36c60",
+          "content": "Emma agreed to go to lunch with me tomorrow but she chose the casino restaurant, how should I handle it?",
+          "created_at": "2026-11-24T08:58:43.763Z",
+          "status": "complete",
+          "reply": "That's a bit tricky since you might prefer to steer clear of gambling environments. You could politely let her know and suggest checking out a great alternative spot nearby instead."
+        }, {
+          "request_id": "7dcb8f53-b826-4d06-8552-729d53e93ce3",
+          "content": "what spots would you recommend nearby?",
+          "created_at": "2026-11-24T09:02:40.130Z",
+          "status": "complete",
+          "reply": "If you're around the Southbank or Crown area, there are some great spots along the Yarra River like Arbory Afloat or Hopetoun Tea Rooms in the CBD that offer fantastic food without the casino atmosphere."
+        }, {
+          "request_id": "2d353235-2ac9-436f-9de4-8a2d3bed4715",
+          "content": "I've updated my living location please check again",
+          "created_at": "2026-11-24T09:02:58.130Z",
+          "status": "complete",
+          "reply": "Oh, my system data still shows you in Melbourne! Whereabouts have you moved to now?"
+        }, {
+          "request_id": "fb1b328f-c548-47ed-b4a5-db846ba98253",
+          "content": "That's fine then, I had the wrong address there for a short time between chats. What places in south bank would suit my preferences?",
+          "created_at": "2026-11-24T09:04:03.300Z",
+          "status": "complete",
+          "reply": "Since you enjoy great food with a nice view and prefer to avoid gambling settings, places like Arbory Afloat along the Yarra River offer a relaxed atmosphere without being near the casino. Are you looking for something casual by the water, or more of a cosy indoor spot?"
+        }, {
+          "request_id": "8f8a3dab-2501-4c25-9d20-f9d43363dccb",
+          "content": "call out any places and help me choose options",
+          "created_at": "2026-11-24T09:05:30.484Z",
+          "status": "complete",
+          "reply": "If you want a relaxed meal by the water without any gambling vibes, Arbory Afloat or the Riverland Bar along the Yarra are fantastic choices for lunch. Would a casual riverside spot like that work well for your date with Emma?"
+        }, {
+          "request_id": "36da7c1b-343b-4f0d-8eff-e28931e35bb4",
+          "content": "I like cricket, ausie rules football, dislike gambling, recomend a place for lunch with a date who also likes similar stuff in melbourne",
+          "created_at": "2026-11-24T09:10:26.886Z",
+          "status": "complete",
+          "reply": "Since you both enjoy sports and want to steer clear of gambling, you might love the Turf Bar in the CBD—it has a great sports-friendly atmosphere and hearty pub food without the casino vibe. Would a classic sports-themed venue like that be a fun option for your lunch?"
+        }, {
+          "request_id": "104a89b0-5250-48c5-9959-b5ace21cbc13",
+          "content": "You can consider my preferences more carefully, for example, I don't like gambling pressure, but it doesn't mean I'm unwilling to go places that has gambling machines",
+          "created_at": "2026-11-24T09:13:45.750Z",
+          "status": "complete",
+          "reply": "Got it, Marcus! So you're fine being around venues with machines as long as there's no pressure to gamble. Would you like to check out some great sports bars in Melbourne that have a fun atmosphere for lunch?"
+        }, {
+          "request_id": "66ca65f8-9eb2-420e-8716-5a13fb82fb3d",
+          "content": "yes",
+          "created_at": "2026-11-24T09:13:56.931Z",
+          "status": "complete",
+          "reply": "Awesome, let's look at some great sports bars in Melbourne that keep things fun and relaxed without any pressure to bet! Do you prefer somewhere right in the CBD or closer to the river?"
+        }, {
+          "request_id": "916bf53b-30c5-4562-adf2-7454c6ad6355",
+          "content": "give some recommendations based on my preferences, sell it to me",
+          "created_at": "2026-11-24T09:14:17.915Z",
+          "status": "complete",
+          "reply": "If you want a classic Melbourne sports pub experience, the Turf Bar on Queen Street is brilliant for catching up over lunch, with great hearty food and screens everywhere without anyone breathing down your neck about betting. Would that kind of vibrant sports atmosphere hit the spot for your lunch?"
+        }]
+    }],
+  "proposals": [{
+      "proposal_id": "a744d777-0dab-40b9-8433-6682111d0fdb",
+      "revision": "\"a377c8ecd8aa5568b9904acf18b07ddedf54e98f65df452a22444cae1980a617\"",
+      "category": "dislike",
+      "preference": {
+        "keyword": "gambling pressure",
+        "definition": "Pressuring someone to bet or gamble as part of a social activity.",
+        "kind": "interest",
+        "personas": []
+      },
+      "evidence": "I don't like gambling pressure, but it doesn't mean I'm unwilling to go places that has gambling machines",
+      "reason": "Clarifying that aversion is to the pressure rather than simply being near machines.",
+      "source": {
+        "keyword": "gambling pressure",
+        "kind": "boundary",
+        "definition": "Pressuring someone to bet or gamble as part of a social activity.",
+        "personas": [],
+        "preference_id": "3a5896e1-90c5-4aec-811b-6b11982ceff5"
+      },
+      "similar": [],
+      "conversation_id": "ad549787-fe11-454e-860e-d20fe28a4674",
+      "request_id": "104a89b0-5250-48c5-9959-b5ace21cbc13",
+      "created_at": "2026-11-24T09:13:47.503Z",
+      "status": "pending"
+    }, {
+      "proposal_id": "a8201dd6-5fe0-43bf-93ce-b80c4f028341",
+      "revision": "\"a377c8ecd8aa5568b9904acf18b07ddedf54e98f65df452a22444cae1980a617\"",
+      "category": "like",
+      "preference": {
+        "keyword": "sports bars",
+        "definition": "Venues that feature sports screens, memorabilia, and a lively sports-focused atmosphere.",
+        "kind": "interest",
+        "personas": [{
+            "persona": "melbourne sport friend",
+            "affinity": 0.5
+          }]
+      },
+      "evidence": "yes",
+      "reason": "The user agreed to check out sports bars in Melbourne for lunch.",
+      "similar": [],
+      "conversation_id": "ad549787-fe11-454e-860e-d20fe28a4674",
+      "request_id": "66ca65f8-9eb2-420e-8716-5a13fb82fb3d",
+      "created_at": "2026-11-24T09:13:59.169Z",
+      "status": "pending"
+    }]
+}

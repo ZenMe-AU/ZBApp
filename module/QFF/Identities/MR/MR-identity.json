@@ -6,9 +6,15 @@
   "location": "Melbourne, Victoria, Australia",
   "occupation": "Civil engineer and junior sports-club volunteer",
   "summary": "A reliable sports enthusiast who enjoys local community projects, cycling and weekend hikes.",
-  "personas": [
-    { "name": "melbourne sport friend", "description": "Enjoys following Australian rules football, playing social cricket and going on casual rides." },
-    { "name": "community volunteer", "description": "Is drawn to local projects, especially education initiatives run by not-for-profit groups." },
-    { "name": "outdoor activity friend", "description": "Enjoys moderate hikes and casual cycling, often as part of a regional day trip." }
-  ]
+  "personas": [{
+      "name": "melbourne sport friend",
+      "description": "Enjoys following Australian rules football, playing social cricket and going on casual rides."
+    }, {
+      "name": "community volunteer",
+      "description": "Is drawn to local projects, especially education initiatives run by not-for-profit groups."
+    }, {
+      "name": "outdoor activity friend",
+      "description": "Enjoys moderate hikes and casual cycling, often as part of a regional day trip."
+    }],
+  "details": []
 }
